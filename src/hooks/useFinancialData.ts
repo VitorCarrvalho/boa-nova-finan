@@ -1,0 +1,71 @@
+
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
+
+type FinancialRecord = Database['public']['Tables']['financial_records']['Row'];
+
+export const useFinancialRecords = () => {
+  return useQuery({
+    queryKey: ['financial-records'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('financial_records')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as FinancialRecord[];
+    },
+  });
+};
+
+export const useFinancialStats = () => {
+  return useQuery({
+    queryKey: ['financial-stats'],
+    queryFn: async () => {
+      const { data: records, error } = await supabase
+        .from('financial_records')
+        .select('*');
+
+      if (error) throw error;
+
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+
+      const thisMonthRecords = records.filter(record => {
+        const recordDate = new Date(record.created_at);
+        return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear;
+      });
+
+      const totalIncome = thisMonthRecords
+        .filter(record => record.type === 'income')
+        .reduce((sum, record) => sum + Number(record.amount), 0);
+
+      const totalExpense = thisMonthRecords
+        .filter(record => record.type === 'expense')
+        .reduce((sum, record) => sum + Number(record.amount), 0);
+
+      const balance = totalIncome - totalExpense;
+
+      // Dados para gráfico por categoria
+      const categoryData = records.reduce((acc: any, record) => {
+        const category = record.category;
+        if (!acc[category]) {
+          acc[category] = 0;
+        }
+        acc[category] += Number(record.amount);
+        return acc;
+      }, {});
+
+      return {
+        totalIncome,
+        totalExpense,
+        balance,
+        totalRecords: records.length,
+        categoryData,
+        thisMonthRecords: thisMonthRecords.length
+      };
+    },
+  });
+};
