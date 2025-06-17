@@ -92,9 +92,15 @@ const EventForm = ({ isOpen, onClose, event }: EventFormProps) => {
   const onSubmit = async (data: EventFormData) => {
     try {
       const eventData = {
-        ...data,
-        max_attendees: data.max_attendees || null,
+        title: data.title,
+        description: data.description || null,
+        date: data.date,
+        time: data.time || null,
+        type: data.type,
+        location: data.location || null,
         organizer_id: data.organizer_id || null,
+        max_attendees: data.max_attendees || null,
+        notes: data.notes || null,
       };
 
       if (event) {
