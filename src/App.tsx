@@ -10,6 +10,9 @@ import Dashboard from "@/pages/Dashboard";
 import Financial from "@/pages/Financial";
 import Members from "@/pages/Members";
 import Events from "@/pages/Events";
+import Ministries from "@/pages/Ministries";
+import Departments from "@/pages/Departments";
+import Suppliers from "@/pages/Suppliers";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -41,6 +44,21 @@ const App = () => (
             <Route path="/eventos" element={
               <ProtectedRoute requiredRoles={['superadmin', 'admin', 'pastor']}>
                 <Events />
+              </ProtectedRoute>
+            } />
+            <Route path="/ministerios" element={
+              <ProtectedRoute requiredRoles={['superadmin', 'admin', 'pastor']}>
+                <Ministries />
+              </ProtectedRoute>
+            } />
+            <Route path="/departamentos" element={
+              <ProtectedRoute requiredRoles={['superadmin', 'admin', 'pastor']}>
+                <Departments />
+              </ProtectedRoute>
+            } />
+            <Route path="/fornecedores" element={
+              <ProtectedRoute requiredRoles={['superadmin', 'admin', 'finance']}>
+                <Suppliers />
               </ProtectedRoute>
             } />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
