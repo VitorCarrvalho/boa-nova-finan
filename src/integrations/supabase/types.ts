@@ -9,16 +9,335 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      audit_logs: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          new_value: Json | null
+          previous_value: Json | null
+          record_id: string
+          table_name: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          id?: string
+          new_value?: Json | null
+          previous_value?: Json | null
+          record_id: string
+          table_name: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          new_value?: Json | null
+          previous_value?: Json | null
+          record_id?: string
+          table_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      church_events: {
+        Row: {
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          time: string | null
+          title: string
+          type: Database["public"]["Enums"]["event_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          description?: string | null
+          id?: string
+          time?: string | null
+          title: string
+          type: Database["public"]["Enums"]["event_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          time?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["event_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      departments: {
+        Row: {
+          created_at: string
+          id: string
+          leader_id: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          leader_id?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          leader_id?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_leader_id_fkey"
+            columns: ["leader_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_records: {
+        Row: {
+          amount: number
+          attendees: number | null
+          category: Database["public"]["Enums"]["financial_category"]
+          created_at: string
+          created_by: string
+          description: string | null
+          event_date: string | null
+          event_type: string | null
+          id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          type: Database["public"]["Enums"]["transaction_type"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          attendees?: number | null
+          category: Database["public"]["Enums"]["financial_category"]
+          created_at?: string
+          created_by: string
+          description?: string | null
+          event_date?: string | null
+          event_type?: string | null
+          id?: string
+          method: Database["public"]["Enums"]["payment_method"]
+          type: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          attendees?: number | null
+          category?: Database["public"]["Enums"]["financial_category"]
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          event_date?: string | null
+          event_type?: string | null
+          id?: string
+          method?: Database["public"]["Enums"]["payment_method"]
+          type?: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      members: {
+        Row: {
+          address: string | null
+          cpf: string | null
+          created_at: string
+          date_of_baptism: string | null
+          date_of_joining: string | null
+          education: string | null
+          email: string | null
+          id: string
+          instagram: string | null
+          is_active: boolean
+          ministries: string[] | null
+          name: string
+          phone: string | null
+          photo_url: string | null
+          rg: string | null
+          role: Database["public"]["Enums"]["member_role"]
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          cpf?: string | null
+          created_at?: string
+          date_of_baptism?: string | null
+          date_of_joining?: string | null
+          education?: string | null
+          email?: string | null
+          id?: string
+          instagram?: string | null
+          is_active?: boolean
+          ministries?: string[] | null
+          name: string
+          phone?: string | null
+          photo_url?: string | null
+          rg?: string | null
+          role?: Database["public"]["Enums"]["member_role"]
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          cpf?: string | null
+          created_at?: string
+          date_of_baptism?: string | null
+          date_of_joining?: string | null
+          education?: string | null
+          email?: string | null
+          id?: string
+          instagram?: string | null
+          is_active?: boolean
+          ministries?: string[] | null
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          rg?: string | null
+          role?: Database["public"]["Enums"]["member_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ministries: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          leader_id: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          leader_id?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          leader_id?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ministries_leader_id_fkey"
+            columns: ["leader_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          name: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          created_at: string
+          document: string | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          services: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          services?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          services?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      event_type: "culto" | "conferencia" | "reuniao" | "evento_especial"
+      financial_category:
+        | "tithe"
+        | "offering"
+        | "online_offering"
+        | "vow_offering"
+        | "event"
+        | "debt_paid"
+        | "salary"
+        | "maintenance"
+        | "supplier"
+        | "project"
+        | "utility"
+      member_role: "member" | "worker" | "pastor"
+      payment_method: "cash" | "coin" | "pix" | "debit" | "credit"
+      transaction_type: "income" | "expense"
+      user_role: "superadmin" | "admin" | "finance" | "pastor" | "worker"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +452,25 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      event_type: ["culto", "conferencia", "reuniao", "evento_especial"],
+      financial_category: [
+        "tithe",
+        "offering",
+        "online_offering",
+        "vow_offering",
+        "event",
+        "debt_paid",
+        "salary",
+        "maintenance",
+        "supplier",
+        "project",
+        "utility",
+      ],
+      member_role: ["member", "worker", "pastor"],
+      payment_method: ["cash", "coin", "pix", "debit", "credit"],
+      transaction_type: ["income", "expense"],
+      user_role: ["superadmin", "admin", "finance", "pastor", "worker"],
+    },
   },
 } as const
