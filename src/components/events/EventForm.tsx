@@ -49,32 +49,34 @@ const EventForm = ({ isOpen, onClose, event }: EventFormProps) => {
   } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
-      title: event?.title || '',
-      description: event?.description || '',
-      date: event?.date || '',
-      time: event?.time || '',
-      type: event?.type || 'culto',
-      location: event?.location || '',
-      organizer_id: event?.organizer_id || '',
-      max_attendees: event?.max_attendees || undefined,
-      notes: event?.notes || '',
+      title: '',
+      description: '',
+      date: '',
+      time: '',
+      type: 'culto',
+      location: '',
+      organizer_id: '',
+      max_attendees: undefined,
+      notes: '',
     }
   });
 
   React.useEffect(() => {
     if (event) {
+      console.log('Editing event:', event);
       reset({
-        title: event.title,
+        title: event.title || '',
         description: event.description || '',
-        date: event.date,
+        date: event.date || '',
         time: event.time || '',
-        type: event.type,
+        type: event.type as any,
         location: event.location || '',
         organizer_id: event.organizer_id || '',
         max_attendees: event.max_attendees || undefined,
         notes: event.notes || '',
       });
     } else {
+      console.log('Creating new event');
       reset({
         title: '',
         description: '',
@@ -91,6 +93,8 @@ const EventForm = ({ isOpen, onClose, event }: EventFormProps) => {
 
   const onSubmit = async (data: EventFormData) => {
     try {
+      console.log('Submitting event data:', data);
+      
       const eventData = {
         title: data.title,
         description: data.description || null,

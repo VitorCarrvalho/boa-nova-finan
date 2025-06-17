@@ -12,11 +12,13 @@ export const useEvents = () => {
   return useQuery({
     queryKey: ['events'],
     queryFn: async () => {
+      console.log('Fetching events...');
+      
       const { data, error } = await supabase
         .from('church_events')
         .select(`
           *,
-          organizer:organizer_id(name)
+          organizer:profiles!organizer_id(name)
         `)
         .order('date', { ascending: true });
 
@@ -25,6 +27,7 @@ export const useEvents = () => {
         throw error;
       }
 
+      console.log('Events fetched successfully:', data);
       return data as (ChurchEvent & { organizer?: { name: string } })[];
     },
   });
@@ -35,13 +38,20 @@ export const useCreateEvent = () => {
 
   return useMutation({
     mutationFn: async (eventData: ChurchEventInsert) => {
+      console.log('Creating event with data:', eventData);
+      
       const { data, error } = await supabase
         .from('church_events')
         .insert(eventData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating event:', error);
+        throw error;
+      }
+      
+      console.log('Event created successfully:', data);
       return data;
     },
     onSuccess: () => {
@@ -67,6 +77,8 @@ export const useUpdateEvent = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...updateData }: ChurchEventUpdate & { id: string }) => {
+      console.log('Updating event:', id, 'with data:', updateData);
+      
       const { data, error } = await supabase
         .from('church_events')
         .update(updateData)
@@ -74,7 +86,12 @@ export const useUpdateEvent = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating event:', error);
+        throw error;
+      }
+      
+      console.log('Event updated successfully:', data);
       return data;
     },
     onSuccess: () => {
@@ -100,12 +117,19 @@ export const useDeleteEvent = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      console.log('Deleting event:', id);
+      
       const { error } = await supabase
         .from('church_events')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting event:', error);
+        throw error;
+      }
+      
+      console.log('Event deleted successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
@@ -129,6 +153,8 @@ export const useProfiles = () => {
   return useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
+      console.log('Fetching profiles...');
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('id, name')
@@ -139,6 +165,7 @@ export const useProfiles = () => {
         throw error;
       }
 
+      console.log('Profiles fetched successfully:', data);
       return data;
     },
   });
