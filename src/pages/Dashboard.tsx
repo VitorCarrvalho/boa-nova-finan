@@ -5,11 +5,14 @@ import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Users, Calendar, TrendingUp } from 'lucide-react';
 import { useFinancialStats } from '@/hooks/useFinancialData';
+import { useMemberStats } from '@/hooks/useMemberData';
 import FinancialChart from '@/components/dashboard/FinancialChart';
+import MemberChart from '@/components/dashboard/MemberChart';
 
 const Dashboard = () => {
   const { userRole } = useAuth();
-  const { data: stats, isLoading } = useFinancialStats();
+  const { data: financialStats, isLoading: financialLoading } = useFinancialStats();
+  const { data: memberStats, isLoading: memberLoading } = useMemberStats();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -21,33 +24,39 @@ const Dashboard = () => {
   const statsCards = [
     {
       title: 'Receita do Mês',
-      value: stats ? formatCurrency(stats.totalIncome) : 'R$ 0,00',
+      value: financialStats ? formatCurrency(financialStats.totalIncome) : 'R$ 0,00',
       icon: DollarSign,
       color: 'text-green-600',
-      description: `${stats?.thisMonthRecords || 0} registros este mês`
+      description: `${financialStats?.thisMonthRecords || 0} registros este mês`,
+      show: ['superadmin', 'admin', 'finance'].includes(userRole || '')
     },
     {
       title: 'Saldo Disponível',
-      value: stats ? formatCurrency(stats.balance) : 'R$ 0,00',
+      value: financialStats ? formatCurrency(financialStats.balance) : 'R$ 0,00',
       icon: TrendingUp,
-      color: stats && stats.balance >= 0 ? 'text-green-600' : 'text-red-600',
-      description: 'Receitas - Despesas'
+      color: financialStats && financialStats.balance >= 0 ? 'text-green-600' : 'text-red-600',
+      description: 'Receitas - Despesas',
+      show: ['superadmin', 'admin', 'finance'].includes(userRole || '')
     },
     {
-      title: 'Total de Registros',
-      value: stats?.totalRecords || '0',
-      icon: Calendar,
-      color: 'text-blue-600',
-      description: 'Registros financeiros'
-    },
-    {
-      title: 'Gastos do Mês',
-      value: stats ? formatCurrency(stats.totalExpense) : 'R$ 0,00',
+      title: 'Total de Membros',
+      value: memberStats?.totalMembers || '0',
       icon: Users,
-      color: 'text-red-600',
-      description: 'Despesas registradas'
+      color: 'text-blue-600',
+      description: 'Membros cadastrados',
+      show: true
+    },
+    {
+      title: 'Membros Ativos',
+      value: memberStats?.activeMembers || '0',
+      icon: Calendar,
+      color: 'text-green-600',
+      description: 'Membros ativos',
+      show: true
     }
   ];
+
+  const visibleStats = statsCards.filter(stat => stat.show);
 
   return (
     <Layout>
@@ -59,7 +68,7 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {isLoading ? (
+        {(financialLoading || memberLoading) ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Carregando dados...</p>
@@ -67,7 +76,7 @@ const Dashboard = () => {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {statsCards.map((stat, index) => {
+              {visibleStats.map((stat, index) => {
                 const Icon = stat.icon;
                 return (
                   <Card key={index}>
@@ -93,6 +102,8 @@ const Dashboard = () => {
             {(userRole === 'superadmin' || userRole === 'admin' || userRole === 'finance') && (
               <FinancialChart />
             )}
+
+            <MemberChart />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
