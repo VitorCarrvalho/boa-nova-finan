@@ -45,9 +45,15 @@ export type Database = {
       church_events: {
         Row: {
           created_at: string
+          current_attendees: number | null
           date: string
           description: string | null
           id: string
+          is_active: boolean
+          location: string | null
+          max_attendees: number | null
+          notes: string | null
+          organizer_id: string | null
           time: string | null
           title: string
           type: Database["public"]["Enums"]["event_type"]
@@ -55,9 +61,15 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          current_attendees?: number | null
           date: string
           description?: string | null
           id?: string
+          is_active?: boolean
+          location?: string | null
+          max_attendees?: number | null
+          notes?: string | null
+          organizer_id?: string | null
           time?: string | null
           title: string
           type: Database["public"]["Enums"]["event_type"]
@@ -65,15 +77,29 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          current_attendees?: number | null
           date?: string
           description?: string | null
           id?: string
+          is_active?: boolean
+          location?: string | null
+          max_attendees?: number | null
+          notes?: string | null
+          organizer_id?: string | null
           time?: string | null
           title?: string
           type?: Database["public"]["Enums"]["event_type"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "church_events_organizer_id_fkey"
+            columns: ["organizer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       departments: {
         Row: {
@@ -101,6 +127,48 @@ export type Database = {
           {
             foreignKeyName: "departments_leader_id_fkey"
             columns: ["leader_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_registrations: {
+        Row: {
+          event_id: string
+          id: string
+          member_id: string
+          notes: string | null
+          registered_at: string
+          status: string
+        }
+        Insert: {
+          event_id: string
+          id?: string
+          member_id: string
+          notes?: string | null
+          registered_at?: string
+          status?: string
+        }
+        Update: {
+          event_id?: string
+          id?: string
+          member_id?: string
+          notes?: string | null
+          registered_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "church_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_member_id_fkey"
+            columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]

@@ -9,6 +9,7 @@ import AuthPage from "@/components/auth/AuthPage";
 import Dashboard from "@/pages/Dashboard";
 import Financial from "@/pages/Financial";
 import Members from "@/pages/Members";
+import Events from "@/pages/Events";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,11 @@ const App = () => (
             <Route path="/membros" element={
               <ProtectedRoute requiredRoles={['superadmin', 'admin', 'pastor', 'worker']}>
                 <Members />
+              </ProtectedRoute>
+            } />
+            <Route path="/eventos" element={
+              <ProtectedRoute requiredRoles={['superadmin', 'admin', 'pastor']}>
+                <Events />
               </ProtectedRoute>
             } />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
