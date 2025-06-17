@@ -28,8 +28,8 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
   const { data: members, isLoading } = useMembers();
   const { userRole } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-';
@@ -50,8 +50,8 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
                          member.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          member.phone?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesRole = !roleFilter || member.role === roleFilter;
-    const matchesStatus = !statusFilter || 
+    const matchesRole = roleFilter === 'all' || member.role === roleFilter;
+    const matchesStatus = statusFilter === 'all' || 
                          (statusFilter === 'active' && member.is_active) ||
                          (statusFilter === 'inactive' && !member.is_active);
 
@@ -139,7 +139,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
               <SelectValue placeholder="Filtrar por função" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas as funções</SelectItem>
+              <SelectItem value="all">Todas as funções</SelectItem>
               <SelectItem value="member">Membro</SelectItem>
               <SelectItem value="worker">Obreiro</SelectItem>
               <SelectItem value="pastor">Pastor</SelectItem>
@@ -151,7 +151,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
               <SelectValue placeholder="Filtrar por status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os status</SelectItem>
+              <SelectItem value="all">Todos os status</SelectItem>
               <SelectItem value="active">Ativo</SelectItem>
               <SelectItem value="inactive">Inativo</SelectItem>
             </SelectContent>
