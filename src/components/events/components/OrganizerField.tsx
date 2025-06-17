@@ -20,14 +20,17 @@ const OrganizerField = ({ control }: OrganizerFieldProps) => {
       render={({ field }) => (
         <FormItem>
           <FormLabel>Organizador</FormLabel>
-          <Select value={field.value} onValueChange={field.onChange}>
+          <Select 
+            value={field.value || "none"} 
+            onValueChange={(value) => field.onChange(value === "none" ? "" : value)}
+          >
             <FormControl>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o organizador" />
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              <SelectItem value="">Nenhum</SelectItem>
+              <SelectItem value="none">Nenhum</SelectItem>
               {profiles?.map((profile) => (
                 <SelectItem key={profile.id} value={profile.id}>
                   {profile.name}
