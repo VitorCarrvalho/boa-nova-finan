@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useCreateEvent, useUpdateEvent, useProfiles } from '@/hooks/useEventData';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -39,14 +40,7 @@ const EventForm = ({ isOpen, onClose, event }: EventFormProps) => {
   const updateEvent = useUpdateEvent();
   const { data: profiles } = useProfiles();
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    reset,
-    formState: { errors, isSubmitting }
-  } = useForm<EventFormData>({
+  const form = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
       title: '',
@@ -64,7 +58,7 @@ const EventForm = ({ isOpen, onClose, event }: EventFormProps) => {
   React.useEffect(() => {
     if (event) {
       console.log('Editing event:', event);
-      reset({
+      form.reset({
         title: event.title || '',
         description: event.description || '',
         date: event.date || '',
@@ -77,7 +71,7 @@ const EventForm = ({ isOpen, onClose, event }: EventFormProps) => {
       });
     } else {
       console.log('Creating new event');
-      reset({
+      form.reset({
         title: '',
         description: '',
         date: '',
@@ -89,7 +83,7 @@ const EventForm = ({ isOpen, onClose, event }: EventFormProps) => {
         notes: '',
       });
     }
-  }, [event, reset]);
+  }, [event, form]);
 
   const onSubmit = async (data: EventFormData) => {
     try {
@@ -135,126 +129,182 @@ const EventForm = ({ isOpen, onClose, event }: EventFormProps) => {
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Título *</Label>
-              <Input
-                id="title"
-                {...register('title')}
-                placeholder="Digite o título do evento"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Título *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Digite o título do evento" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {errors.title && (
-                <p className="text-sm text-red-600">{errors.title.message}</p>
+
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo *</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {eventTypes.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data *</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Horário</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Local</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Local do evento" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="organizer_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Organizador</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o organizador" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">Nenhum</SelectItem>
+                        {profiles?.map((profile) => (
+                          <SelectItem key={profile.id} value={profile.id}>
+                            {profile.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="max_attendees"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Máximo de Participantes</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="Sem limite"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Descrição</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Descrição do evento"
+                      rows={3}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="type">Tipo *</Label>
-              <Select value={watch('type')} onValueChange={(value) => setValue('type', value as any)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {eventTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.type && (
-                <p className="text-sm text-red-600">{errors.type.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="date">Data *</Label>
-              <Input
-                id="date"
-                type="date"
-                {...register('date')}
-              />
-              {errors.date && (
-                <p className="text-sm text-red-600">{errors.date.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="time">Horário</Label>
-              <Input
-                id="time"
-                type="time"
-                {...register('time')}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="location">Local</Label>
-              <Input
-                id="location"
-                {...register('location')}
-                placeholder="Local do evento"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="organizer_id">Organizador</Label>
-              <Select value={watch('organizer_id')} onValueChange={(value) => setValue('organizer_id', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o organizador" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
-                  {profiles?.map((profile) => (
-                    <SelectItem key={profile.id} value={profile.id}>
-                      {profile.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="max_attendees">Máximo de Participantes</Label>
-              <Input
-                id="max_attendees"
-                type="number"
-                {...register('max_attendees', { valueAsNumber: true })}
-                placeholder="Sem limite"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea
-              id="description"
-              {...register('description')}
-              placeholder="Descrição do evento"
-              rows={3}
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Observações</Label>
-            <Textarea
-              id="notes"
-              {...register('notes')}
-              placeholder="Observações adicionais"
-              rows={2}
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Observações</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Observações adicionais"
+                      rows={2}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Salvando...' : event ? 'Atualizar' : 'Criar'}
-            </Button>
-          </div>
-        </form>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? 'Salvando...' : event ? 'Atualizar' : 'Criar'}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
