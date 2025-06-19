@@ -25,7 +25,7 @@ export const useSuppliers = () => {
       }
 
       console.log('Suppliers fetched successfully:', data);
-      return data;
+      return data as Supplier[];
     },
   });
 };

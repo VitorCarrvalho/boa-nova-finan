@@ -71,8 +71,9 @@ const DepartmentForm = ({ open, onOpenChange, department }: DepartmentFormProps)
   }, [department, form]);
 
   const onSubmit = (data: DepartmentFormData) => {
+    // Ensure name is always present
     const submitData = {
-      ...data,
+      name: data.name,
       leader_id: data.leader_id === '' ? null : data.leader_id,
     };
 

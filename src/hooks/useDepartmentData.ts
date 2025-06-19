@@ -14,21 +14,37 @@ export const useDepartments = () => {
     queryFn: async () => {
       console.log('Fetching departments...');
       
-      const { data, error } = await supabase
+      // First get departments
+      const { data: departments, error: departmentsError } = await supabase
         .from('departments')
-        .select(`
-          *,
-          leader:profiles!leader_id(name)
-        `)
+        .select('*')
         .order('name');
 
-      if (error) {
-        console.error('Error fetching departments:', error);
-        throw error;
+      if (departmentsError) {
+        console.error('Error fetching departments:', departmentsError);
+        throw departmentsError;
       }
 
-      console.log('Departments fetched successfully:', data);
-      return data as (Department & { leader?: { name: string } })[];
+      // Then get profiles separately to avoid foreign key issues
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name');
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        // Don't throw here, just continue without leader names
+      }
+
+      // Manually join the data
+      const departmentsWithLeaders = departments?.map(department => ({
+        ...department,
+        leader: department.leader_id && profiles 
+          ? profiles.find(p => p.id === department.leader_id) 
+          : undefined
+      })) || [];
+
+      console.log('Departments fetched successfully:', departmentsWithLeaders);
+      return departmentsWithLeaders as (Department & { leader?: { name: string } })[];
     },
   });
 };

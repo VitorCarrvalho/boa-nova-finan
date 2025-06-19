@@ -26,10 +26,10 @@ import { useEffect } from 'react';
 const supplierSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   document: z.string().optional(),
+  services: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   address: z.string().optional(),
-  services: z.string().optional(),
 });
 
 type SupplierFormData = z.infer<typeof supplierSchema>;
@@ -49,10 +49,10 @@ const SupplierForm = ({ open, onOpenChange, supplier }: SupplierFormProps) => {
     defaultValues: {
       name: '',
       document: '',
+      services: '',
       phone: '',
       email: '',
       address: '',
-      services: '',
     },
   });
 
@@ -61,31 +61,32 @@ const SupplierForm = ({ open, onOpenChange, supplier }: SupplierFormProps) => {
       form.reset({
         name: supplier.name || '',
         document: supplier.document || '',
+        services: supplier.services || '',
         phone: supplier.phone || '',
         email: supplier.email || '',
         address: supplier.address || '',
-        services: supplier.services || '',
       });
     } else {
       form.reset({
         name: '',
         document: '',
+        services: '',
         phone: '',
         email: '',
         address: '',
-        services: '',
       });
     }
   }, [supplier, form]);
 
   const onSubmit = (data: SupplierFormData) => {
+    // Ensure name is always present and convert empty strings to null
     const submitData = {
-      ...data,
-      email: data.email === '' ? null : data.email,
-      document: data.document === '' ? null : data.document,
-      phone: data.phone === '' ? null : data.phone,
-      address: data.address === '' ? null : data.address,
-      services: data.services === '' ? null : data.services,
+      name: data.name,
+      document: data.document || null,
+      services: data.services || null,
+      phone: data.phone || null,
+      email: data.email || null,
+      address: data.address || null,
     };
 
     if (supplier) {
@@ -107,7 +108,7 @@ const SupplierForm = ({ open, onOpenChange, supplier }: SupplierFormProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
             {supplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}
@@ -130,35 +131,47 @@ const SupplierForm = ({ open, onOpenChange, supplier }: SupplierFormProps) => {
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="document"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>CNPJ/CPF</FormLabel>
-                    <FormControl>
-                      <Input placeholder="00.000.000/0000-00" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="document"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>CNPJ/CPF</FormLabel>
+                  <FormControl>
+                    <Input placeholder="00.000.000/0000-00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telefone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="(00) 00000-0000" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="services"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Serviços</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Descrição dos serviços" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Telefone</FormLabel>
+                  <FormControl>
+                    <Input placeholder="(11) 99999-9999" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -167,7 +180,7 @@ const SupplierForm = ({ open, onOpenChange, supplier }: SupplierFormProps) => {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="email@exemplo.com" {...field} />
+                    <Input placeholder="email@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -182,20 +195,6 @@ const SupplierForm = ({ open, onOpenChange, supplier }: SupplierFormProps) => {
                   <FormLabel>Endereço</FormLabel>
                   <FormControl>
                     <Textarea placeholder="Endereço completo" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="services"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Serviços</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Descrição dos serviços oferecidos" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

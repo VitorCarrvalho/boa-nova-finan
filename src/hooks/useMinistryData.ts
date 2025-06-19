@@ -14,21 +14,37 @@ export const useMinistries = () => {
     queryFn: async () => {
       console.log('Fetching ministries...');
       
-      const { data, error } = await supabase
+      // First get ministries
+      const { data: ministries, error: ministriesError } = await supabase
         .from('ministries')
-        .select(`
-          *,
-          leader:profiles!leader_id(name)
-        `)
+        .select('*')
         .order('name');
 
-      if (error) {
-        console.error('Error fetching ministries:', error);
-        throw error;
+      if (ministriesError) {
+        console.error('Error fetching ministries:', ministriesError);
+        throw ministriesError;
       }
 
-      console.log('Ministries fetched successfully:', data);
-      return data as (Ministry & { leader?: { name: string } })[];
+      // Then get profiles separately to avoid foreign key issues
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name');
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        // Don't throw here, just continue without leader names
+      }
+
+      // Manually join the data
+      const ministriesWithLeaders = ministries?.map(ministry => ({
+        ...ministry,
+        leader: ministry.leader_id && profiles 
+          ? profiles.find(p => p.id === ministry.leader_id) 
+          : undefined
+      })) || [];
+
+      console.log('Ministries fetched successfully:', ministriesWithLeaders);
+      return ministriesWithLeaders as (Ministry & { leader?: { name: string } })[];
     },
   });
 };

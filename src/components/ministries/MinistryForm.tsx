@@ -76,8 +76,10 @@ const MinistryForm = ({ open, onOpenChange, ministry }: MinistryFormProps) => {
   }, [ministry, form]);
 
   const onSubmit = (data: MinistryFormData) => {
+    // Ensure name is always present
     const submitData = {
-      ...data,
+      name: data.name,
+      description: data.description || null,
       leader_id: data.leader_id === '' ? null : data.leader_id,
     };
 
