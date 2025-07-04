@@ -20,28 +20,60 @@ const AuthPage = () => {
 
   useEffect(() => {
     if (user) {
+      console.log('Usuário autenticado, redirecionando...');
       navigate('/dashboard');
     }
   }, [user, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
-    const { error } = await signIn(email, password);
-
-    if (error) {
+    
+    if (!email || !password) {
       toast({
-        title: "Erro no login",
-        description: error.message,
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha email e senha.",
         variant: "destructive",
       });
-    } else {
+      return;
+    }
+
+    setLoading(true);
+    console.log('Tentando fazer login...');
+
+    try {
+      const { error } = await signIn(email, password);
+
+      if (error) {
+        console.log('Erro no login:', error);
+        let errorMessage = "Erro desconhecido";
+        
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = "Email ou senha incorretos";
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = "Por favor, confirme seu email antes de fazer login";
+        } else {
+          errorMessage = error.message;
+        }
+        
+        toast({
+          title: "Erro no login",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Login realizado com sucesso!",
+          description: "Bem-vindo ao sistema",
+        });
+        // O redirecionamento será feito pelo useEffect quando o user state for atualizado
+      }
+    } catch (err) {
+      console.log('Erro inesperado:', err);
       toast({
-        title: "Login realizado com sucesso!",
-        description: "Bem-vindo ao sistema",
+        title: "Erro no login",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive",
       });
-      navigate('/dashboard');
     }
 
     setLoading(false);
@@ -49,20 +81,73 @@ const AuthPage = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
-    const { error } = await signUp(email, password, name);
-
-    if (error) {
+    
+    if (!email || !password || !name) {
       toast({
-        title: "Erro no cadastro",
-        description: error.message,
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos.",
         variant: "destructive",
       });
-    } else {
+      return;
+    }
+
+    if (password.length < 6) {
       toast({
-        title: "Cadastro realizado com sucesso!",
-        description: "Verifique seu email para confirmar a conta",
+        title: "Senha muito curta",
+        description: "A senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    console.log('Tentando fazer cadastro...');
+
+    try {
+      const { error } = await signUp(email, password, name);
+
+      if (error) {
+        console.log('Erro no cadastro:', error);
+        let errorMessage = "Erro desconhecido";
+        
+        if (error.message.includes('User already registered')) {
+          errorMessage = "Este email já está cadastrado";
+        } else if (error.message.includes('Password should be at least')) {
+          errorMessage = "A senha deve ter pelo menos 6 caracteres";
+        } else if (error.message.includes('Invalid email')) {
+          errorMessage = "Email inválido";
+        } else {
+          errorMessage = error.message;
+        }
+        
+        toast({
+          title: "Erro no cadastro",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Cadastro realizado com sucesso!",
+          description: "Você pode fazer login agora",
+        });
+        
+        // Limpar campos e ir para a aba de login
+        setName('');
+        setEmail('');
+        setPassword('');
+        
+        // Mudar para a aba de login
+        const loginTab = document.querySelector('[value="signin"]') as HTMLElement;
+        if (loginTab) {
+          loginTab.click();
+        }
+      }
+    } catch (err) {
+      console.log('Erro inesperado:', err);
+      toast({
+        title: "Erro no cadastro",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive",
       });
     }
 
@@ -98,6 +183,7 @@ const AuthPage = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    disabled={loading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -109,6 +195,7 @@ const AuthPage = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    disabled={loading}
                   />
                 </div>
                 <Button 
@@ -132,6 +219,7 @@ const AuthPage = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
+                    disabled={loading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -143,6 +231,7 @@ const AuthPage = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    disabled={loading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -150,10 +239,12 @@ const AuthPage = () => {
                   <Input
                     id="signup-password"
                     type="password"
-                    placeholder="Sua senha"
+                    placeholder="Sua senha (mínimo 6 caracteres)"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    disabled={loading}
+                    minLength={6}
                   />
                 </div>
                 <Button 

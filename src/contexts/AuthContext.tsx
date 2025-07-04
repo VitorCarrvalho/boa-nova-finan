@@ -26,6 +26,27 @@ export const useAuth = () => {
   return context;
 };
 
+// Função para limpar estado de autenticação
+const cleanupAuthState = () => {
+  console.log('Limpando estado de autenticação...');
+  
+  // Remove tokens do localStorage
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+  
+  // Remove tokens do sessionStorage se existir
+  if (typeof sessionStorage !== 'undefined') {
+    Object.keys(sessionStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        sessionStorage.removeItem(key);
+      }
+    });
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -33,23 +54,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('Configurando AuthProvider...');
+    
     // Configurar listener de mudanças de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email);
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Buscar role do usuário
+          // Buscar role do usuário - usar setTimeout para evitar deadlock
           setTimeout(async () => {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('id', session.user.id)
-              .single();
-            
-            setUserRole(profile?.role ?? null);
-          }, 0);
+            try {
+              const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', session.user.id)
+                .single();
+              
+              if (error) {
+                console.log('Erro ao buscar perfil:', error);
+                setUserRole('worker'); // Role padrão
+              } else {
+                setUserRole(profile?.role ?? 'worker');
+              }
+            } catch (err) {
+              console.log('Erro na busca do perfil:', err);
+              setUserRole('worker');
+            }
+          }, 100);
         } else {
           setUserRole(null);
         }
@@ -59,56 +94,126 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // Verificar sessão existente
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        setTimeout(async () => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single();
-          
-          setUserRole(profile?.role ?? null);
-        }, 0);
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.log('Erro ao verificar sessão:', error);
+          cleanupAuthState();
+          setLoading(false);
+          return;
+        }
+
+        console.log('Sessão existente:', session?.user?.email);
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          setTimeout(async () => {
+            try {
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', session.user.id)
+                .single();
+              
+              setUserRole(profile?.role ?? 'worker');
+            } catch (err) {
+              console.log('Erro ao buscar perfil inicial:', err);
+              setUserRole('worker');
+            }
+          }, 100);
+        }
+        
+        setLoading(false);
+      } catch (err) {
+        console.log('Erro geral na verificação de sessão:', err);
+        cleanupAuthState();
+        setLoading(false);
       }
-      
-      setLoading(false);
-    });
+    };
+
+    checkSession();
 
     return () => subscription.unsubscribe();
   }, []);
 
   const signUp = async (email: string, password: string, name: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          name: name
+    try {
+      console.log('Iniciando cadastro para:', email);
+      
+      // Limpar estado antes do cadastro
+      cleanupAuthState();
+      
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            name: name
+          }
         }
+      });
+      
+      if (error) {
+        console.log('Erro no cadastro:', error);
+        return { error };
       }
-    });
-    
-    return { error };
+      
+      console.log('Cadastro realizado com sucesso:', data);
+      return { error: null };
+    } catch (err) {
+      console.log('Erro inesperado no cadastro:', err);
+      return { error: err };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    
-    return { error };
+    try {
+      console.log('Iniciando login para:', email);
+      
+      // Limpar estado antes do login
+      cleanupAuthState();
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) {
+        console.log('Erro no login:', error);
+        return { error };
+      }
+      
+      console.log('Login realizado com sucesso:', data);
+      return { error: null };
+    } catch (err) {
+      console.log('Erro inesperado no login:', err);
+      return { error: err };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      console.log('Fazendo logout...');
+      
+      // Limpar estado primeiro
+      cleanupAuthState();
+      
+      // Tentar logout global
+      await supabase.auth.signOut({ scope: 'global' });
+      
+      // Forçar refresh da página para garantir limpeza completa
+      window.location.href = '/auth';
+    } catch (error) {
+      console.log('Erro no logout:', error);
+      // Mesmo com erro, forçar refresh
+      window.location.href = '/auth';
+    }
   };
 
   const value = {
