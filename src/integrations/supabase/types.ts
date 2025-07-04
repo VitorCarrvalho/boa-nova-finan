@@ -101,6 +101,66 @@ export type Database = {
           },
         ]
       }
+      congregations: {
+        Row: {
+          avg_members: number | null
+          cep: string | null
+          city: string | null
+          cnpj: string | null
+          complement: string | null
+          country: string | null
+          created_at: string
+          has_own_property: boolean | null
+          id: string
+          is_active: boolean
+          name: string
+          number: string | null
+          rent_value: number | null
+          responsible_pastor_ids: string[] | null
+          state: string | null
+          street: string | null
+          updated_at: string
+        }
+        Insert: {
+          avg_members?: number | null
+          cep?: string | null
+          city?: string | null
+          cnpj?: string | null
+          complement?: string | null
+          country?: string | null
+          created_at?: string
+          has_own_property?: boolean | null
+          id?: string
+          is_active?: boolean
+          name: string
+          number?: string | null
+          rent_value?: number | null
+          responsible_pastor_ids?: string[] | null
+          state?: string | null
+          street?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avg_members?: number | null
+          cep?: string | null
+          city?: string | null
+          cnpj?: string | null
+          complement?: string | null
+          country?: string | null
+          created_at?: string
+          has_own_property?: boolean | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          number?: string | null
+          rent_value?: number | null
+          responsible_pastor_ids?: string[] | null
+          state?: string | null
+          street?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       departments: {
         Row: {
           created_at: string
@@ -180,6 +240,7 @@ export type Database = {
           amount: number
           attendees: number | null
           category: Database["public"]["Enums"]["financial_category"]
+          congregation_id: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -194,6 +255,7 @@ export type Database = {
           amount: number
           attendees?: number | null
           category: Database["public"]["Enums"]["financial_category"]
+          congregation_id?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -208,6 +270,7 @@ export type Database = {
           amount?: number
           attendees?: number | null
           category?: Database["public"]["Enums"]["financial_category"]
+          congregation_id?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -218,11 +281,20 @@ export type Database = {
           type?: Database["public"]["Enums"]["transaction_type"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "financial_records_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       members: {
         Row: {
           address: string | null
+          congregation_id: string | null
           cpf: string | null
           created_at: string
           date_of_baptism: string | null
@@ -242,6 +314,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          congregation_id?: string | null
           cpf?: string | null
           created_at?: string
           date_of_baptism?: string | null
@@ -261,6 +334,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          congregation_id?: string | null
           cpf?: string | null
           created_at?: string
           date_of_baptism?: string | null
@@ -278,7 +352,15 @@ export type Database = {
           role?: Database["public"]["Enums"]["member_role"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "members_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ministries: {
         Row: {
@@ -341,6 +423,74 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      reconciliations: {
+        Row: {
+          amount_to_send: number
+          approved_at: string | null
+          approved_by: string | null
+          cash: number | null
+          congregation_id: string
+          created_at: string
+          credit: number | null
+          debit: number | null
+          id: string
+          month: string
+          online_pix: number | null
+          pix: number | null
+          sent_by: string | null
+          sent_date: string | null
+          status: string
+          total_income: number
+          updated_at: string
+        }
+        Insert: {
+          amount_to_send?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          cash?: number | null
+          congregation_id: string
+          created_at?: string
+          credit?: number | null
+          debit?: number | null
+          id?: string
+          month: string
+          online_pix?: number | null
+          pix?: number | null
+          sent_by?: string | null
+          sent_date?: string | null
+          status?: string
+          total_income?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_to_send?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          cash?: number | null
+          congregation_id?: string
+          created_at?: string
+          credit?: number | null
+          debit?: number | null
+          id?: string
+          month?: string
+          online_pix?: number | null
+          pix?: number | null
+          sent_by?: string | null
+          sent_date?: string | null
+          status?: string
+          total_income?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliations_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suppliers: {
         Row: {

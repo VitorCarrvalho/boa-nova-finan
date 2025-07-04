@@ -12,6 +12,8 @@ import Members from "@/pages/Members";
 import Events from "@/pages/Events";
 import Ministries from "@/pages/Ministries";
 import Departments from "@/pages/Departments";
+import Congregations from "@/pages/Congregations";
+import Reconciliations from "@/pages/Reconciliations";
 import Suppliers from "@/pages/Suppliers";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -54,6 +56,16 @@ const App = () => (
             <Route path="/departamentos" element={
               <ProtectedRoute requiredRoles={['superadmin', 'admin', 'pastor']}>
                 <Departments />
+              </ProtectedRoute>
+            } />
+            <Route path="/congregacoes" element={
+              <ProtectedRoute requiredRoles={['superadmin', 'admin', 'pastor']}>
+                <Congregations />
+              </ProtectedRoute>
+            } />
+            <Route path="/conciliacoes" element={
+              <ProtectedRoute requiredRoles={['superadmin', 'admin', 'finance']}>
+                <Reconciliations />
               </ProtectedRoute>
             } />
             <Route path="/fornecedores" element={

@@ -11,7 +11,9 @@ import {
   Heart, 
   Truck,
   LogOut,
-  Settings
+  Settings,
+  Church,
+  Calculator
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -55,6 +57,18 @@ const Sidebar = () => {
       icon: Building2,
       href: '/departamentos',
       roles: ['superadmin', 'admin', 'pastor']
+    },
+    {
+      title: 'Congregações',
+      icon: Church,
+      href: '/congregacoes',
+      roles: ['superadmin', 'admin', 'pastor']
+    },
+    {
+      title: 'Conciliações',
+      icon: Calculator,
+      href: '/conciliacoes',
+      roles: ['superadmin', 'admin', 'finance']
     },
     {
       title: 'Fornecedores',
