@@ -9,6 +9,9 @@ import { useCreateReconciliation, useUpdateReconciliation } from '@/hooks/useRec
 import { useCongregations } from '@/hooks/useCongregationData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
+import CongregationField from './CongregationField';
+import PaymentMethodsFields from './PaymentMethodsFields';
+import ReconciliationSummary from './ReconciliationSummary';
 import type { Database } from '@/integrations/supabase/types';
 
 type ReconciliationFormData = {
@@ -106,34 +109,18 @@ const ReconciliationForm: React.FC<ReconciliationFormProps> = ({ reconciliation,
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
   const isPastor = userRole === 'pastor';
+  const isAdmin = userRole === 'admin' || userRole === 'superadmin';
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="congregation_id">Congregação *</Label>
-          {isPastor ? (
-            <Input
-              value={availableCongregations.find(c => c.id === defaultCongregationId)?.name || 'Nenhuma congregação atribuída'}
-              readOnly
-              className="bg-gray-100"
-            />
-          ) : (
-            <Select onValueChange={(value) => setValue('congregation_id', value)} defaultValue={defaultCongregationId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione uma congregação" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableCongregations.map((congregation) => (
-                  <SelectItem key={congregation.id} value={congregation.id}>
-                    {congregation.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          {errors.congregation_id && <p className="text-red-500 text-sm mt-1">Congregação é obrigatória</p>}
-        </div>
+        <CongregationField
+          isPastor={isPastor}
+          availableCongregations={availableCongregations}
+          defaultCongregationId={defaultCongregationId}
+          setValue={setValue}
+          errors={errors}
+        />
 
         <div>
           <Label htmlFor="month">Mês/Ano *</Label>
@@ -146,87 +133,11 @@ const ReconciliationForm: React.FC<ReconciliationFormProps> = ({ reconciliation,
         </div>
       </div>
 
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Formas de Arrecadação</h3>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="pix">PIX (R$)</Label>
-            <Input
-              id="pix"
-              type="number"
-              step="0.01"
-              {...register('pix', { valueAsNumber: true })}
-              placeholder="0.00"
-            />
-          </div>
+      <PaymentMethodsFields register={register} watch={watch} />
 
-          <div>
-            <Label htmlFor="online_pix">PIX Online (R$)</Label>
-            <Input
-              id="online_pix"
-              type="number"
-              step="0.01"
-              {...register('online_pix', { valueAsNumber: true })}
-              placeholder="0.00"
-            />
-          </div>
+      <ReconciliationSummary totalIncome={totalIncome} />
 
-          <div>
-            <Label htmlFor="debit">Débito (R$)</Label>
-            <Input
-              id="debit"
-              type="number"
-              step="0.01"
-              {...register('debit', { valueAsNumber: true })}
-              placeholder="0.00"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="credit">Crédito (R$)</Label>
-            <Input
-              id="credit"
-              type="number"
-              step="0.01"
-              {...register('credit', { valueAsNumber: true })}
-              placeholder="0.00"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="cash">Dinheiro (R$)</Label>
-            <Input
-              id="cash"
-              type="number"
-              step="0.01"
-              {...register('cash', { valueAsNumber: true })}
-              placeholder="0.00"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="total_income">Total Arrecadado (R$)</Label>
-            <Input
-              id="total_income"
-              type="number"
-              step="0.01"
-              {...register('total_income', { valueAsNumber: true })}
-              value={totalIncome}
-              readOnly
-              className="bg-gray-100"
-            />
-          </div>
-        </div>
-
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>Valor a Enviar (15%):</strong> R$ {(totalIncome * 0.15).toFixed(2)}
-          </p>
-        </div>
-      </div>
-
-      {!isPastor && (
+      {isAdmin && (
         <div>
           <Label htmlFor="status">Status</Label>
           <Select onValueChange={(value: any) => setValue('status', value)} defaultValue="pending">
