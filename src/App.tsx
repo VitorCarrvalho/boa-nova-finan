@@ -59,12 +59,18 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/congregacoes" element={
-              <ProtectedRoute requiredRoles={['superadmin', 'admin', 'pastor']}>
+              <ProtectedRoute 
+                requiredRoles={['superadmin', 'admin', 'pastor']}
+                requiresCongregationAccess={true}
+              >
                 <Congregations />
               </ProtectedRoute>
             } />
             <Route path="/conciliacoes" element={
-              <ProtectedRoute requiredRoles={['superadmin', 'admin', 'finance']}>
+              <ProtectedRoute 
+                requiredRoles={['superadmin', 'admin', 'finance', 'pastor']}
+                requiresCongregationAccess={true}
+              >
                 <Reconciliations />
               </ProtectedRoute>
             } />

@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
 import { Button } from '@/components/ui/button';
 import { 
   LayoutDashboard, 
@@ -19,6 +20,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 const Sidebar = () => {
   const { signOut, userRole } = useAuth();
+  const { data: congregationAccess } = useUserCongregationAccess();
   const location = useLocation();
 
   const menuItems = [
@@ -62,13 +64,15 @@ const Sidebar = () => {
       title: 'Congregações',
       icon: Church,
       href: '/congregacoes',
-      roles: ['superadmin', 'admin', 'pastor']
+      roles: ['superadmin', 'admin', 'pastor'],
+      requiresCongregationAccess: true
     },
     {
       title: 'Conciliações',
       icon: Calculator,
       href: '/conciliacoes',
-      roles: ['superadmin', 'admin', 'finance']
+      roles: ['superadmin', 'admin', 'finance', 'pastor'],
+      requiresCongregationAccess: true
     },
     {
       title: 'Fornecedores',
@@ -78,9 +82,32 @@ const Sidebar = () => {
     }
   ];
 
-  const visibleItems = menuItems.filter(item => 
-    userRole && item.roles.includes(userRole)
-  );
+  const visibleItems = menuItems.filter(item => {
+    // Verificar se o usuário tem o role necessário
+    if (!userRole || !item.roles.includes(userRole)) {
+      return false;
+    }
+
+    // Para itens que requerem acesso a congregações
+    if (item.requiresCongregationAccess) {
+      // Finance e worker nunca veem esses itens
+      if (userRole === 'finance' || userRole === 'worker') {
+        return false;
+      }
+      
+      // Admin e superadmin sempre veem
+      if (userRole === 'admin' || userRole === 'superadmin') {
+        return true;
+      }
+      
+      // Para pastores, verificar se têm acesso a congregações
+      if (userRole === 'pastor') {
+        return congregationAccess?.hasAccess || false;
+      }
+    }
+
+    return true;
+  });
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">

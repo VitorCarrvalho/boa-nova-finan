@@ -1,17 +1,25 @@
 
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
+import { Navigate, useLocation } from 'react-router-dom';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRoles?: string[];
+  requiresCongregationAccess?: boolean;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+  children, 
+  requiredRoles,
+  requiresCongregationAccess = false 
+}) => {
   const { user, userRole, loading } = useAuth();
+  const { data: congregationAccess, isLoading: congregationLoading } = useUserCongregationAccess();
+  const location = useLocation();
 
-  if (loading) {
+  if (loading || (requiresCongregationAccess && congregationLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -28,6 +36,33 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
 
   if (requiredRoles && userRole && !requiredRoles.includes(userRole)) {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  // Verificar acesso específico para congregações e conciliações
+  if (requiresCongregationAccess) {
+    const congregationRoutes = ['/congregacoes', '/conciliacoes'];
+    const isRestrictedRoute = congregationRoutes.some(route => 
+      location.pathname.startsWith(route)
+    );
+
+    if (isRestrictedRoute) {
+      // Finance e worker não têm acesso
+      if (userRole === 'finance' || userRole === 'worker') {
+        return <Navigate to="/dashboard" replace />;
+      }
+
+      // Admin e superadmin sempre têm acesso
+      if (userRole === 'admin' || userRole === 'superadmin') {
+        return <>{children}</>;
+      }
+
+      // Para pastores, verificar se têm acesso a congregações
+      if (userRole === 'pastor') {
+        if (!congregationAccess?.hasAccess) {
+          return <Navigate to="/dashboard" replace />;
+        }
+      }
+    }
   }
 
   return <>{children}</>;
