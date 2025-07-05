@@ -111,11 +111,6 @@ const Sidebar = () => {
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
-      <div className="p-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-gray-900">Sistema IPTM</h1>
-        <p className="text-sm text-gray-600 mt-1">Sistema de Gestão</p>
-      </div>
-
       <nav className="flex-1 p-4 space-y-2">
         {visibleItems.map((item) => {
           const Icon = item.icon;
