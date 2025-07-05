@@ -58,10 +58,23 @@ const ReconciliationForm: React.FC<ReconciliationFormProps> = ({ reconciliation,
     return '';
   }, [reconciliation, userRole, availableCongregations]);
 
+  // Convert date from database format to month input format
+  const formatMonthForInput = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  };
+
+  // Convert month input format to first day of the month for database
+  const formatMonthForDatabase = (monthString: string) => {
+    if (!monthString) return '';
+    return `${monthString}-01`;
+  };
+
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ReconciliationFormData>({
     defaultValues: {
       congregation_id: defaultCongregationId,
-      month: reconciliation?.month || '',
+      month: reconciliation?.month ? formatMonthForInput(reconciliation.month) : '',
       total_income: reconciliation?.total_income ? Number(reconciliation.total_income) : 0,
       pix: reconciliation?.pix ? Number(reconciliation.pix) : 0,
       online_pix: reconciliation?.online_pix ? Number(reconciliation.online_pix) : 0,
@@ -101,7 +114,7 @@ const ReconciliationForm: React.FC<ReconciliationFormProps> = ({ reconciliation,
       // For pastors, always force status to pending and ensure congregation_id is valid
       const submissionData = {
         congregation_id: data.congregation_id,
-        month: data.month,
+        month: formatMonthForDatabase(data.month), // Convert to database format
         total_income: totalIncome,
         pix: Number(data.pix) || 0,
         online_pix: Number(data.online_pix) || 0,
