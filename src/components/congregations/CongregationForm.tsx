@@ -1,11 +1,13 @@
 
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateCongregation, useUpdateCongregation } from '@/hooks/useCongregationData';
+import { useMembers } from '@/hooks/useMemberData';
 import type { Database } from '@/integrations/supabase/types';
 
 type CongregationFormData = {
@@ -21,6 +23,7 @@ type CongregationFormData = {
   has_own_property: boolean;
   rent_value?: number;
   is_active: boolean;
+  responsible_pastor_ids: string[];
 };
 
 interface CongregationFormProps {
@@ -31,9 +34,13 @@ interface CongregationFormProps {
 const CongregationForm: React.FC<CongregationFormProps> = ({ congregation, onClose }) => {
   const createMutation = useCreateCongregation();
   const updateMutation = useUpdateCongregation();
+  const { data: members = [] } = useMembers();
   const isEditing = !!congregation;
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<CongregationFormData>({
+  // Filter members to only show pastors
+  const pastors = members.filter(member => member.role === 'pastor');
+
+  const { register, handleSubmit, watch, control, setValue, formState: { errors } } = useForm<CongregationFormData>({
     defaultValues: {
       name: congregation?.name || '',
       cnpj: congregation?.cnpj || '',
@@ -47,10 +54,12 @@ const CongregationForm: React.FC<CongregationFormProps> = ({ congregation, onClo
       has_own_property: congregation?.has_own_property || false,
       rent_value: congregation?.rent_value ? Number(congregation.rent_value) : undefined,
       is_active: congregation?.is_active ?? true,
+      responsible_pastor_ids: congregation?.responsible_pastor_ids || [],
     },
   });
 
   const hasOwnProperty = watch('has_own_property');
+  const selectedPastorIds = watch('responsible_pastor_ids');
 
   const onSubmit = async (data: CongregationFormData) => {
     try {
@@ -66,6 +75,19 @@ const CongregationForm: React.FC<CongregationFormProps> = ({ congregation, onClo
     } catch (error) {
       console.error('Error saving congregation:', error);
     }
+  };
+
+  const handlePastorToggle = (pastorId: string) => {
+    const currentIds = selectedPastorIds || [];
+    const newIds = currentIds.includes(pastorId)
+      ? currentIds.filter(id => id !== pastorId)
+      : [...currentIds, pastorId];
+    setValue('responsible_pastor_ids', newIds);
+  };
+
+  const getSelectedPastorNames = () => {
+    if (!selectedPastorIds || selectedPastorIds.length === 0) return [];
+    return pastors.filter(pastor => selectedPastorIds.includes(pastor.id));
   };
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
@@ -100,6 +122,47 @@ const CongregationForm: React.FC<CongregationFormProps> = ({ congregation, onClo
             {...register('avg_members', { valueAsNumber: true })}
             placeholder="0"
           />
+        </div>
+      </div>
+
+      {/* Pastores Responsáveis Section */}
+      <div className="space-y-4">
+        <div>
+          <Label>Pastores Responsáveis</Label>
+          <div className="mt-2 space-y-2">
+            {pastors.length > 0 ? (
+              pastors.map((pastor) => (
+                <div key={pastor.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`pastor-${pastor.id}`}
+                    checked={selectedPastorIds?.includes(pastor.id) || false}
+                    onChange={() => handlePastorToggle(pastor.id)}
+                    className="rounded border-gray-300"
+                  />
+                  <label htmlFor={`pastor-${pastor.id}`} className="text-sm">
+                    {pastor.name} {pastor.email && `(${pastor.email})`}
+                  </label>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-sm">Nenhum pastor encontrado</p>
+            )}
+          </div>
+          
+          {/* Show selected pastors */}
+          {getSelectedPastorNames().length > 0 && (
+            <div className="mt-3 p-3 bg-gray-50 rounded-md">
+              <p className="text-sm font-medium text-gray-700 mb-2">Pastores Selecionados:</p>
+              <ul className="text-sm text-gray-600 space-y-1">
+                {getSelectedPastorNames().map((pastor) => (
+                  <li key={pastor.id}>
+                    • {pastor.name} {pastor.email && `(${pastor.email})`}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
 
