@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Check, X } from 'lucide-react';
 import { useUpdateReconciliation } from '@/hooks/useReconciliationData';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ReconciliationTableProps {
   reconciliations: any[];
@@ -12,6 +13,7 @@ interface ReconciliationTableProps {
 
 const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliations, onEdit }) => {
   const updateMutation = useUpdateReconciliation();
+  const { userRole } = useAuth();
 
   const handleApprove = async (reconciliation: any) => {
     await updateMutation.mutateAsync({
@@ -48,6 +50,9 @@ const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliatio
         return <Badge className="bg-yellow-100 text-yellow-800">Pendente</Badge>;
     }
   };
+
+  const isAdmin = userRole === 'admin' || userRole === 'superadmin';
+  const isPastor = userRole === 'pastor';
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -97,20 +102,27 @@ const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliatio
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEdit(reconciliation)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    {reconciliation.status === 'pending' && (
+                    {/* Edit button - only for pastors on their own reconciliations or admins */}
+                    {(isPastor || isAdmin) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEdit(reconciliation)}
+                        title="Editar"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                    
+                    {/* Approval buttons - only for admins on pending reconciliations */}
+                    {isAdmin && reconciliation.status === 'pending' && (
                       <>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleApprove(reconciliation)}
                           className="text-green-600 hover:text-green-700"
+                          title="Aprovar"
                         >
                           <Check className="h-4 w-4" />
                         </Button>
@@ -119,6 +131,7 @@ const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliatio
                           size="sm"
                           onClick={() => handleReject(reconciliation)}
                           className="text-red-600 hover:text-red-700"
+                          title="Reprovar"
                         >
                           <X className="h-4 w-4" />
                         </Button>

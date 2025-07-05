@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateReconciliation, useUpdateReconciliation } from '@/hooks/useReconciliationData';
 import { useCongregations } from '@/hooks/useCongregationData';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
 import type { Database } from '@/integrations/supabase/types';
 
 type ReconciliationFormData = {
@@ -30,11 +32,32 @@ const ReconciliationForm: React.FC<ReconciliationFormProps> = ({ reconciliation,
   const createMutation = useCreateReconciliation();
   const updateMutation = useUpdateReconciliation();
   const { data: congregations } = useCongregations();
+  const { userRole } = useAuth();
+  const { data: congregationAccess } = useUserCongregationAccess();
   const isEditing = !!reconciliation;
+
+  // For pastors, filter to only their assigned congregations
+  const availableCongregations = React.useMemo(() => {
+    if (userRole === 'pastor' && congregationAccess?.assignedCongregations) {
+      return congregationAccess.assignedCongregations;
+    }
+    return congregations || [];
+  }, [userRole, congregationAccess, congregations]);
+
+  // Auto-select first congregation for pastors
+  const defaultCongregationId = React.useMemo(() => {
+    if (reconciliation?.congregation_id) {
+      return reconciliation.congregation_id;
+    }
+    if (userRole === 'pastor' && availableCongregations.length > 0) {
+      return availableCongregations[0].id;
+    }
+    return '';
+  }, [reconciliation, userRole, availableCongregations]);
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ReconciliationFormData>({
     defaultValues: {
-      congregation_id: reconciliation?.congregation_id || '',
+      congregation_id: defaultCongregationId,
       month: reconciliation?.month || '',
       total_income: reconciliation?.total_income ? Number(reconciliation.total_income) : 0,
       pix: reconciliation?.pix ? Number(reconciliation.pix) : 0,
@@ -42,7 +65,7 @@ const ReconciliationForm: React.FC<ReconciliationFormProps> = ({ reconciliation,
       debit: reconciliation?.debit ? Number(reconciliation.debit) : 0,
       credit: reconciliation?.credit ? Number(reconciliation.credit) : 0,
       cash: reconciliation?.cash ? Number(reconciliation.cash) : 0,
-      status: reconciliation?.status || 'pending',
+      status: 'pending', // Always pending for new submissions
     },
   });
 
@@ -53,15 +76,27 @@ const ReconciliationForm: React.FC<ReconciliationFormProps> = ({ reconciliation,
     setValue('total_income', totalIncome);
   }, [totalIncome, setValue]);
 
+  React.useEffect(() => {
+    if (defaultCongregationId) {
+      setValue('congregation_id', defaultCongregationId);
+    }
+  }, [defaultCongregationId, setValue]);
+
   const onSubmit = async (data: ReconciliationFormData) => {
     try {
+      // Force status to pending for pastors
+      const submissionData = {
+        ...data,
+        status: 'pending' as const
+      };
+
       if (isEditing && reconciliation) {
         await updateMutation.mutateAsync({
           id: reconciliation.id,
-          ...data,
+          ...submissionData,
         });
       } else {
-        await createMutation.mutateAsync(data);
+        await createMutation.mutateAsync(submissionData);
       }
       onClose();
     } catch (error) {
@@ -70,24 +105,33 @@ const ReconciliationForm: React.FC<ReconciliationFormProps> = ({ reconciliation,
   };
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
+  const isPastor = userRole === 'pastor';
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="congregation_id">Congregação *</Label>
-          <Select onValueChange={(value) => setValue('congregation_id', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione uma congregação" />
-            </SelectTrigger>
-            <SelectContent>
-              {congregations?.map((congregation) => (
-                <SelectItem key={congregation.id} value={congregation.id}>
-                  {congregation.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isPastor ? (
+            <Input
+              value={availableCongregations.find(c => c.id === defaultCongregationId)?.name || 'Nenhuma congregação atribuída'}
+              readOnly
+              className="bg-gray-100"
+            />
+          ) : (
+            <Select onValueChange={(value) => setValue('congregation_id', value)} defaultValue={defaultCongregationId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma congregação" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableCongregations.map((congregation) => (
+                  <SelectItem key={congregation.id} value={congregation.id}>
+                    {congregation.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           {errors.congregation_id && <p className="text-red-500 text-sm mt-1">Congregação é obrigatória</p>}
         </div>
 
@@ -182,19 +226,21 @@ const ReconciliationForm: React.FC<ReconciliationFormProps> = ({ reconciliation,
         </div>
       </div>
 
-      <div>
-        <Label htmlFor="status">Status</Label>
-        <Select onValueChange={(value: any) => setValue('status', value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione o status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pending">Pendente</SelectItem>
-            <SelectItem value="approved">Aprovado</SelectItem>
-            <SelectItem value="rejected">Rejeitado</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {!isPastor && (
+        <div>
+          <Label htmlFor="status">Status</Label>
+          <Select onValueChange={(value: any) => setValue('status', value)} defaultValue="pending">
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">Pendente</SelectItem>
+              <SelectItem value="approved">Aprovado</SelectItem>
+              <SelectItem value="rejected">Rejeitado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="flex justify-end space-x-2 pt-4">
         <Button type="button" variant="outline" onClick={onClose}>
@@ -205,7 +251,7 @@ const ReconciliationForm: React.FC<ReconciliationFormProps> = ({ reconciliation,
           className="bg-red-600 hover:bg-red-700"
           disabled={isLoading}
         >
-          {isLoading ? 'Salvando...' : (isEditing ? 'Atualizar' : 'Criar')}
+          {isLoading ? 'Salvando...' : (isEditing ? 'Atualizar' : 'Enviar Conciliação')}
         </Button>
       </div>
     </form>
