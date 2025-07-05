@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { Camera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -112,45 +111,35 @@ const UserProfile = () => {
 
   return (
     <div className="flex items-center gap-3">
-      <div className="flex items-center gap-2">
-        <div className="w-2 h-2 bg-green-500 rounded-full" title="Online"></div>
-        <span className="text-sm text-gray-600">Usuário logado:</span>
-      </div>
-      
-      <div className="flex items-center gap-3">
-        <div className="relative group">
-          <Avatar className="h-10 w-10 cursor-pointer">
-            <AvatarImage 
-              src={profileData.photo_url || undefined} 
-              alt={profileData.name}
-            />
-            <AvatarFallback className="bg-red-100 text-red-600">
-              {getInitials(profileData.name)}
-            </AvatarFallback>
-          </Avatar>
-          
-          <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <Camera className="h-4 w-4 text-white" />
-          </div>
-          
-          <input
-            type="file"
-            accept="image/jpeg,image/png"
-            onChange={uploadProfilePicture}
-            disabled={uploading}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            title="Enviar nova foto"
+      <div className="relative group">
+        <Avatar className="h-10 w-10 cursor-pointer">
+          <AvatarImage 
+            src={profileData.photo_url || undefined} 
+            alt={profileData.name}
           />
+          <AvatarFallback className="bg-red-100 text-red-600">
+            {getInitials(profileData.name)}
+          </AvatarFallback>
+        </Avatar>
+        
+        <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <Camera className="h-4 w-4 text-white" />
         </div>
         
-        <div className="flex flex-col">
-          <span className="text-sm font-medium text-gray-900">
-            {profileData.name}
-          </span>
-          <span className="text-xs text-gray-500 capitalize">
-            {userRole}
-          </span>
-        </div>
+        <input
+          type="file"
+          accept="image/jpeg,image/png"
+          onChange={uploadProfilePicture}
+          disabled={uploading}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          title="Enviar nova foto"
+        />
+      </div>
+      
+      <div className="flex flex-col">
+        <span className="text-xs text-gray-500 capitalize">
+          {userRole}
+        </span>
       </div>
     </div>
   );
