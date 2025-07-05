@@ -1,10 +1,7 @@
 
 import React from 'react';
 import { Label } from '@/components/ui/label';
-import { useMembers } from '@/hooks/useMemberData';
-import type { Database } from '@/integrations/supabase/types';
-
-type Member = Database['public']['Tables']['members']['Row'];
+import { useSystemPastors } from '@/hooks/useSystemUsers';
 
 interface PastorSelectionProps {
   selectedPastorIds: string[];
@@ -15,21 +12,31 @@ const PastorSelection: React.FC<PastorSelectionProps> = ({
   selectedPastorIds,
   onPastorToggle,
 }) => {
-  const { data: members = [] } = useMembers();
-  const pastors = members.filter(member => member.role === 'pastor');
+  const { data: systemPastors = [], isLoading } = useSystemPastors();
 
   const getSelectedPastorNames = () => {
     if (!selectedPastorIds || selectedPastorIds.length === 0) return [];
-    return pastors.filter(pastor => selectedPastorIds.includes(pastor.id));
+    return systemPastors.filter(pastor => selectedPastorIds.includes(pastor.id));
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Label>Pastores Responsáveis</Label>
+        <div className="mt-2">
+          <p className="text-gray-500 text-sm">Carregando pastores...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
       <div>
         <Label>Pastores Responsáveis</Label>
         <div className="mt-2 space-y-2">
-          {pastors.length > 0 ? (
-            pastors.map((pastor) => (
+          {systemPastors.length > 0 ? (
+            systemPastors.map((pastor) => (
               <div key={pastor.id} className="flex items-center space-x-2">
                 <input
                   type="checkbox"
@@ -40,11 +47,16 @@ const PastorSelection: React.FC<PastorSelectionProps> = ({
                 />
                 <label htmlFor={`pastor-${pastor.id}`} className="text-sm">
                   {pastor.name} {pastor.email && `(${pastor.email})`}
+                  <span className="text-xs text-gray-500 ml-2">
+                    - {pastor.role === 'pastor' ? 'Pastor' : pastor.role === 'admin' ? 'Admin' : 'Finance'}
+                  </span>
                 </label>
               </div>
             ))
           ) : (
-            <p className="text-gray-500 text-sm">Nenhum pastor encontrado</p>
+            <p className="text-gray-500 text-sm">
+              Nenhum pastor com acesso ao sistema encontrado
+            </p>
           )}
         </div>
         
@@ -56,6 +68,9 @@ const PastorSelection: React.FC<PastorSelectionProps> = ({
               {getSelectedPastorNames().map((pastor) => (
                 <li key={pastor.id}>
                   • {pastor.name} {pastor.email && `(${pastor.email})`}
+                  <span className="text-xs text-gray-500 ml-2">
+                    - {pastor.role === 'pastor' ? 'Pastor' : pastor.role === 'admin' ? 'Admin' : 'Finance'}
+                  </span>
                 </li>
               ))}
             </ul>

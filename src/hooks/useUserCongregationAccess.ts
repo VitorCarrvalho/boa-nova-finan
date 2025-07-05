@@ -22,7 +22,35 @@ export const useUserCongregationAccess = () => {
       }
 
       // Para pastores, verificar se estão atribuídos a alguma congregação
+      // E também verificar se têm um perfil de membro correspondente
       if (userRole === 'pastor') {
+        // Primeiro verificar se o usuário tem um perfil de membro correspondente
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('id', user.id)
+          .single();
+
+        if (!profile?.email) {
+          console.log('Pastor não possui email no perfil');
+          return { hasAccess: false, assignedCongregations: [] };
+        }
+
+        // Verificar se existe um membro correspondente com role de pastor
+        const { data: member } = await supabase
+          .from('members')
+          .select('*')
+          .eq('email', profile.email)
+          .eq('role', 'pastor')
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (!member) {
+          console.log('Pastor não possui perfil de membro correspondente ou não está ativo');
+          return { hasAccess: false, assignedCongregations: [] };
+        }
+
+        // Verificar congregações atribuídas
         const { data: congregations, error } = await supabase
           .from('congregations')
           .select('id, name, responsible_pastor_ids')
@@ -34,6 +62,8 @@ export const useUserCongregationAccess = () => {
         }
 
         const hasAccess = congregations && congregations.length > 0;
+        console.log('Pastor access check:', { hasAccess, congregations: congregations?.length || 0 });
+        
         return { 
           hasAccess, 
           assignedCongregations: congregations || [] 
