@@ -25,7 +25,7 @@ const BasicInfoFields: React.FC<BasicInfoFieldsProps> = ({ register, errors }) =
           {...register('name', { required: 'Nome é obrigatório' })}
           placeholder="Nome da congregação"
         />
-        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
+        {errors.name && <p className="text-red-500 text-sm mt-1">{String(errors.name.message)}</p>}
       </div>
 
       <div>
