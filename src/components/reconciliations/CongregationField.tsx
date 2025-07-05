@@ -20,6 +20,12 @@ const CongregationField: React.FC<CongregationFieldProps> = ({
   setValue,
   errors
 }) => {
+  React.useEffect(() => {
+    if (defaultCongregationId) {
+      setValue('congregation_id', defaultCongregationId);
+    }
+  }, [defaultCongregationId, setValue]);
+
   return (
     <div>
       <Label htmlFor="congregation_id">Congregação *</Label>
@@ -30,7 +36,11 @@ const CongregationField: React.FC<CongregationFieldProps> = ({
           className="bg-gray-100"
         />
       ) : (
-        <Select onValueChange={(value) => setValue('congregation_id', value)} defaultValue={defaultCongregationId}>
+        <Select 
+          onValueChange={(value) => setValue('congregation_id', value)} 
+          defaultValue={defaultCongregationId}
+          value={defaultCongregationId}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Selecione uma congregação" />
           </SelectTrigger>

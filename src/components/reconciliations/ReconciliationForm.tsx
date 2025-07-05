@@ -35,7 +35,7 @@ const ReconciliationForm: React.FC<ReconciliationFormProps> = ({ reconciliation,
   const createMutation = useCreateReconciliation();
   const updateMutation = useUpdateReconciliation();
   const { data: congregations } = useCongregations();
-  const { userRole } = useAuth();
+  const { userRole, user } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
   const isEditing = !!reconciliation;
 
@@ -87,11 +87,31 @@ const ReconciliationForm: React.FC<ReconciliationFormProps> = ({ reconciliation,
 
   const onSubmit = async (data: ReconciliationFormData) => {
     try {
-      // Force status to pending for pastors
+      console.log('Submitting reconciliation data:', data);
+      
+      // Ensure required fields are present
+      if (!data.congregation_id) {
+        throw new Error('Congregação é obrigatória');
+      }
+      
+      if (!data.month) {
+        throw new Error('Mês é obrigatório');
+      }
+
+      // For pastors, always force status to pending and ensure congregation_id is valid
       const submissionData = {
-        ...data,
-        status: 'pending' as const
+        congregation_id: data.congregation_id,
+        month: data.month,
+        total_income: totalIncome,
+        pix: Number(data.pix) || 0,
+        online_pix: Number(data.online_pix) || 0,
+        debit: Number(data.debit) || 0,
+        credit: Number(data.credit) || 0,
+        cash: Number(data.cash) || 0,
+        status: userRole === 'pastor' ? 'pending' as const : (data.status || 'pending' as const)
       };
+
+      console.log('Final submission data:', submissionData);
 
       if (isEditing && reconciliation) {
         await updateMutation.mutateAsync({
@@ -104,12 +124,25 @@ const ReconciliationForm: React.FC<ReconciliationFormProps> = ({ reconciliation,
       onClose();
     } catch (error) {
       console.error('Error saving reconciliation:', error);
+      // The error will be handled by the mutation's onError callback
     }
   };
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
   const isPastor = userRole === 'pastor';
   const isAdmin = userRole === 'admin' || userRole === 'superadmin';
+
+  // Validation to ensure pastor has access to congregations
+  if (isPastor && (!congregationAccess?.hasAccess || availableCongregations.length === 0)) {
+    return (
+      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <p className="text-yellow-800">
+          Você não possui acesso a nenhuma congregação para enviar conciliações. 
+          Entre em contato com o administrador.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

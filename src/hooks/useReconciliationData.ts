@@ -61,10 +61,20 @@ export const useCreateReconciliation = () => {
     mutationFn: async (reconciliationData: ReconciliationInsert) => {
       console.log('Creating reconciliation with data:', reconciliationData);
       
+      // Validate required fields
+      if (!reconciliationData.congregation_id) {
+        throw new Error('Congregação é obrigatória');
+      }
+      
+      if (!reconciliationData.month) {
+        throw new Error('Mês é obrigatório');
+      }
+      
       // Ensure status is always pending for new reconciliations
       const dataToInsert = {
         ...reconciliationData,
-        status: 'pending'
+        status: 'pending',
+        total_income: reconciliationData.total_income || 0
       };
       
       const { data, error } = await supabase
@@ -88,11 +98,11 @@ export const useCreateReconciliation = () => {
         description: 'A conciliação foi enviada com sucesso e está aguardando aprovação.',
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error creating reconciliation:', error);
       toast({
         title: 'Erro ao enviar conciliação',
-        description: 'Ocorreu um erro ao enviar a conciliação.',
+        description: error.message || 'Ocorreu um erro ao enviar a conciliação.',
         variant: 'destructive',
       });
     },
@@ -142,11 +152,11 @@ export const useUpdateReconciliation = () => {
         });
       }
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error updating reconciliation:', error);
       toast({
         title: 'Erro ao atualizar conciliação',
-        description: 'Ocorreu um erro ao atualizar a conciliação.',
+        description: error.message || 'Ocorreu um erro ao atualizar a conciliação.',
         variant: 'destructive',
       });
     },
