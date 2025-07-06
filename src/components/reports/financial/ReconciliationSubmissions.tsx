@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Download } from 'lucide-react';
-import { format, subMonths } from 'date-fns';
+import { format, subMonths, isValid, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const ReconciliationSubmissions = () => {
@@ -24,6 +24,29 @@ const ReconciliationSubmissions = () => {
     startDate: format(subMonths(new Date(), 6), 'yyyy-MM-dd'),
     endDate: format(new Date(), 'yyyy-MM-dd')
   });
+
+  // Safe date formatting function
+  const safeFormatDate = (dateString: string, formatStr: string = 'dd/MM/yyyy') => {
+    if (!dateString) return '-';
+    
+    let date: Date;
+    
+    // Try to parse the date string
+    if (dateString.includes('-01') && dateString.length === 10) {
+      // This looks like a month string (YYYY-MM-01), extract just YYYY-MM
+      const monthString = dateString.substring(0, 7);
+      date = parseISO(monthString + '-01');
+    } else {
+      date = parseISO(dateString);
+    }
+    
+    if (!isValid(date)) {
+      console.warn('Invalid date received:', dateString);
+      return '-';
+    }
+    
+    return format(date, formatStr, { locale: ptBR });
+  };
 
   // Filter reconciliations based on user permissions and date range
   const getFilteredReconciliations = () => {
@@ -101,13 +124,13 @@ const ReconciliationSubmissions = () => {
     ];
 
     const csvData = filteredReconciliations.map(record => [
-      format(new Date(record.created_at), 'dd/MM/yyyy', { locale: ptBR }),
+      safeFormatDate(record.created_at),
       getCongregationName(record.congregation_id),
-      format(new Date(record.month + '-01'), 'MM/yyyy'),
-      `R$ ${record.total_income.toFixed(2).replace('.', ',')}`,
-      `R$ ${record.amount_to_send.toFixed(2).replace('.', ',')}`,
+      safeFormatDate(record.month, 'MM/yyyy'),
+      `R$ ${(record.total_income || 0).toFixed(2).replace('.', ',')}`,
+      `R$ ${(record.amount_to_send || 0).toFixed(2).replace('.', ',')}`,
       getStatusLabel(record.status),
-      record.approved_at ? format(new Date(record.approved_at), 'dd/MM/yyyy', { locale: ptBR }) : ''
+      record.approved_at ? safeFormatDate(record.approved_at) : ''
     ]);
 
     const csvContent = [headers, ...csvData]
@@ -199,17 +222,17 @@ const ReconciliationSubmissions = () => {
             {filteredReconciliations.map((record) => (
               <TableRow key={record.id}>
                 <TableCell>
-                  {format(new Date(record.created_at), 'dd/MM/yyyy', { locale: ptBR })}
+                  {safeFormatDate(record.created_at)}
                 </TableCell>
                 <TableCell>{getCongregationName(record.congregation_id)}</TableCell>
                 <TableCell>
-                  {format(new Date(record.month + '-01'), 'MM/yyyy')}
+                  {safeFormatDate(record.month, 'MM/yyyy')}
                 </TableCell>
                 <TableCell className="font-medium">
-                  R$ {record.total_income.toFixed(2).replace('.', ',')}
+                  R$ {(record.total_income || 0).toFixed(2).replace('.', ',')}
                 </TableCell>
                 <TableCell className="font-medium">
-                  R$ {record.amount_to_send.toFixed(2).replace('.', ',')}
+                  R$ {(record.amount_to_send || 0).toFixed(2).replace('.', ',')}
                 </TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(record.status)}`}>
@@ -217,10 +240,7 @@ const ReconciliationSubmissions = () => {
                   </span>
                 </TableCell>
                 <TableCell>
-                  {record.approved_at 
-                    ? format(new Date(record.approved_at), 'dd/MM/yyyy', { locale: ptBR })
-                    : '-'
-                  }
+                  {record.approved_at ? safeFormatDate(record.approved_at) : '-'}
                 </TableCell>
               </TableRow>
             ))}

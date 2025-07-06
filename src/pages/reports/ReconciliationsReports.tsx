@@ -2,6 +2,8 @@
 import React from 'react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ReconciliationSubmissions from '@/components/reports/financial/ReconciliationSubmissions';
 
 const ReconciliationsReports = () => {
   return (
@@ -14,25 +16,25 @@ const ReconciliationsReports = () => {
           </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Em Desenvolvimento</CardTitle>
-            <CardDescription>
-              Os relatórios específicos de conciliações estarão disponíveis em breve
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600">
-              Esta seção incluirá relatórios detalhados sobre conciliações, incluindo:
-            </p>
-            <ul className="list-disc list-inside mt-2 text-gray-600">
-              <li>Status de conciliações por congregação</li>
-              <li>Histórico de aprovações</li>
-              <li>Valores transferidos por período</li>
-              <li>Comparativo entre congregações</li>
-            </ul>
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="submissions" className="w-full">
+          <TabsList className="grid w-full grid-cols-1">
+            <TabsTrigger value="submissions">Conciliações Enviadas</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="submissions" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Histórico de Conciliações</CardTitle>
+                <CardDescription>
+                  Visualize e exporte o histórico completo das conciliações enviadas
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ReconciliationSubmissions />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
