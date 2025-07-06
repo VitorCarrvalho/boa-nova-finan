@@ -20,26 +20,54 @@ const CongregationField: React.FC<CongregationFieldProps> = ({
   setValue,
   errors
 }) => {
+  const [selectedCongregation, setSelectedCongregation] = React.useState(defaultCongregationId);
+
   React.useEffect(() => {
     if (defaultCongregationId) {
+      setSelectedCongregation(defaultCongregationId);
       setValue('congregation_id', defaultCongregationId);
     }
   }, [defaultCongregationId, setValue]);
 
+  // For pastors with multiple congregations, show dropdown
+  // For pastors with only one congregation, show read-only field
+  const showDropdown = isPastor && availableCongregations.length > 1;
+  const showReadOnly = isPastor && availableCongregations.length === 1;
+
+  const handleCongregationChange = (value: string) => {
+    setSelectedCongregation(value);
+    setValue('congregation_id', value);
+  };
+
   return (
     <div>
       <Label htmlFor="congregation_id">Congregação *</Label>
-      {isPastor ? (
+      {showDropdown ? (
+        <Select 
+          onValueChange={handleCongregationChange} 
+          value={selectedCongregation}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione a congregação" />
+          </SelectTrigger>
+          <SelectContent>
+            {availableCongregations.map((congregation) => (
+              <SelectItem key={congregation.id} value={congregation.id}>
+                {congregation.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : showReadOnly ? (
         <Input
-          value={availableCongregations.find(c => c.id === defaultCongregationId)?.name || 'Nenhuma congregação atribuída'}
+          value={availableCongregations.find(c => c.id === selectedCongregation)?.name || 'Nenhuma congregação atribuída'}
           readOnly
           className="bg-gray-100"
         />
       ) : (
         <Select 
-          onValueChange={(value) => setValue('congregation_id', value)} 
-          defaultValue={defaultCongregationId}
-          value={defaultCongregationId}
+          onValueChange={handleCongregationChange} 
+          value={selectedCongregation}
         >
           <SelectTrigger>
             <SelectValue placeholder="Selecione uma congregação" />

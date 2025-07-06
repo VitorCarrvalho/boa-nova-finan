@@ -47,12 +47,12 @@ const ReconciliationForm: React.FC<ReconciliationFormProps> = ({ reconciliation,
     return congregations || [];
   }, [userRole, congregationAccess, congregations]);
 
-  // Auto-select first congregation for pastors
+  // Auto-select first congregation for pastors with only one congregation
   const defaultCongregationId = React.useMemo(() => {
     if (reconciliation?.congregation_id) {
       return reconciliation.congregation_id;
     }
-    if (userRole === 'pastor' && availableCongregations.length > 0) {
+    if (userRole === 'pastor' && availableCongregations.length === 1) {
       return availableCongregations[0].id;
     }
     return '';
