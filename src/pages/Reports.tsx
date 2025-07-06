@@ -7,6 +7,7 @@ import ReportsFilters from '@/components/reports/ReportsFilters';
 import ReconciliationCharts from '@/components/reports/ReconciliationCharts';
 import PaymentMethodsBreakdown from '@/components/reports/PaymentMethodsBreakdown';
 import ExportControls from '@/components/reports/ExportControls';
+import { ReportsProvider } from '@/contexts/ReportsContext';
 
 const Reports = () => {
   const { userRole } = useAuth();
@@ -26,46 +27,48 @@ const Reports = () => {
   }
 
   return (
-    <Layout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Relatórios</h1>
-          <p className="text-gray-600 mt-2">
-            Análise visual e exportação de dados das conciliações
-          </p>
+    <ReportsProvider>
+      <Layout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Relatórios</h1>
+            <p className="text-gray-600 mt-2">
+              Análise visual e exportação de dados das conciliações
+            </p>
+          </div>
+
+          <ReportsFilters />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Gráficos de Conciliações</CardTitle>
+                <CardDescription>
+                  Visualização por mês e congregação
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ReconciliationCharts />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Formas de Pagamento</CardTitle>
+                <CardDescription>
+                  Distribuição por método de pagamento
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PaymentMethodsBreakdown />
+              </CardContent>
+            </Card>
+          </div>
+
+          <ExportControls />
         </div>
-
-        <ReportsFilters />
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Gráficos de Conciliações</CardTitle>
-              <CardDescription>
-                Visualização por mês e congregação
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ReconciliationCharts />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Formas de Pagamento</CardTitle>
-              <CardDescription>
-                Distribuição por método de pagamento
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PaymentMethodsBreakdown />
-            </CardContent>
-          </Card>
-        </div>
-
-        <ExportControls />
-      </div>
-    </Layout>
+      </Layout>
+    </ReportsProvider>
   );
 };
 

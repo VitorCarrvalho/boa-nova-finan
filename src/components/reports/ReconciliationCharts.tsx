@@ -3,10 +3,12 @@ import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, ResponsiveContainer } from 'recharts';
 import { useReconciliations } from '@/hooks/useReconciliationData';
 import { useCongregations } from '@/hooks/useCongregationData';
+import { useReportsFilters } from '@/contexts/ReportsContext';
 
 const ReconciliationCharts = () => {
   const { data: reconciliations, isLoading: reconciliationsLoading } = useReconciliations();
   const { data: congregations, isLoading: congregationsLoading } = useCongregations();
+  const { filters, isFiltersApplied } = useReportsFilters();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -53,6 +55,37 @@ const ReconciliationCharts = () => {
     );
   }
 
+  // Apply filters to reconciliations
+  const filteredReconciliations = reconciliations.filter(rec => {
+    // Status filter
+    if (filters.status !== 'all' && rec.status !== filters.status) {
+      return false;
+    }
+    
+    // Congregation filter
+    if (filters.selectedCongregations.length > 0 && !filters.selectedCongregations.includes(rec.congregation_id)) {
+      return false;
+    }
+    
+    // Period filter
+    if (filters.period !== 'all') {
+      const recDate = new Date(rec.created_at);
+      const now = new Date();
+      const monthsBack = {
+        'last-3-months': 3,
+        'last-6-months': 6,
+        'last-12-months': 12
+      }[filters.period] || 0;
+      
+      const cutoffDate = new Date(now.getFullYear(), now.getMonth() - monthsBack, 1);
+      if (recDate < cutoffDate) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
+
   // Process data for charts - group by month and congregation
   const processedData = () => {
     const monthlyData: { [key: string]: { [key: string]: number } } = {};
@@ -75,8 +108,8 @@ const ReconciliationCharts = () => {
       });
     });
 
-    // Populate with reconciliation data
-    reconciliations
+    // Populate with filtered reconciliation data
+    filteredReconciliations
       .filter(rec => rec.status === 'approved')
       .forEach(reconciliation => {
         const monthKey = reconciliation.month.slice(0, 7); // Extract YYYY-MM
@@ -103,6 +136,14 @@ const ReconciliationCharts = () => {
 
   return (
     <div className="space-y-6">
+      {isFiltersApplied && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <p className="text-sm text-blue-800">
+            Filtros aplicados: {filteredReconciliations.length} conciliações encontradas
+          </p>
+        </div>
+      )}
+      
       <div>
         <h3 className="text-lg font-medium mb-4">Gráfico de Colunas - Por Mês e Congregação</h3>
         <ResponsiveContainer width="100%" height={300}>

@@ -6,9 +6,36 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar, Filter } from 'lucide-react';
 import { useCongregations } from '@/hooks/useCongregationData';
+import { useReportsFilters } from '@/contexts/ReportsContext';
 
 const ReportsFilters = () => {
   const { data: congregations, isLoading } = useCongregations();
+  const { filters, setFilters, applyFilters } = useReportsFilters();
+
+  const handlePeriodChange = (value: string) => {
+    setFilters({ ...filters, period: value });
+  };
+
+  const handleStatusChange = (value: string) => {
+    setFilters({ ...filters, status: value });
+  };
+
+  const handlePaymentMethodChange = (value: string) => {
+    setFilters({ ...filters, paymentMethod: value });
+  };
+
+  const handleCongregationToggle = (congregationId: string, checked: boolean) => {
+    const updatedCongregations = checked
+      ? [...filters.selectedCongregations, congregationId]
+      : filters.selectedCongregations.filter(id => id !== congregationId);
+    
+    setFilters({ ...filters, selectedCongregations: updatedCongregations });
+  };
+
+  const handleApplyFilters = () => {
+    console.log('Aplicando filtros:', filters);
+    applyFilters();
+  };
 
   if (isLoading) {
     return (
@@ -35,22 +62,22 @@ const ReportsFilters = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Período</label>
-            <Select>
+            <Select value={filters.period} onValueChange={handlePeriodChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecionar período" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">Todos os períodos</SelectItem>
                 <SelectItem value="last-3-months">Últimos 3 meses</SelectItem>
                 <SelectItem value="last-6-months">Últimos 6 meses</SelectItem>
                 <SelectItem value="last-12-months">Últimos 12 meses</SelectItem>
-                <SelectItem value="custom">Período personalizado</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Status</label>
-            <Select>
+            <Select value={filters.status} onValueChange={handleStatusChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Todos os status" />
               </SelectTrigger>
@@ -65,7 +92,7 @@ const ReportsFilters = () => {
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Forma de Pagamento</label>
-            <Select>
+            <Select value={filters.paymentMethod} onValueChange={handlePaymentMethodChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Todas as formas" />
               </SelectTrigger>
@@ -81,7 +108,7 @@ const ReportsFilters = () => {
           </div>
 
           <div className="flex items-end">
-            <Button className="w-full">
+            <Button className="w-full" onClick={handleApplyFilters}>
               <Calendar className="h-4 w-4 mr-2" />
               Aplicar Filtros
             </Button>
@@ -93,7 +120,13 @@ const ReportsFilters = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {congregations?.map((congregation) => (
               <div key={congregation.id} className="flex items-center space-x-2">
-                <Checkbox id={`congregation-${congregation.id}`} defaultChecked />
+                <Checkbox 
+                  id={`congregation-${congregation.id}`} 
+                  checked={filters.selectedCongregations.includes(congregation.id)}
+                  onCheckedChange={(checked) => 
+                    handleCongregationToggle(congregation.id, checked as boolean)
+                  }
+                />
                 <label 
                   htmlFor={`congregation-${congregation.id}`} 
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"

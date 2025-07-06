@@ -24,11 +24,11 @@ export const useFinancialStats = () => {
   return useQuery({
     queryKey: ['financial-stats'],
     queryFn: async () => {
-      // Query only records for headquarters (congregation_id = 100 or null for sede)
+      // Query records for headquarters (congregation_id is null for sede)
       const { data: records, error } = await supabase
         .from('financial_records')
         .select('*')
-        .or('congregation_id.is.null,congregation_id.eq.100');
+        .is('congregation_id', null);
 
       if (error) {
         console.error('Error fetching financial records:', error);
