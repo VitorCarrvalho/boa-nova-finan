@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -125,10 +124,10 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
     if (!user) return;
 
     // Validation
-    if (formData.type === 'expense' && !formData.supplier_id) {
+    if (formData.type === 'expense' && formData.category === 'supplier' && !formData.supplier_id) {
       toast({
         title: "Erro",
-        description: "Fornecedor é obrigatório para despesas.",
+        description: "Fornecedor é obrigatório para despesas de fornecedor.",
         variant: "destructive",
       });
       return;
@@ -160,8 +159,8 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
         congregation_id: '00000000-0000-0000-0000-000000000100' // Default to headquarters
       };
 
-      // Add supplier_id only for expenses
-      if (formData.type === 'expense' && formData.supplier_id) {
+      // Add supplier_id only for supplier category expenses
+      if (formData.type === 'expense' && formData.category === 'supplier' && formData.supplier_id) {
         insertData.supplier_id = formData.supplier_id;
       }
 
@@ -203,7 +202,7 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
   };
 
   const availableCategories = formData.type ? categoryOptions[formData.type] || [] : [];
-  const showSupplierField = formData.type === 'expense';
+  const showSupplierField = formData.type === 'expense' && formData.category === 'supplier';
   const isCurrentUserPastor = userRole === 'pastor';
   const availablePastors = isCurrentUserPastor && currentUserPastor ? [currentUserPastor] : pastors || [];
 
@@ -237,7 +236,7 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
               <Label htmlFor="category">Categoria *</Label>
               <Select 
                 value={formData.category} 
-                onValueChange={(value) => setFormData({ ...formData, category: value as FinancialCategory })}
+                onValueChange={(value) => setFormData({ ...formData, category: value as FinancialCategory, supplier_id: '' })}
                 disabled={!formData.type}
               >
                 <SelectTrigger>

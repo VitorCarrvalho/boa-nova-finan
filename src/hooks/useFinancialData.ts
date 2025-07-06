@@ -11,11 +11,18 @@ export const useFinancialRecords = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('financial_records')
-        .select('*')
+        .select(`
+          *,
+          responsible_pastor:members!financial_records_responsible_pastor_id_fkey(id, name, email),
+          congregation:congregations(id, name)
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as FinancialRecord[];
+      return data as (FinancialRecord & {
+        responsible_pastor?: { id: string; name: string; email: string | null };
+        congregation?: { id: string; name: string };
+      })[];
     },
   });
 };
@@ -24,11 +31,11 @@ export const useFinancialStats = () => {
   return useQuery({
     queryKey: ['financial-stats'],
     queryFn: async () => {
-      // Query records for headquarters (congregation_id is null for sede)
+      // Query records for headquarters (congregation_id matches the headquarters UUID)
       const { data: records, error } = await supabase
         .from('financial_records')
         .select('*')
-        .is('congregation_id', null);
+        .eq('congregation_id', '00000000-0000-0000-0000-000000000100');
 
       if (error) {
         console.error('Error fetching financial records:', error);

@@ -248,6 +248,7 @@ export type Database = {
           event_type: string | null
           id: string
           method: Database["public"]["Enums"]["payment_method"]
+          responsible_pastor_id: string | null
           type: Database["public"]["Enums"]["transaction_type"]
           updated_at: string
         }
@@ -263,6 +264,7 @@ export type Database = {
           event_type?: string | null
           id?: string
           method: Database["public"]["Enums"]["payment_method"]
+          responsible_pastor_id?: string | null
           type: Database["public"]["Enums"]["transaction_type"]
           updated_at?: string
         }
@@ -278,6 +280,7 @@ export type Database = {
           event_type?: string | null
           id?: string
           method?: Database["public"]["Enums"]["payment_method"]
+          responsible_pastor_id?: string | null
           type?: Database["public"]["Enums"]["transaction_type"]
           updated_at?: string
         }
@@ -287,6 +290,13 @@ export type Database = {
             columns: ["congregation_id"]
             isOneToOne: false
             referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_records_responsible_pastor_id_fkey"
+            columns: ["responsible_pastor_id"]
+            isOneToOne: false
+            referencedRelation: "members"
             referencedColumns: ["id"]
           },
         ]
