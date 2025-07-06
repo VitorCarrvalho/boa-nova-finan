@@ -3,9 +3,10 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Users, Calendar, TrendingUp } from 'lucide-react';
+import { DollarSign, Users, Calendar, TrendingUp, CheckCircle, Clock } from 'lucide-react';
 import { useFinancialStats } from '@/hooks/useFinancialData';
 import { useMemberStats } from '@/hooks/useMemberData';
+import { useReconciliationStats } from '@/hooks/useReconciliationStats';
 import FinancialChart from '@/components/dashboard/FinancialChart';
 import MemberChart from '@/components/dashboard/MemberChart';
 
@@ -13,6 +14,7 @@ const Dashboard = () => {
   const { userRole } = useAuth();
   const { data: financialStats, isLoading: financialLoading } = useFinancialStats();
   const { data: memberStats, isLoading: memberLoading } = useMemberStats();
+  const { data: reconciliationStats, isLoading: reconciliationLoading } = useReconciliationStats();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -20,6 +22,9 @@ const Dashboard = () => {
       currency: 'BRL'
     }).format(amount);
   };
+
+  // Calculate general monthly revenue (sede + approved reconciliations)
+  const generalMonthlyRevenue = (financialStats?.totalIncome || 0) + (reconciliationStats?.totalApprovedAmount || 0);
 
   const statsCards = [
     {
@@ -36,6 +41,30 @@ const Dashboard = () => {
       icon: TrendingUp,
       color: financialStats && financialStats.balance >= 0 ? 'text-green-600' : 'text-red-600',
       description: 'Receitas - Despesas',
+      show: ['superadmin', 'admin', 'finance'].includes(userRole || '')
+    },
+    {
+      title: 'Conciliações Aprovadas',
+      value: reconciliationStats?.approvedThisMonth || '0',
+      icon: CheckCircle,
+      color: 'text-green-600',
+      description: `${formatCurrency(reconciliationStats?.totalApprovedAmount || 0)} em valores`,
+      show: ['superadmin', 'admin', 'finance', 'pastor'].includes(userRole || '')
+    },
+    {
+      title: 'Conciliações Pendentes',
+      value: reconciliationStats?.pendingThisMonth || '0',
+      icon: Clock,
+      color: 'text-yellow-600',
+      description: `${formatCurrency(reconciliationStats?.totalPendingAmount || 0)} aguardando`,
+      show: ['superadmin', 'admin', 'finance', 'pastor'].includes(userRole || '')
+    },
+    {
+      title: 'Receita Geral do Mês',
+      value: formatCurrency(generalMonthlyRevenue),
+      icon: TrendingUp,
+      color: 'text-blue-600',
+      description: 'Sede + Conciliações Aprovadas',
       show: ['superadmin', 'admin', 'finance'].includes(userRole || '')
     },
     {
@@ -68,14 +97,14 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {(financialLoading || memberLoading) ? (
+        {(financialLoading || memberLoading || reconciliationLoading) ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Carregando dados...</p>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {visibleStats.map((stat, index) => {
                 const Icon = stat.icon;
                 return (

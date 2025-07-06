@@ -16,7 +16,8 @@ import {
   Settings,
   Church,
   Calculator,
-  Camera
+  Camera,
+  BarChart3
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -184,6 +185,12 @@ const Sidebar = () => {
       href: '/conciliacoes',
       roles: ['superadmin', 'admin', 'finance', 'pastor'],
       requiresCongregationAccess: true
+    },
+    {
+      title: 'Relatórios',
+      icon: BarChart3,
+      href: '/relatorios',
+      roles: ['superadmin', 'admin', 'finance', 'pastor']
     },
     {
       title: 'Fornecedores',

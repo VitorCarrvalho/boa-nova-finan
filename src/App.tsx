@@ -14,6 +14,7 @@ import Ministries from "@/pages/Ministries";
 import Departments from "@/pages/Departments";
 import Congregations from "@/pages/Congregations";
 import Reconciliations from "@/pages/Reconciliations";
+import Reports from "@/pages/Reports";
 import Suppliers from "@/pages/Suppliers";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -72,6 +73,11 @@ const App = () => (
                 requiresCongregationAccess={true}
               >
                 <Reconciliations />
+              </ProtectedRoute>
+            } />
+            <Route path="/relatorios" element={
+              <ProtectedRoute requiredRoles={['superadmin', 'admin', 'finance', 'pastor']}>
+                <Reports />
               </ProtectedRoute>
             } />
             <Route path="/fornecedores" element={
