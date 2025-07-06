@@ -15,6 +15,20 @@ import { Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+interface SupplierPayment {
+  id: string;
+  amount: number;
+  method: string;
+  category: string;
+  created_at: string;
+  description: string | null;
+  congregation_id: string | null;
+  supplier_id: string | null;
+  responsible_pastor_id: string | null;
+  suppliers: { name: string } | null;
+  members: { name: string } | null;
+}
+
 const PaymentsToSuppliers = () => {
   const { userRole } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
@@ -52,8 +66,11 @@ const PaymentsToSuppliers = () => {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching supplier payments:', error);
+        return [];
+      }
+      return data as SupplierPayment[];
     },
     enabled: !!userRole,
   });
