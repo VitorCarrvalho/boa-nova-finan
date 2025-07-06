@@ -15,7 +15,21 @@ export const useSupplierPayments = () => {
       let query = supabase
         .from('financial_records')
         .select(`
-          *,
+          id,
+          amount,
+          method,
+          category,
+          created_at,
+          description,
+          congregation_id,
+          supplier_id,
+          responsible_pastor_id,
+          type,
+          attendees,
+          event_date,
+          event_type,
+          created_by,
+          updated_at,
           suppliers (name),
           members!financial_records_responsible_pastor_id_fkey (name)
         `)
