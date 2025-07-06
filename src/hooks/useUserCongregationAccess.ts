@@ -22,7 +22,6 @@ export const useUserCongregationAccess = () => {
       }
 
       // Para pastores, verificar se estão atribuídos a alguma congregação
-      // E também verificar se têm um perfil de membro correspondente
       if (userRole === 'pastor') {
         // Primeiro verificar se o usuário tem um perfil de membro correspondente
         const { data: profile } = await supabase
@@ -50,7 +49,7 @@ export const useUserCongregationAccess = () => {
           return { hasAccess: false, assignedCongregations: [] };
         }
 
-        // Verificar congregações atribuídas
+        // Verificar congregações atribuídas ao pastor
         const { data: congregations, error } = await supabase
           .from('congregations')
           .select('id, name, responsible_pastor_ids')

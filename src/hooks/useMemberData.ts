@@ -1,35 +1,77 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
 
 type Member = Database['public']['Tables']['members']['Row'];
 type MemberInsert = Database['public']['Tables']['members']['Insert'];
 type MemberUpdate = Database['public']['Tables']['members']['Update'];
 
 export const useMembers = () => {
+  const { userRole } = useAuth();
+  const { data: congregationAccess } = useUserCongregationAccess();
+
   return useQuery({
-    queryKey: ['members'],
+    queryKey: ['members', userRole, congregationAccess?.assignedCongregations],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('members')
         .select('*')
         .order('name', { ascending: true });
 
+      // Filter for pastors to only their assigned congregations
+      if (userRole === 'pastor' && congregationAccess?.assignedCongregations) {
+        const assignedCongregationIds = congregationAccess.assignedCongregations.map(c => c.id);
+        if (assignedCongregationIds.length > 0) {
+          query = query.in('congregation_id', assignedCongregationIds);
+        } else {
+          // If pastor has no assigned congregations, return empty array
+          return [];
+        }
+      }
+
+      const { data, error } = await query;
+
       if (error) throw error;
       return data as Member[];
     },
+    enabled: !!userRole,
   });
 };
 
 export const useMemberStats = () => {
+  const { userRole } = useAuth();
+  const { data: congregationAccess } = useUserCongregationAccess();
+
   return useQuery({
-    queryKey: ['member-stats'],
+    queryKey: ['member-stats', userRole, congregationAccess?.assignedCongregations],
     queryFn: async () => {
-      const { data: members, error } = await supabase
+      let query = supabase
         .from('members')
         .select('*');
+
+      // Filter for pastors to only their assigned congregations
+      if (userRole === 'pastor' && congregationAccess?.assignedCongregations) {
+        const assignedCongregationIds = congregationAccess.assignedCongregations.map(c => c.id);
+        if (assignedCongregationIds.length > 0) {
+          query = query.in('congregation_id', assignedCongregationIds);
+        } else {
+          // If pastor has no assigned congregations, return empty stats
+          return {
+            totalMembers: 0,
+            activeMembers: 0,
+            inactiveMembers: 0,
+            pastors: 0,
+            workers: 0,
+            regularMembers: 0,
+            ministryStats: {}
+          };
+        }
+      }
+
+      const { data: members, error } = await query;
 
       if (error) throw error;
 
@@ -62,6 +104,7 @@ export const useMemberStats = () => {
         ministryStats
       };
     },
+    enabled: !!userRole,
   });
 };
 

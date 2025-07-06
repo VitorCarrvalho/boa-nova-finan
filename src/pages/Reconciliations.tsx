@@ -31,23 +31,7 @@ const Reconciliations = () => {
   const isPastor = userRole === 'pastor';
   const canSubmit = isPastor && congregationAccess?.hasAccess;
 
-  // Filter reconciliations for pastors to only show their congregations
-  const filteredReconciliations = React.useMemo(() => {
-    if (!reconciliations) return [];
-    
-    if (isAdmin) {
-      // Admins see all reconciliations
-      return reconciliations;
-    }
-    
-    if (isPastor && congregationAccess?.assignedCongregations) {
-      // Pastors only see reconciliations from their assigned congregations
-      const assignedCongregationIds = congregationAccess.assignedCongregations.map(c => c.id);
-      return reconciliations.filter(r => assignedCongregationIds.includes(r.congregation_id));
-    }
-    
-    return [];
-  }, [reconciliations, isAdmin, isPastor, congregationAccess]);
+  // Reconciliations are already filtered in the hook based on user role and congregation access
 
   return (
     <Layout>
@@ -97,7 +81,7 @@ const Reconciliations = () => {
           </div>
         ) : (
           <ReconciliationTable 
-            reconciliations={filteredReconciliations}
+            reconciliations={reconciliations || []}
             onEdit={handleEdit}
           />
         )}

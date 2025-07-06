@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useCreateMember, useUpdateMember } from '@/hooks/useMemberData';
+import { useCongregations } from '@/hooks/useCongregationData';
 import { Database } from '@/integrations/supabase/types';
 
 type MemberRole = Database['public']['Enums']['member_role'];
@@ -21,6 +21,7 @@ interface MemberFormProps {
 const MemberForm: React.FC<MemberFormProps> = ({ onSuccess, member }) => {
   const createMember = useCreateMember();
   const updateMember = useUpdateMember();
+  const { data: congregations, isLoading: congregationsLoading } = useCongregations();
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -36,6 +37,7 @@ const MemberForm: React.FC<MemberFormProps> = ({ onSuccess, member }) => {
     address: member?.address || '',
     education: member?.education || '',
     instagram: member?.instagram || '',
+    congregation_id: member?.congregation_id || '',
     is_active: member?.is_active !== false
   });
 
@@ -55,6 +57,12 @@ const MemberForm: React.FC<MemberFormProps> = ({ onSuccess, member }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.congregation_id) {
+      alert('Por favor, selecione uma congregação.');
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -94,6 +102,16 @@ const MemberForm: React.FC<MemberFormProps> = ({ onSuccess, member }) => {
     }));
   };
 
+  if (congregationsLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">Carregando congregações...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -113,6 +131,26 @@ const MemberForm: React.FC<MemberFormProps> = ({ onSuccess, member }) => {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="congregation_id">Congregação *</Label>
+              <Select 
+                value={formData.congregation_id} 
+                onValueChange={(value) => setFormData({ ...formData, congregation_id: value })}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a congregação" />
+                </SelectTrigger>
+                <SelectContent>
+                  {congregations?.map((congregation) => (
+                    <SelectItem key={congregation.id} value={congregation.id}>
+                      {congregation.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

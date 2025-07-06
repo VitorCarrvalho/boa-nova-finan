@@ -4,6 +4,8 @@ import { Control } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { EventFormData } from '../schemas/eventSchema';
 import EventTypeField from './EventTypeField';
 import OrganizerField from './OrganizerField';
@@ -13,31 +15,42 @@ interface BasicEventFieldsProps {
 }
 
 const BasicEventFields = ({ control }: BasicEventFieldsProps) => {
+  const supportTeamOptions = [
+    'Som e Áudio',
+    'Louvor e Adoração',
+    'Obreiros',
+    'Recepção',
+    'Limpeza',
+    'Segurança',
+    'Ministério Infantil',
+    'Mídia e Transmissão',
+    'Decoração',
+    'Cozinha'
+  ];
+
   return (
-    <>
+    <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
           control={control}
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Título *</FormLabel>
+              <FormLabel>Nome do Evento *</FormLabel>
               <FormControl>
-                <Input placeholder="Digite o título do evento" {...field} />
+                <Input placeholder="Digite o nome do evento" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <EventTypeField control={control} />
-
         <FormField
           control={control}
           name="date"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Data *</FormLabel>
+              <FormLabel>Data do Evento *</FormLabel>
               <FormControl>
                 <Input type="date" {...field} />
               </FormControl>
@@ -73,42 +86,75 @@ const BasicEventFields = ({ control }: BasicEventFieldsProps) => {
             </FormItem>
           )}
         />
-
-        <OrganizerField control={control} />
-
-        <FormField
-          control={control}
-          name="max_attendees"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Máximo de Participantes</FormLabel>
-              <FormControl>
-                <Input 
-                  type="number" 
-                  placeholder="Sem limite"
-                  {...field}
-                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
       </div>
+
+      <EventTypeField control={control} />
+      
+      <OrganizerField control={control} />
+
+      <FormField
+        control={control}
+        name="max_attendees"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Número Máximo de Participantes</FormLabel>
+            <FormControl>
+              <Input 
+                type="number" 
+                placeholder="Deixe em branco se não houver limite"
+                {...field}
+                onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
       <FormField
         control={control}
         name="description"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Descrição</FormLabel>
+            <FormLabel>Descrição/Detalhes</FormLabel>
             <FormControl>
-              <Textarea
-                placeholder="Descrição do evento"
+              <Textarea 
+                placeholder="Descreva os detalhes do evento"
                 rows={3}
-                {...field}
+                {...field} 
               />
             </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="support_teams"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Equipes de Apoio Necessárias</FormLabel>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+              {supportTeamOptions.map((team) => (
+                <div key={team} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={team}
+                    checked={field.value?.includes(team) || false}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        field.onChange([...(field.value || []), team]);
+                      } else {
+                        field.onChange((field.value || []).filter(t => t !== team));
+                      }
+                    }}
+                  />
+                  <Label htmlFor={team} className="text-sm">
+                    {team}
+                  </Label>
+                </div>
+              ))}
+            </div>
             <FormMessage />
           </FormItem>
         )}
@@ -119,19 +165,19 @@ const BasicEventFields = ({ control }: BasicEventFieldsProps) => {
         name="notes"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Observações</FormLabel>
+            <FormLabel>Observações Adicionais</FormLabel>
             <FormControl>
-              <Textarea
-                placeholder="Observações adicionais"
+              <Textarea 
+                placeholder="Observações internas sobre o evento"
                 rows={2}
-                {...field}
+                {...field} 
               />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
-    </>
+    </div>
   );
 };
 
