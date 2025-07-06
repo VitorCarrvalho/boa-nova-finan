@@ -13,10 +13,10 @@ const SupplierTotalsSummary = ({ supplierTotals }: SupplierTotalsSummaryProps) =
 
   return (
     <div className="bg-blue-50 p-4 rounded-lg">
-      <h3 className="font-semibold mb-3">Totais por Fornecedor</h3>
+      <h3 className="font-semibold mb-3">Totais por Categoria</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Object.entries(supplierTotals).map(([supplierId, data]) => (
-          <div key={supplierId} className="bg-white p-3 rounded border">
+        {Object.entries(supplierTotals).map(([category, data]) => (
+          <div key={category} className="bg-white p-3 rounded border">
             <div className="font-medium">{data.name}</div>
             <div className="text-sm text-gray-600">{data.count} pagamentos</div>
             <div className="font-bold text-blue-600">

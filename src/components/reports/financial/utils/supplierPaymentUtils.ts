@@ -6,10 +6,6 @@ import { SupplierPayment, SupplierPaymentFilters, SupplierTotal } from '../types
 export const filterPayments = (payments: SupplierPayment[], filters: SupplierPaymentFilters): SupplierPayment[] => {
   let filtered = [...payments];
 
-  if (filters.supplierId !== 'all') {
-    filtered = filtered.filter(payment => payment.supplier_id === filters.supplierId);
-  }
-
   if (filters.congregationId !== 'all') {
     filtered = filtered.filter(payment => payment.congregation_id === filters.congregationId);
   }
@@ -35,19 +31,18 @@ export const filterPayments = (payments: SupplierPayment[], filters: SupplierPay
 
 export const calculateSupplierTotals = (payments: SupplierPayment[]): Record<string, SupplierTotal> => {
   return payments.reduce((acc, payment) => {
-    const supplierId = payment.supplier_id;
-    if (!supplierId) return acc;
+    const category = payment.category;
     
-    if (!acc[supplierId]) {
-      acc[supplierId] = {
-        name: payment.suppliers?.name || 'N/A',
+    if (!acc[category]) {
+      acc[category] = {
+        name: getCategoryLabel(category),
         total: 0,
         count: 0
       };
     }
     
-    acc[supplierId].total += Number(payment.amount);
-    acc[supplierId].count += 1;
+    acc[category].total += Number(payment.amount);
+    acc[category].count += 1;
     
     return acc;
   }, {} as Record<string, SupplierTotal>);
@@ -86,22 +81,18 @@ export const getPaymentMethodLabel = (method: string) => {
 export const exportToCSV = (payments: SupplierPayment[], congregations: any[]) => {
   const headers = [
     'Data',
-    'Fornecedor',
     'Valor',
     'Método de Pagamento',
     'Categoria',
-    'Pastor Responsável',
     'Congregação',
     'Descrição'
   ];
 
   const csvData = payments.map(payment => [
     format(new Date(payment.created_at), 'dd/MM/yyyy', { locale: ptBR }),
-    payment.suppliers?.name || 'N/A',
     `R$ ${payment.amount.toFixed(2).replace('.', ',')}`,
     getPaymentMethodLabel(payment.method),
     getCategoryLabel(payment.category),
-    payment.members?.name || 'N/A',
     getCongregationName(payment.congregation_id, congregations),
     payment.description || ''
   ]);

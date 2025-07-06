@@ -3,7 +3,6 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useSuppliers } from '@/hooks/useSupplierData';
 import { useCongregations } from '@/hooks/useCongregationData';
 import { SupplierPaymentFilters } from '../types/SupplierPaymentTypes';
 
@@ -13,7 +12,6 @@ interface SupplierPaymentFiltersProps {
 }
 
 const SupplierPaymentFiltersComponent = ({ filters, onFiltersChange }: SupplierPaymentFiltersProps) => {
-  const { data: suppliers } = useSuppliers();
   const { data: congregations } = useCongregations();
 
   const updateFilter = (key: keyof SupplierPaymentFilters, value: string) => {
@@ -21,24 +19,7 @@ const SupplierPaymentFiltersComponent = ({ filters, onFiltersChange }: SupplierP
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 p-4 bg-gray-50 rounded-lg">
-      <div>
-        <Label htmlFor="supplier">Fornecedor</Label>
-        <Select value={filters.supplierId} onValueChange={(value) => updateFilter('supplierId', value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Todos" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            {suppliers?.map(supplier => (
-              <SelectItem key={supplier.id} value={supplier.id}>
-                {supplier.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
       <div>
         <Label htmlFor="congregation">Congregação</Label>
         <Select value={filters.congregationId} onValueChange={(value) => updateFilter('congregationId', value)}>

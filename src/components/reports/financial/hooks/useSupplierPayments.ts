@@ -22,19 +22,15 @@ export const useSupplierPayments = () => {
           created_at,
           description,
           congregation_id,
-          supplier_id,
-          responsible_pastor_id,
           type,
           attendees,
           event_date,
           event_type,
           created_by,
-          updated_at,
-          suppliers (name),
-          members!financial_records_responsible_pastor_id_fkey (name)
+          updated_at
         `)
         .eq('type', 'expense')
-        .not('supplier_id', 'is', null)
+        .eq('category', 'supplier')
         .order('created_at', { ascending: false });
 
       // Apply user role filters

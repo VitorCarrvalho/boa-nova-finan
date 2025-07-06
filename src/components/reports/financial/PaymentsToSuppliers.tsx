@@ -15,7 +15,6 @@ const PaymentsToSuppliers = () => {
   const { data: supplierPayments, isLoading } = useSupplierPayments();
   
   const [filters, setFilters] = useState<SupplierPaymentFilters>({
-    supplierId: 'all',
     congregationId: 'all',
     startDate: '',
     endDate: '',

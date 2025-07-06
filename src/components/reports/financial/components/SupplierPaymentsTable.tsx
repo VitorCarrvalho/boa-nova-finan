@@ -49,11 +49,9 @@ const SupplierPaymentsTable = ({ payments }: SupplierPaymentsTableProps) => {
         <TableHeader>
           <TableRow>
             <TableHead>Data</TableHead>
-            <TableHead>Fornecedor</TableHead>
             <TableHead>Valor</TableHead>
             <TableHead>Método</TableHead>
             <TableHead>Categoria</TableHead>
-            <TableHead>Pastor Responsável</TableHead>
             <TableHead>Congregação</TableHead>
             <TableHead>Descrição</TableHead>
           </TableRow>
@@ -65,21 +63,17 @@ const SupplierPaymentsTable = ({ payments }: SupplierPaymentsTableProps) => {
                 {format(new Date(payment.created_at), 'dd/MM/yyyy', { locale: ptBR })}
               </TableCell>
               <TableCell className="font-medium">
-                {payment.suppliers?.name || 'N/A'}
-              </TableCell>
-              <TableCell className="font-medium">
                 R$ {payment.amount.toFixed(2).replace('.', ',')}
               </TableCell>
               <TableCell>{getPaymentMethodLabel(payment.method)}</TableCell>
               <TableCell>{getCategoryLabel(payment.category)}</TableCell>
-              <TableCell>{payment.members?.name || 'N/A'}</TableCell>
               <TableCell>{getCongregationName(payment.congregation_id)}</TableCell>
               <TableCell>{payment.description || '-'}</TableCell>
             </TableRow>
           ))}
           {payments.length === 0 && (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                 Nenhum pagamento encontrado
               </TableCell>
             </TableRow>
