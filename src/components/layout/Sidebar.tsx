@@ -16,11 +16,14 @@ import {
   Church,
   Calculator,
   Camera,
-  BarChart3
+  BarChart3,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const Sidebar = () => {
   const { signOut, userRole, user } = useAuth();
@@ -29,6 +32,7 @@ const Sidebar = () => {
   const { toast } = useToast();
   const [uploading, setUploading] = React.useState(false);
   const [profileData, setProfileData] = React.useState<{ name: string; photo_url: string | null } | null>(null);
+  const [reportsOpen, setReportsOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (user) {
@@ -186,17 +190,20 @@ const Sidebar = () => {
       requiresCongregationAccess: true
     },
     {
-      title: 'Relatórios',
-      icon: BarChart3,
-      href: '/relatorios',
-      roles: ['superadmin', 'admin', 'finance', 'pastor']
-    },
-    {
       title: 'Fornecedores',
       icon: Truck,
       href: '/fornecedores',
       roles: ['superadmin', 'admin', 'finance']
     }
+  ];
+
+  // Report submenus in alphabetical order
+  const reportSubmenus = [
+    { title: 'Eventos', href: '/relatorios/eventos' },
+    { title: 'Financeiro', href: '/relatorios/financeiro' },
+    { title: 'Fornecedores', href: '/relatorios/fornecedores' },
+    { title: 'Membros', href: '/relatorios/membros' },
+    { title: 'Conciliações', href: '/relatorios/conciliacoes' }
   ];
 
   const visibleItems = menuItems.filter(item => {
@@ -226,6 +233,9 @@ const Sidebar = () => {
     return true;
   });
 
+  // Check if user can access reports
+  const canAccessReports = userRole && ['superadmin', 'admin', 'finance', 'pastor'].includes(userRole);
+
   if (!user || !profileData) {
     return (
       <div className="w-64 bg-white border-r border-gray-200 min-h-screen flex items-center justify-center">
@@ -238,7 +248,7 @@ const Sidebar = () => {
     <div className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
       {/* User Info Section */}
       <div className="p-4 border-b border-gray-200">
-        <h1 className="text-lg font-bold text-gray-900 mb-3">Gestor IPTM</h1>
+        <h1 className="text-lg font-bold text-gray-900 mb-3">Gestor iptm</h1>
         
         <div className="flex items-center gap-3">
           {/* Profile Picture with Upload */}
@@ -306,6 +316,48 @@ const Sidebar = () => {
             </Link>
           );
         })}
+
+        {/* Reports Collapsible Menu */}
+        {canAccessReports && (
+          <Collapsible open={reportsOpen} onOpenChange={setReportsOpen}>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                className={`w-full justify-start text-gray-700 hover:bg-gray-100 ${
+                  location.pathname.startsWith('/relatorios') ? 'bg-red-50 text-red-600' : ''
+                }`}
+              >
+                <BarChart3 className="mr-3 h-4 w-4" />
+                Relatórios
+                {reportsOpen ? (
+                  <ChevronDown className="ml-auto h-4 w-4" />
+                ) : (
+                  <ChevronRight className="ml-auto h-4 w-4" />
+                )}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="ml-4 space-y-1">
+              {reportSubmenus.map((submenu) => {
+                const isActive = location.pathname === submenu.href;
+                return (
+                  <Link key={submenu.href} to={submenu.href}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`w-full justify-start text-sm ${
+                        isActive 
+                          ? 'bg-red-600 text-white hover:bg-red-700' 
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {submenu.title}
+                    </Button>
+                  </Link>
+                );
+              })}
+            </CollapsibleContent>
+          </Collapsible>
+        )}
       </nav>
 
       {/* Bottom Actions */}

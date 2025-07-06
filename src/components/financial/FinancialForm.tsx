@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useSuppliers } from '@/hooks/useSupplierData';
+import { useQuery } from '@tanstack/react-query';
 import { Database } from '@/integrations/supabase/types';
 
 type TransactionType = Database['public']['Enums']['transaction_type'];
@@ -20,8 +22,9 @@ interface FinancialFormProps {
 }
 
 const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const { toast } = useToast();
+  const { data: suppliers } = useSuppliers();
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -32,8 +35,64 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
     event_type: '',
     event_date: '',
     attendees: '',
-    description: ''
+    description: '',
+    supplier_id: '',
+    responsible_pastor_id: ''
   });
+
+  // Fetch pastors for selection
+  const { data: pastors } = useQuery({
+    queryKey: ['pastors'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('members')
+        .select('id, name, email')
+        .eq('role', 'pastor')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch current user's pastor profile if they are a pastor
+  const { data: currentUserPastor } = useQuery({
+    queryKey: ['current-user-pastor', user?.id],
+    queryFn: async () => {
+      if (!user?.id || userRole !== 'pastor') return null;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.email) return null;
+
+      const { data: pastor, error } = await supabase
+        .from('members')
+        .select('id, name, email')
+        .eq('email', profile.email)
+        .eq('role', 'pastor')
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (error) throw error;
+      return pastor;
+    },
+    enabled: !!user?.id && userRole === 'pastor',
+  });
+
+  // Set default pastor if user is a pastor
+  React.useEffect(() => {
+    if (currentUserPastor && userRole === 'pastor') {
+      setFormData(prev => ({
+        ...prev,
+        responsible_pastor_id: currentUserPastor.id
+      }));
+    }
+  }, [currentUserPastor, userRole]);
 
   const categoryOptions = {
     income: [
@@ -65,28 +124,56 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
     e.preventDefault();
     if (!user) return;
 
+    // Validation
+    if (formData.type === 'expense' && !formData.supplier_id) {
+      toast({
+        title: "Erro",
+        description: "Fornecedor é obrigatório para despesas.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.responsible_pastor_id) {
+      toast({
+        title: "Erro",
+        description: "Pastor responsável é obrigatório.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
+      const insertData: any = {
+        type: formData.type,
+        category: formData.category,
+        amount: parseFloat(formData.amount),
+        method: formData.method,
+        event_type: formData.event_type || null,
+        event_date: formData.event_date || null,
+        attendees: formData.attendees ? parseInt(formData.attendees) : null,
+        description: formData.description || null,
+        created_by: user.id,
+        responsible_pastor_id: formData.responsible_pastor_id,
+        congregation_id: '00000000-0000-0000-0000-000000000100' // Default to headquarters
+      };
+
+      // Add supplier_id only for expenses
+      if (formData.type === 'expense' && formData.supplier_id) {
+        insertData.supplier_id = formData.supplier_id;
+      }
+
       const { error } = await supabase
         .from('financial_records')
-        .insert([{
-          type: formData.type,
-          category: formData.category,
-          amount: parseFloat(formData.amount),
-          method: formData.method,
-          event_type: formData.event_type || null,
-          event_date: formData.event_date || null,
-          attendees: formData.attendees ? parseInt(formData.attendees) : null,
-          description: formData.description || null,
-          created_by: user.id
-        }]);
+        .insert([insertData]);
 
       if (error) throw error;
 
       toast({
-        title: "Registro financeiro criado",
-        description: "O registro foi adicionado com sucesso!",
+        title: "Sucesso",
+        description: "Registro financeiro criado com sucesso!",
       });
 
       // Reset form
@@ -98,7 +185,9 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
         event_type: '',
         event_date: '',
         attendees: '',
-        description: ''
+        description: '',
+        supplier_id: '',
+        responsible_pastor_id: userRole === 'pastor' && currentUserPastor ? currentUserPastor.id : ''
       });
 
       onSuccess();
@@ -114,6 +203,9 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
   };
 
   const availableCategories = formData.type ? categoryOptions[formData.type] || [] : [];
+  const showSupplierField = formData.type === 'expense';
+  const isCurrentUserPastor = userRole === 'pastor';
+  const availablePastors = isCurrentUserPastor && currentUserPastor ? [currentUserPastor] : pastors || [];
 
   return (
     <Card>
@@ -129,14 +221,14 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
             <div className="space-y-2">
               <Label htmlFor="type">Tipo *</Label>
               <Select value={formData.type} onValueChange={(value) => 
-                setFormData({ ...formData, type: value as TransactionType, category: '' as FinancialCategory })
+                setFormData({ ...formData, type: value as TransactionType, category: '' as FinancialCategory, supplier_id: '' })
               }>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="income">Entrada</SelectItem>
-                  <SelectItem value="expense">Saída</SelectItem>
+                  <SelectItem value="income">Receita</SelectItem>
+                  <SelectItem value="expense">Despesa</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -186,6 +278,47 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
                   {paymentMethods.map((method) => (
                     <SelectItem key={method.value} value={method.value}>
                       {method.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {showSupplierField && (
+              <div className="space-y-2">
+                <Label htmlFor="supplier">Fornecedor *</Label>
+                <Select 
+                  value={formData.supplier_id} 
+                  onValueChange={(value) => setFormData({ ...formData, supplier_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o fornecedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suppliers?.map((supplier) => (
+                      <SelectItem key={supplier.id} value={supplier.id}>
+                        {supplier.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="responsible_pastor">Pastor Responsável *</Label>
+              <Select 
+                value={formData.responsible_pastor_id} 
+                onValueChange={(value) => setFormData({ ...formData, responsible_pastor_id: value })}
+                disabled={isCurrentUserPastor}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o pastor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availablePastors.map((pastor) => (
+                    <SelectItem key={pastor.id} value={pastor.id}>
+                      {pastor.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

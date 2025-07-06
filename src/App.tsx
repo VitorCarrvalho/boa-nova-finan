@@ -3,20 +3,28 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import AuthPage from "@/components/auth/AuthPage";
-import Dashboard from "@/pages/Dashboard";
-import Financial from "@/pages/Financial";
-import Members from "@/pages/Members";
-import Events from "@/pages/Events";
-import Ministries from "@/pages/Ministries";
-import Departments from "@/pages/Departments";
-import Congregations from "@/pages/Congregations";
-import Reconciliations from "@/pages/Reconciliations";
-import Reports from "@/pages/Reports";
-import Suppliers from "@/pages/Suppliers";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
+import Members from "./pages/Members";
+import Financial from "./pages/Financial";
+import Events from "./pages/Events";
+import Ministries from "./pages/Ministries";
+import Departments from "./pages/Departments";
+import Congregations from "./pages/Congregations";
+import Reconciliations from "./pages/Reconciliations";
+import Reports from "./pages/Reports";
+import Suppliers from "./pages/Suppliers";
+import NotFound from "./pages/NotFound";
+
+// New report pages
+import FinancialReports from "./pages/reports/FinancialReports";
+import MembersReports from "./pages/reports/MembersReports";
+import EventsReports from "./pages/reports/EventsReports";
+import ReconciliationsReports from "./pages/reports/ReconciliationsReports";
+import SuppliersReports from "./pages/reports/SuppliersReports";
 
 const queryClient = new QueryClient();
 
@@ -28,65 +36,83 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
             } />
-            <Route path="/financeiro" element={
-              <ProtectedRoute requiredRoles={['superadmin', 'admin', 'finance']}>
-                <Financial />
-              </ProtectedRoute>
-            } />
             <Route path="/membros" element={
-              <ProtectedRoute requiredRoles={['superadmin', 'admin', 'pastor', 'worker']}>
+              <ProtectedRoute>
                 <Members />
               </ProtectedRoute>
             } />
+            <Route path="/financeiro" element={
+              <ProtectedRoute>
+                <Financial />
+              </ProtectedRoute>
+            } />
             <Route path="/eventos" element={
-              <ProtectedRoute requiredRoles={['superadmin', 'admin', 'pastor']}>
+              <ProtectedRoute>
                 <Events />
               </ProtectedRoute>
             } />
             <Route path="/ministerios" element={
-              <ProtectedRoute requiredRoles={['superadmin', 'admin', 'pastor']}>
+              <ProtectedRoute>
                 <Ministries />
               </ProtectedRoute>
             } />
             <Route path="/departamentos" element={
-              <ProtectedRoute requiredRoles={['superadmin', 'admin', 'pastor']}>
+              <ProtectedRoute>
                 <Departments />
               </ProtectedRoute>
             } />
             <Route path="/congregacoes" element={
-              <ProtectedRoute 
-                requiredRoles={['superadmin', 'admin', 'pastor']}
-                requiresCongregationAccess={true}
-              >
+              <ProtectedRoute>
                 <Congregations />
               </ProtectedRoute>
             } />
             <Route path="/conciliacoes" element={
-              <ProtectedRoute 
-                requiredRoles={['superadmin', 'admin', 'finance', 'pastor']}
-                requiresCongregationAccess={true}
-              >
+              <ProtectedRoute>
                 <Reconciliations />
               </ProtectedRoute>
             } />
             <Route path="/relatorios" element={
-              <ProtectedRoute requiredRoles={['superadmin', 'admin', 'finance', 'pastor']}>
+              <ProtectedRoute>
                 <Reports />
               </ProtectedRoute>
             } />
+            <Route path="/relatorios/financeiro" element={
+              <ProtectedRoute>
+                <FinancialReports />
+              </ProtectedRoute>
+            } />
+            <Route path="/relatorios/membros" element={
+              <ProtectedRoute>
+                <MembersReports />
+              </ProtectedRoute>
+            } />
+            <Route path="/relatorios/eventos" element={
+              <ProtectedRoute>
+                <EventsReports />
+              </ProtectedRoute>
+            } />
+            <Route path="/relatorios/conciliacoes" element={
+              <ProtectedRoute>
+                <ReconciliationsReports />
+              </ProtectedRoute>
+            } />
+            <Route path="/relatorios/fornecedores" element={
+              <ProtectedRoute>
+                <SuppliersReports />
+              </ProtectedRoute>
+            } />
             <Route path="/fornecedores" element={
-              <ProtectedRoute requiredRoles={['superadmin', 'admin', 'finance']}>
+              <ProtectedRoute>
                 <Suppliers />
               </ProtectedRoute>
             } />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
