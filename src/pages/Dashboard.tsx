@@ -23,12 +23,12 @@ const Dashboard = () => {
     }).format(amount);
   };
 
-  // Calculate general monthly revenue (sede + approved reconciliations)
+  // Calculate general monthly revenue (sede financial records + approved reconciliations)
   const generalMonthlyRevenue = (financialStats?.totalIncome || 0) + (reconciliationStats?.totalApprovedAmount || 0);
 
   const statsCards = [
     {
-      title: 'Receita do Mês',
+      title: 'Receita do Mês (Sede)',
       value: financialStats ? formatCurrency(financialStats.totalIncome) : 'R$ 0,00',
       icon: DollarSign,
       color: 'text-green-600',
@@ -36,7 +36,7 @@ const Dashboard = () => {
       show: ['superadmin', 'admin', 'finance'].includes(userRole || '')
     },
     {
-      title: 'Saldo Disponível',
+      title: 'Saldo Disponível (Sede)',
       value: financialStats ? formatCurrency(financialStats.balance) : 'R$ 0,00',
       icon: TrendingUp,
       color: financialStats && financialStats.balance >= 0 ? 'text-green-600' : 'text-red-600',
@@ -45,7 +45,7 @@ const Dashboard = () => {
     },
     {
       title: 'Conciliações Aprovadas',
-      value: reconciliationStats?.approvedThisMonth || '0',
+      value: reconciliationStats?.approvedThisMonth?.toString() || '0',
       icon: CheckCircle,
       color: 'text-green-600',
       description: `${formatCurrency(reconciliationStats?.totalApprovedAmount || 0)} em valores`,
@@ -53,7 +53,7 @@ const Dashboard = () => {
     },
     {
       title: 'Conciliações Pendentes',
-      value: reconciliationStats?.pendingThisMonth || '0',
+      value: reconciliationStats?.pendingThisMonth?.toString() || '0',
       icon: Clock,
       color: 'text-yellow-600',
       description: `${formatCurrency(reconciliationStats?.totalPendingAmount || 0)} aguardando`,
@@ -69,7 +69,7 @@ const Dashboard = () => {
     },
     {
       title: 'Total de Membros',
-      value: memberStats?.totalMembers || '0',
+      value: memberStats?.totalMembers?.toString() || '0',
       icon: Users,
       color: 'text-blue-600',
       description: 'Membros cadastrados',
@@ -77,7 +77,7 @@ const Dashboard = () => {
     },
     {
       title: 'Membros Ativos',
-      value: memberStats?.activeMembers || '0',
+      value: memberStats?.activeMembers?.toString() || '0',
       icon: Calendar,
       color: 'text-green-600',
       description: 'Membros ativos',

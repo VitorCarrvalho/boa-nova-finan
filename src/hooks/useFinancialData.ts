@@ -24,11 +24,18 @@ export const useFinancialStats = () => {
   return useQuery({
     queryKey: ['financial-stats'],
     queryFn: async () => {
+      // Query only records for headquarters (congregation_id = 100 or null for sede)
       const { data: records, error } = await supabase
         .from('financial_records')
-        .select('*');
+        .select('*')
+        .or('congregation_id.is.null,congregation_id.eq.100');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching financial records:', error);
+        throw error;
+      }
+
+      console.log('Financial records fetched for headquarters:', records);
 
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
@@ -48,7 +55,7 @@ export const useFinancialStats = () => {
 
       const balance = totalIncome - totalExpense;
 
-      // Dados para gráfico por categoria
+      // Dados para gráfico por categoria (todos os registros da sede)
       const categoryData = records.reduce((acc: any, record) => {
         const category = record.category;
         if (!acc[category]) {
@@ -57,6 +64,14 @@ export const useFinancialStats = () => {
         acc[category] += Number(record.amount);
         return acc;
       }, {});
+
+      console.log('Financial stats calculated:', {
+        totalIncome,
+        totalExpense,
+        balance,
+        totalRecords: records.length,
+        thisMonthRecords: thisMonthRecords.length
+      });
 
       return {
         totalIncome,

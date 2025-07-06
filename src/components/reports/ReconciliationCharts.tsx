@@ -1,18 +1,13 @@
 
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, ResponsiveContainer } from 'recharts';
-
-// Mock data - in real implementation, this would come from useQuery
-const mockData = [
-  { month: 'Jan', sede: 15000, congregacao1: 8000, congregacao2: 12000 },
-  { month: 'Fev', sede: 18000, congregacao1: 9500, congregacao2: 11000 },
-  { month: 'Mar', sede: 16000, congregacao1: 7800, congregacao2: 13500 },
-  { month: 'Abr', sede: 20000, congregacao1: 10200, congregacao2: 12800 },
-  { month: 'Mai', sede: 17500, congregacao1: 8900, congregacao2: 14200 },
-  { month: 'Jun', sede: 19000, congregacao1: 9800, congregacao2: 13000 }
-];
+import { useReconciliations } from '@/hooks/useReconciliationData';
+import { useCongregations } from '@/hooks/useCongregationData';
 
 const ReconciliationCharts = () => {
+  const { data: reconciliations, isLoading: reconciliationsLoading } = useReconciliations();
+  const { data: congregations, isLoading: congregationsLoading } = useCongregations();
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -29,7 +24,6 @@ const ReconciliationCharts = () => {
           {payload.map((entry: any, index: number) => (
             <p key={index} style={{ color: entry.color }}>
               {`${entry.dataKey}: ${formatCurrency(entry.value)}`}
-              {/* TODO: Add percentage variation calculation */}
             </p>
           ))}
         </div>
@@ -38,20 +32,94 @@ const ReconciliationCharts = () => {
     return null;
   };
 
+  if (reconciliationsLoading || congregationsLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!reconciliations || !congregations) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8">
+          <p className="text-gray-600">Nenhum dado disponível</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Process data for charts - group by month and congregation
+  const processedData = () => {
+    const monthlyData: { [key: string]: { [key: string]: number } } = {};
+    
+    // Get last 6 months
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const monthKey = date.toISOString().slice(0, 7); // YYYY-MM format
+      const monthLabel = date.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+      months.push({ key: monthKey, label: monthLabel });
+      monthlyData[monthKey] = {};
+    }
+
+    // Initialize data structure
+    congregations.forEach(congregation => {
+      months.forEach(month => {
+        monthlyData[month.key][congregation.name] = 0;
+      });
+    });
+
+    // Populate with reconciliation data
+    reconciliations
+      .filter(rec => rec.status === 'approved')
+      .forEach(reconciliation => {
+        const monthKey = reconciliation.month.slice(0, 7); // Extract YYYY-MM
+        const congregation = congregations.find(c => c.id === reconciliation.congregation_id);
+        
+        if (monthlyData[monthKey] && congregation) {
+          monthlyData[monthKey][congregation.name] = (monthlyData[monthKey][congregation.name] || 0) + Number(reconciliation.total_income);
+        }
+      });
+
+    // Convert to chart format
+    return months.map(month => {
+      const dataPoint: any = { month: month.label };
+      congregations.forEach(congregation => {
+        dataPoint[congregation.name] = monthlyData[month.key][congregation.name] || 0;
+      });
+      return dataPoint;
+    });
+  };
+
+  const chartData = processedData();
+  const congregationNames = congregations.map(c => c.name);
+  const colors = ['#dc2626', '#16a34a', '#2563eb', '#ca8a04', '#9333ea', '#ec4899'];
+
   return (
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-medium mb-4">Gráfico de Colunas - Por Mês e Congregação</h3>
         <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={mockData}>
+          <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" />
             <YAxis tickFormatter={formatCurrency} />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
-            <Bar dataKey="sede" fill="#dc2626" name="Sede" />
-            <Bar dataKey="congregacao1" fill="#16a34a" name="Congregação 1" />
-            <Bar dataKey="congregacao2" fill="#2563eb" name="Congregação 2" />
+            {congregationNames.map((name, index) => (
+              <Bar 
+                key={name} 
+                dataKey={name} 
+                fill={colors[index % colors.length]} 
+                name={name} 
+              />
+            ))}
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -59,15 +127,22 @@ const ReconciliationCharts = () => {
       <div>
         <h3 className="text-lg font-medium mb-4">Gráfico de Linha - Histórico por Congregação</h3>
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={mockData}>
+          <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" />
             <YAxis tickFormatter={formatCurrency} />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
-            <Line type="monotone" dataKey="sede" stroke="#dc2626" strokeWidth={2} name="Sede" />
-            <Line type="monotone" dataKey="congregacao1" stroke="#16a34a" strokeWidth={2} name="Congregação 1" />
-            <Line type="monotone" dataKey="congregacao2" stroke="#2563eb" strokeWidth={2} name="Congregação 2" />
+            {congregationNames.map((name, index) => (
+              <Line 
+                key={name}
+                type="monotone" 
+                dataKey={name} 
+                stroke={colors[index % colors.length]} 
+                strokeWidth={2} 
+                name={name} 
+              />
+            ))}
           </LineChart>
         </ResponsiveContainer>
       </div>

@@ -3,32 +3,75 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, FileSpreadsheet } from 'lucide-react';
+import { useReconciliations } from '@/hooks/useReconciliationData';
+import { useCongregations } from '@/hooks/useCongregationData';
+import { toast } from '@/hooks/use-toast';
 
 const ExportControls = () => {
+  const { data: reconciliations } = useReconciliations();
+  const { data: congregations } = useCongregations();
+
   const handleExportCSV = () => {
-    // TODO: Implement CSV export functionality
-    console.log('Exporting to CSV...');
+    if (!reconciliations || !congregations) {
+      toast({
+        title: 'Erro',
+        description: 'Dados não disponíveis para exportação.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    console.log('Exporting real data to CSV...');
     
-    // Mock CSV data structure
-    const csvHeaders = [
-      'Congregação',
-      'Janeiro', 'Janeiro (%)',
-      'Fevereiro', 'Fevereiro (%)',
-      'Março', 'Março (%)',
-      'Abril', 'Abril (%)',
-      'Maio', 'Maio (%)',
-      'Junho', 'Junho (%)'
-    ];
-    
-    const csvData = [
-      ['Sede', '15000', '0%', '18000', '20%', '16000', '-11%', '20000', '25%', '17500', '-12.5%', '19000', '8.6%'],
-      ['Congregação 1', '8000', '0%', '9500', '18.8%', '7800', '-17.9%', '10200', '30.8%', '8900', '-12.7%', '9800', '10.1%'],
-      ['Congregação 2', '12000', '0%', '11000', '-8.3%', '13500', '22.7%', '12800', '-5.2%', '14200', '10.9%', '13000', '-8.5%']
-    ];
+    // Get last 6 months
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const monthKey = date.toISOString().slice(0, 7); // YYYY-MM format
+      const monthLabel = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      months.push({ key: monthKey, label: monthLabel });
+    }
+
+    // Process data by congregation and month
+    const csvData: string[][] = [];
+    const csvHeaders = ['Congregação', ...months.flatMap(m => [m.label, `${m.label} (%)`])];
+    csvData.push(csvHeaders);
+
+    congregations.forEach(congregation => {
+      const row = [congregation.name];
+      let previousValue = 0;
+
+      months.forEach((month, monthIndex) => {
+        const monthlyTotal = reconciliations
+          .filter(rec => 
+            rec.status === 'approved' && 
+            rec.congregation_id === congregation.id &&
+            rec.month.startsWith(month.key)
+          )
+          .reduce((sum, rec) => sum + Number(rec.total_income || 0), 0);
+
+        row.push(monthlyTotal.toString());
+
+        // Calculate percentage change
+        let percentageChange = '0%';
+        if (monthIndex > 0 && previousValue > 0) {
+          const change = ((monthlyTotal - previousValue) / previousValue) * 100;
+          percentageChange = `${change.toFixed(1)}%`;
+        } else if (monthIndex === 0) {
+          percentageChange = '0%';
+        }
+        
+        row.push(percentageChange);
+        previousValue = monthlyTotal;
+      });
+
+      csvData.push(row);
+    });
     
     // Create CSV content
-    const csvContent = [csvHeaders, ...csvData]
-      .map(row => row.join(','))
+    const csvContent = csvData
+      .map(row => row.map(cell => `"${cell}"`).join(','))
       .join('\n');
     
     // Download CSV
@@ -41,6 +84,11 @@ const ExportControls = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    toast({
+      title: 'Exportação concluída',
+      description: 'O arquivo CSV foi baixado com sucesso.',
+    });
   };
 
   return (
@@ -61,7 +109,7 @@ const ExportControls = () => {
             Exportar CSV
           </Button>
           
-          <Button variant="outline">
+          <Button variant="outline" disabled>
             <Download className="h-4 w-4 mr-2" />
             Exportar PDF
           </Button>
@@ -70,10 +118,10 @@ const ExportControls = () => {
         <div className="mt-4 p-4 bg-blue-50 rounded-lg">
           <h4 className="font-medium text-blue-900 mb-2">Formato do CSV:</h4>
           <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Linhas: Congregações</li>
-            <li>• Colunas: Meses com valores e % de crescimento</li>
-            <li>• Dados agrupados (não registros individuais)</li>
-            <li>• Histórico dos últimos 6 meses</li>
+            <li>• Linhas: Congregações registradas no sistema</li>
+            <li>• Colunas: Últimos 6 meses com valores e % de crescimento</li>
+            <li>• Dados das conciliações aprovadas</li>
+            <li>• Valores reais do banco de dados</li>
           </ul>
         </div>
       </CardContent>
