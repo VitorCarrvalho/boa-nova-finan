@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
@@ -239,7 +238,7 @@ const Sidebar = () => {
     <div className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
       {/* User Info Section */}
       <div className="p-4 border-b border-gray-200">
-        <h1 className="text-lg font-bold text-gray-900 mb-3">Sistema IPTM</h1>
+        <h1 className="text-lg font-bold text-gray-900 mb-3">Gestor IPTM</h1>
         
         <div className="flex items-center gap-3">
           {/* Profile Picture with Upload */}
