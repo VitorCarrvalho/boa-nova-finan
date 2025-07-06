@@ -31,18 +31,43 @@ export const useFinancialStats = () => {
   return useQuery({
     queryKey: ['financial-stats'],
     queryFn: async () => {
-      // Query records for headquarters (congregation_id matches the headquarters UUID)
-      const { data: records, error } = await supabase
-        .from('financial_records')
-        .select('*')
-        .eq('congregation_id', '00000000-0000-0000-0000-000000000100');
+      // First, get the headquarters congregation ID
+      const { data: headquarters, error: hqError } = await supabase
+        .from('congregations')
+        .select('id')
+        .eq('name', 'Sede')
+        .maybeSingle();
+
+      if (hqError) {
+        console.error('Error fetching headquarters:', hqError);
+      }
+
+      // Use headquarters ID if found, otherwise get all records
+      const query = supabase.from('financial_records').select('*');
+      
+      if (headquarters?.id) {
+        query.eq('congregation_id', headquarters.id);
+      }
+
+      const { data: records, error } = await query;
 
       if (error) {
         console.error('Error fetching financial records:', error);
         throw error;
       }
 
-      console.log('Financial records fetched for headquarters:', records);
+      console.log('Financial records fetched:', records?.length || 0, 'records');
+
+      if (!records || records.length === 0) {
+        return {
+          totalIncome: 0,
+          totalExpense: 0,
+          balance: 0,
+          totalRecords: 0,
+          categoryData: {},
+          thisMonthRecords: 0
+        };
+      }
 
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
@@ -62,7 +87,7 @@ export const useFinancialStats = () => {
 
       const balance = totalIncome - totalExpense;
 
-      // Dados para gráfico por categoria (todos os registros da sede)
+      // Dados para gráfico por categoria (todos os registros)
       const categoryData = records.reduce((acc: any, record) => {
         const category = record.category;
         if (!acc[category]) {

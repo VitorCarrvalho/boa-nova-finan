@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -36,7 +37,23 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
     attendees: '',
     description: '',
     supplier_id: '',
-    responsible_pastor_id: ''
+    responsible_pastor_id: '',
+    congregation_id: ''
+  });
+
+  // Fetch congregations for selection
+  const { data: congregations } = useQuery({
+    queryKey: ['congregations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('congregations')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      return data;
+    },
   });
 
   // Fetch pastors for selection
@@ -83,7 +100,18 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
     enabled: !!user?.id && userRole === 'pastor',
   });
 
-  // Set default pastor if user is a pastor
+  // Set default values when data loads
+  React.useEffect(() => {
+    if (congregations && congregations.length > 0 && !formData.congregation_id) {
+      // Find headquarters or use first congregation
+      const headquarters = congregations.find(c => c.name === 'Sede');
+      setFormData(prev => ({
+        ...prev,
+        congregation_id: headquarters?.id || congregations[0].id
+      }));
+    }
+  }, [congregations, formData.congregation_id]);
+
   React.useEffect(() => {
     if (currentUserPastor && userRole === 'pastor') {
       setFormData(prev => ({
@@ -124,6 +152,15 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
     if (!user) return;
 
     // Validation
+    if (!formData.congregation_id) {
+      toast({
+        title: "Erro",
+        description: "Congregação é obrigatória.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (formData.type === 'expense' && formData.category === 'supplier' && !formData.supplier_id) {
       toast({
         title: "Erro",
@@ -156,7 +193,7 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
         description: formData.description || null,
         created_by: user.id,
         responsible_pastor_id: formData.responsible_pastor_id,
-        congregation_id: '00000000-0000-0000-0000-000000000100' // Default to headquarters
+        congregation_id: formData.congregation_id
       };
 
       // Add supplier_id only for supplier category expenses
@@ -164,11 +201,16 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
         insertData.supplier_id = formData.supplier_id;
       }
 
+      console.log('Inserting financial record:', insertData);
+
       const { error } = await supabase
         .from('financial_records')
         .insert([insertData]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error inserting financial record:', error);
+        throw error;
+      }
 
       toast({
         title: "Sucesso",
@@ -176,6 +218,7 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
       });
 
       // Reset form
+      const defaultCongregationId = congregations?.find(c => c.name === 'Sede')?.id || congregations?.[0]?.id || '';
       setFormData({
         type: '' as TransactionType,
         category: '' as FinancialCategory,
@@ -186,14 +229,16 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
         attendees: '',
         description: '',
         supplier_id: '',
-        responsible_pastor_id: userRole === 'pastor' && currentUserPastor ? currentUserPastor.id : ''
+        responsible_pastor_id: userRole === 'pastor' && currentUserPastor ? currentUserPastor.id : '',
+        congregation_id: defaultCongregationId
       });
 
       onSuccess();
     } catch (error: any) {
+      console.error('Full error details:', error);
       toast({
         title: "Erro ao criar registro",
-        description: error.message,
+        description: error.message || "Erro desconhecido ao salvar o registro.",
         variant: "destructive",
       });
     } finally {
@@ -217,6 +262,25 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="congregation">Congregação *</Label>
+              <Select 
+                value={formData.congregation_id} 
+                onValueChange={(value) => setFormData({ ...formData, congregation_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a congregação" />
+                </SelectTrigger>
+                <SelectContent>
+                  {congregations?.map((congregation) => (
+                    <SelectItem key={congregation.id} value={congregation.id}>
+                      {congregation.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="type">Tipo *</Label>
               <Select value={formData.type} onValueChange={(value) => 
