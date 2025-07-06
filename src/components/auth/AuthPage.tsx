@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -159,7 +158,7 @@ const AuthPage = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-gray-900">
-            Sistema IPTM
+            Gestor iptm
           </CardTitle>
           <CardDescription>
             Sistema de Gestão da Igreja
