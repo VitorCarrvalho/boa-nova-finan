@@ -4,31 +4,45 @@ import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Clock, ArrowLeft, X, Play, Download } from 'lucide-react';
+import { Clock, ArrowLeft, X, PlayCircle, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import type { Database } from '@/integrations/supabase/types';
+
+type NotificationStatus = Database['public']['Enums']['notification_status'];
 
 const ScheduledMessages = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
 
   // Fetch scheduled notifications
   const { data: notifications = [], isLoading } = useQuery({
-    queryKey: ['scheduled-notifications'],
+    queryKey: ['scheduled-notifications', statusFilter, typeFilter],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('notifications')
         .select(`
           *,
           video_library(title)
         `)
-        .eq('delivery_type', 'agendado')
         .in('status', ['scheduled', 'inactive'])
         .order('created_at', { ascending: false });
+
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter as NotificationStatus);
+      }
+
+      if (typeFilter !== 'all') {
+        query = query.eq('message_type', typeFilter);
+      }
       
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     }
@@ -45,7 +59,7 @@ const ScheduledMessages = () => {
 
       toast({
         title: "Sucesso",
-        description: "Notificação cancelada com sucesso."
+        description: "Notificação cancelada com sucesso!"
       });
 
       queryClient.invalidateQueries({ queryKey: ['scheduled-notifications'] });
@@ -70,7 +84,7 @@ const ScheduledMessages = () => {
 
       toast({
         title: "Sucesso",
-        description: "Notificação reativada com sucesso."
+        description: "Notificação reativada com sucesso!"
       });
 
       queryClient.invalidateQueries({ queryKey: ['scheduled-notifications'] });
@@ -175,15 +189,50 @@ const ScheduledMessages = () => {
           </div>
         </div>
 
-        <div className="flex justify-between items-center">
-          <p className="text-sm text-gray-600">
-            {notifications.length} mensagem(ns) agendada(s)
-          </p>
-          <Button onClick={exportToCsv} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Exportar CSV
-          </Button>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Filtros</span>
+              <Button onClick={exportToCsv} variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                Exportar CSV
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Status</label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os status</SelectItem>
+                    <SelectItem value="scheduled">Agendado</SelectItem>
+                    <SelectItem value="inactive">Inativo</SelectItem>
+                    <SelectItem value="cancelled">Cancelado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tipo de Mensagem</label>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os tipos</SelectItem>
+                    <SelectItem value="texto">Texto</SelectItem>
+                    <SelectItem value="texto_com_video">Texto + Vídeo</SelectItem>
+                    <SelectItem value="video">Vídeo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -193,13 +242,13 @@ const ScheduledMessages = () => {
             {isLoading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
-                <p className="mt-2 text-gray-600">Carregando mensagens...</p>
+                <p className="mt-2 text-gray-600">Carregando notificações...</p>
               </div>
             ) : notifications.length === 0 ? (
               <div className="text-center py-8">
                 <Clock className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-600">Nenhuma mensagem agendada</p>
-                <p className="text-sm text-gray-400">Crie uma nova notificação agendada</p>
+                <p className="text-gray-600">Nenhuma notificação agendada</p>
+                <p className="text-sm text-gray-400">As mensagens agendadas aparecerão aqui</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -215,8 +264,8 @@ const ScheduledMessages = () => {
                             {notification.message_type.replace('_', ' + ')}
                           </span>
                           {notification.scheduled_time && (
-                            <span className="text-sm text-blue-600 font-medium">
-                              {notification.scheduled_time}
+                            <span className="text-sm text-orange-600">
+                              🕐 {notification.scheduled_time}
                             </span>
                           )}
                         </div>
@@ -260,12 +309,12 @@ const ScheduledMessages = () => {
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Não</AlertDialogCancel>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                 <AlertDialogAction 
                                   onClick={() => handleCancel(notification.id)}
                                   className="bg-red-600 hover:bg-red-700"
                                 >
-                                  Sim, cancelar
+                                  Confirmar
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -273,13 +322,30 @@ const ScheduledMessages = () => {
                         )}
                         
                         {(notification.status === 'inactive' || notification.status === 'cancelled') && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleReactivate(notification.id)}
-                          >
-                            <Play className="h-4 w-4" />
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <PlayCircle className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Reativar Notificação</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja reativar esta notificação?
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleReactivate(notification.id)}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  Reativar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         )}
                       </div>
                     </div>

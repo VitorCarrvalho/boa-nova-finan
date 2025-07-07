@@ -13,17 +13,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { MessageSquare, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import type { Database } from '@/integrations/supabase/types';
+
+type NotificationType = Database['public']['Enums']['notification_type'];
+type DeliveryType = Database['public']['Enums']['delivery_type'];
+type RecipientProfile = Database['public']['Enums']['recipient_profile'];
 
 const NewNotification = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    messageType: 'texto' as 'texto' | 'texto_com_video' | 'video',
+    messageType: 'texto' as NotificationType,
     messageContent: '',
     videoId: '',
-    deliveryType: 'unico' as 'unico' | 'agendado',
-    recipientProfiles: [] as string[],
+    deliveryType: 'unico' as DeliveryType,
+    recipientProfiles: [] as RecipientProfile[],
     scheduledTime: ''
   });
 
@@ -44,13 +49,13 @@ const NewNotification = () => {
 
   const timeOptions = ['08:00', '12:00', '17:00', '20:00', '22:00'];
   const recipientOptions = [
-    { value: 'pastores', label: 'Pastores' },
-    { value: 'financeiro', label: 'Financeiro' },
-    { value: 'membros', label: 'Membros' },
-    { value: 'todos', label: 'Todos' }
+    { value: 'pastores' as RecipientProfile, label: 'Pastores' },
+    { value: 'financeiro' as RecipientProfile, label: 'Financeiro' },
+    { value: 'membros' as RecipientProfile, label: 'Membros' },
+    { value: 'todos' as RecipientProfile, label: 'Todos' }
   ];
 
-  const handleRecipientChange = (value: string, checked: boolean) => {
+  const handleRecipientChange = (value: RecipientProfile, checked: boolean) => {
     if (checked) {
       setFormData(prev => ({
         ...prev,
@@ -117,6 +122,10 @@ const NewNotification = () => {
         videoInfo = video;
       }
 
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
       // Prepare n8n payload
       const n8nPayload = {
         tipo_disparo: formData.deliveryType,
@@ -125,7 +134,7 @@ const NewNotification = () => {
         id_video: videoInfo?.minio_video_id || null,
         destinatarios: formData.recipientProfiles,
         horario_agendado: formData.deliveryType === 'agendado' ? formData.scheduledTime : null,
-        criado_por: (await supabase.auth.getUser()).data.user?.id,
+        criado_por: user.id,
         criado_em: new Date().toISOString(),
         nome_video: videoInfo?.title || null
       };
@@ -140,7 +149,7 @@ const NewNotification = () => {
           delivery_type: formData.deliveryType,
           recipient_profiles: formData.recipientProfiles,
           scheduled_time: formData.deliveryType === 'agendado' ? formData.scheduledTime : null,
-          created_by: (await supabase.auth.getUser()).data.user?.id,
+          created_by: user.id,
           n8n_payload: n8nPayload,
           status: formData.deliveryType === 'agendado' ? 'scheduled' : 'sent',
           sent_at: formData.deliveryType === 'unico' ? new Date().toISOString() : null
@@ -202,7 +211,7 @@ const NewNotification = () => {
                 <Label htmlFor="messageType">Tipo de Mensagem</Label>
                 <Select 
                   value={formData.messageType} 
-                  onValueChange={(value: 'texto' | 'texto_com_video' | 'video') => 
+                  onValueChange={(value: NotificationType) => 
                     setFormData(prev => ({ ...prev, messageType: value }))
                   }
                 >
@@ -275,7 +284,7 @@ const NewNotification = () => {
                 <Label htmlFor="deliveryType">Tipo de Entrega</Label>
                 <Select 
                   value={formData.deliveryType} 
-                  onValueChange={(value: 'unico' | 'agendado') => 
+                  onValueChange={(value: DeliveryType) => 
                     setFormData(prev => ({ ...prev, deliveryType: value }))
                   }
                 >

@@ -7,16 +7,20 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Send, ArrowLeft, RefreshCw, Download, Filter } from 'lucide-react';
+import { Send, ArrowLeft, RefreshCw, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import type { Database } from '@/integrations/supabase/types';
+
+type NotificationStatus = Database['public']['Enums']['notification_status'];
+type DeliveryType = Database['public']['Enums']['delivery_type'];
 
 const SentHistory = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
 
   // Fetch sent notifications
   const { data: notifications = [], isLoading } = useQuery({
@@ -26,18 +30,17 @@ const SentHistory = () => {
         .from('notifications')
         .select(`
           *,
-          video_library(title),
-          profiles!notifications_created_by_fkey(name)
+          video_library(title)
         `)
         .neq('status', 'scheduled')
         .order('created_at', { ascending: false });
 
       if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
+        query = query.eq('status', statusFilter as NotificationStatus);
       }
 
       if (typeFilter !== 'all') {
-        query = query.eq('delivery_type', typeFilter);
+        query = query.eq('delivery_type', typeFilter as DeliveryType);
       }
       
       const { data, error } = await query;
@@ -57,6 +60,10 @@ const SentHistory = () => {
 
       if (fetchError) throw fetchError;
 
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
       // Create a new notification with the same data
       const { error: insertError } = await supabase
         .from('notifications')
@@ -66,12 +73,12 @@ const SentHistory = () => {
           video_id: originalNotification.video_id,
           delivery_type: 'unico',
           recipient_profiles: originalNotification.recipient_profiles,
-          created_by: (await supabase.auth.getUser()).data.user?.id,
-          n8n_payload: {
+          created_by: user.id,
+          n8n_payload: originalNotification.n8n_payload ? {
             ...originalNotification.n8n_payload,
             tipo_disparo: 'unico',
             criado_em: new Date().toISOString()
-          },
+          } : null,
           status: 'sent',
           sent_at: new Date().toISOString()
         });
@@ -110,8 +117,7 @@ const SentHistory = () => {
       'Conteúdo',
       'Destinatários',
       'Tipo Entrega',
-      'Status',
-      'Criado Por'
+      'Status'
     ];
 
     const csvData = notifications.map(notification => [
@@ -120,8 +126,7 @@ const SentHistory = () => {
       notification.message_content.substring(0, 100) + (notification.message_content.length > 100 ? '...' : ''),
       notification.recipient_profiles.join(', '),
       notification.delivery_type === 'unico' ? 'Único' : 'Agendado',
-      notification.status,
-      notification.profiles?.name || ''
+      notification.status
     ]);
 
     const csvContent = [headers, ...csvData]
@@ -287,9 +292,6 @@ const SentHistory = () => {
                               ? new Date(notification.sent_at).toLocaleDateString('pt-BR')
                               : new Date(notification.created_at).toLocaleDateString('pt-BR')
                             }
-                          </span>
-                          <span>
-                            👤 {notification.profiles?.name || 'N/A'}
                           </span>
                         </div>
 
