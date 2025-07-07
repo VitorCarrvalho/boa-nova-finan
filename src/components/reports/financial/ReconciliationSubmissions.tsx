@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useReconciliations } from '@/hooks/useReconciliationData';
 import { useCongregations } from '@/hooks/useCongregationData';
@@ -107,18 +106,24 @@ const ReconciliationSubmissions = () => {
     doc.text('Relatório Comparativo de Conciliações por Congregação', 20, 20);
     
     doc.setFontSize(10);
-    doc.text(`Usuário: ${user?.email || 'N/A'}`, 20, 35);
-    doc.text(`Data: ${format(currentDate, 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 20, 42);
+    doc.text(`Usuário: ${user?.name || user?.email || 'N/A'}`, 20, 35);
+    doc.text(`Data/Hora: ${format(currentDate, 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 20, 42);
     doc.text('Período: Últimos 6 meses', 20, 49);
 
     // Generate table data for last 6 months
-    if (!reconciliations || !congregations) return;
+    if (!reconciliations || !congregations) {
+      console.error('No data available for PDF generation');
+      return;
+    }
 
     const months = [];
+    const now = new Date();
     for (let i = 5; i >= 0; i--) {
-      const date = new Date();
-      date.setMonth(date.getMonth() - i);
-      months.push(format(date, 'MMM yyyy', { locale: ptBR }));
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        key: format(date, 'yyyy-MM'),
+        label: format(date, 'MMM yyyy', { locale: ptBR })
+      });
     }
 
     const tableData = congregations.map(congregation => {
@@ -128,7 +133,7 @@ const ReconciliationSubmissions = () => {
       months.forEach((month, index) => {
         const reconciliation = reconciliations.find(rec => 
           rec.congregation_id === congregation.id &&
-          format(new Date(rec.month), 'MMM yyyy', { locale: ptBR }) === month &&
+          format(new Date(rec.month), 'yyyy-MM') === month.key &&
           rec.status === 'approved'
         );
 
@@ -149,7 +154,7 @@ const ReconciliationSubmissions = () => {
       return row;
     });
 
-    const headers = ['Congregação', ...months];
+    const headers = ['Congregação', ...months.map(m => m.label)];
     
     (doc as any).autoTable({
       head: [headers],
@@ -265,6 +270,20 @@ const ReconciliationSubmissions = () => {
         </div>
       </div>
 
+      {/* Export Buttons */}
+      <div className="flex justify-end space-x-2">
+        {canDownloadPDF && (
+          <Button onClick={generatePDF} className="bg-red-600 hover:bg-red-700">
+            <FileText className="mr-2 h-4 w-4" />
+            Relatório Comparativo (PDF)
+          </Button>
+        )}
+        <Button onClick={exportToCSV} className="bg-green-600 hover:bg-green-700">
+          <Download className="mr-2 h-4 w-4" />
+          Exportar CSV
+        </Button>
+      </div>
+
       {/* Comparative Chart */}
       <div className="bg-white p-6 rounded-lg border">
         <h3 className="text-lg font-medium mb-4">Gráfico Comparativo por Congregação (Últimos 6 Meses)</h3>
@@ -286,20 +305,6 @@ const ReconciliationSubmissions = () => {
             ))}
           </BarChart>
         </ResponsiveContainer>
-      </div>
-
-      {/* Export Buttons */}
-      <div className="flex justify-end space-x-2">
-        {canDownloadPDF && (
-          <Button onClick={generatePDF} className="bg-red-600 hover:bg-red-700">
-            <FileText className="mr-2 h-4 w-4" />
-            Relatório Comparativo (PDF)
-          </Button>
-        )}
-        <Button onClick={exportToCSV} className="bg-green-600 hover:bg-green-700">
-          <Download className="mr-2 h-4 w-4" />
-          Exportar CSV
-        </Button>
       </div>
 
       {/* Table */}
