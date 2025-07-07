@@ -18,16 +18,19 @@ export const useReconciliationExports = (
     doc.text('Relatório Comparativo de Conciliações por Congregação', 20, 20);
     
     doc.setFontSize(10);
-    doc.text(`Usuário: ${user?.email || 'N/A'}`, 20, 35);
+    doc.text(`Usuário: ${user?.name || user?.email || 'N/A'}`, 20, 35);
     doc.text(`Data/Hora: ${format(currentDate, 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 20, 42);
     doc.text('Período: Últimos 6 meses', 20, 49);
 
     // Generate table data for last 6 months
-    if (!reconciliations || !congregations) {
-      console.error('No data available for PDF generation');
+    if (!reconciliations || !congregations || congregations.length === 0) {
+      doc.setFontSize(12);
+      doc.text('Nenhum dado disponível para gerar o relatório.', 20, 70);
+      doc.save('relatorio-comparativo-conciliacoes.pdf');
       return;
     }
 
+    // Generate months array (last 6 months)
     const months = [];
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
@@ -38,9 +41,10 @@ export const useReconciliationExports = (
       });
     }
 
+    // Generate table data
     const tableData = congregations.map(congregation => {
       const row = [congregation.name];
-      let previousValue = 0;
+      let previousValue = null;
 
       months.forEach((month, index) => {
         const reconciliation = reconciliations.find(rec => 
@@ -49,18 +53,26 @@ export const useReconciliationExports = (
           rec.status === 'approved'
         );
 
-        const currentValue = reconciliation ? Number(reconciliation.total_income) : 0;
-        const valueStr = `R$ ${currentValue.toFixed(2).replace('.', ',')}`;
+        const currentValue = reconciliation ? Number(reconciliation.total_income) || 0 : null;
         
-        if (index > 0 && previousValue > 0) {
-          const growth = ((currentValue - previousValue) / previousValue) * 100;
-          const growthStr = growth >= 0 ? `+${growth.toFixed(1)}%` : `${growth.toFixed(1)}%`;
-          row.push(`${valueStr} (${growthStr})`);
+        if (currentValue !== null) {
+          const valueStr = `R$ ${currentValue.toFixed(2).replace('.', ',')}`;
+          
+          // Calculate growth percentage if we have both current and previous values
+          if (index > 0 && previousValue !== null && previousValue > 0) {
+            const growth = ((currentValue - previousValue) / previousValue) * 100;
+            const growthStr = growth >= 0 ? `+${growth.toFixed(1)}%` : `${growth.toFixed(1)}%`;
+            row.push(`${valueStr} (${growthStr})`);
+          } else {
+            row.push(valueStr);
+          }
+          
+          previousValue = currentValue;
         } else {
-          row.push(valueStr);
+          // No data for this month
+          row.push('');
+          // Don't update previousValue if current month has no data
         }
-        
-        previousValue = currentValue;
       });
 
       return row;
@@ -68,14 +80,29 @@ export const useReconciliationExports = (
 
     const headers = ['Congregação', ...months.map(m => m.label)];
     
+    // Use autoTable to create the table
     (doc as any).autoTable({
       head: [headers],
       body: tableData,
       startY: 60,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [220, 53, 69] },
+      styles: { 
+        fontSize: 8,
+        cellPadding: 2
+      },
+      headStyles: { 
+        fillColor: [220, 53, 69],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      columnStyles: {
+        0: { cellWidth: 40 }, // Congregation name column
+      },
+      margin: { top: 60, left: 20, right: 20 },
+      tableWidth: 'auto',
+      theme: 'striped'
     });
 
+    // Save the PDF
     doc.save('relatorio-comparativo-conciliacoes.pdf');
   };
 
