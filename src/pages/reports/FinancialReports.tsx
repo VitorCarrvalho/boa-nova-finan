@@ -8,6 +8,8 @@ import ReconciliationSubmissions from '@/components/reports/financial/Reconcilia
 import PaymentsToSuppliers from '@/components/reports/financial/PaymentsToSuppliers';
 
 const FinancialReports = () => {
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState('all');
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -34,7 +36,10 @@ const FinancialReports = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <IncomeExpensesByCongregation />
+                <IncomeExpensesByCongregation 
+                  transactionTypeFilter={transactionTypeFilter}
+                  onTransactionTypeChange={setTransactionTypeFilter}
+                />
               </CardContent>
             </Card>
           </TabsContent>

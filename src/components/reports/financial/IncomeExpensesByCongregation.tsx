@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useFinancialRecords } from '@/hooks/useFinancialData';
 import { useCongregations } from '@/hooks/useCongregationData';
@@ -13,7 +12,15 @@ import { Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-const IncomeExpensesByCongregation = () => {
+interface IncomeExpensesByCongregationProps {
+  transactionTypeFilter: string;
+  onTransactionTypeChange: (value: string) => void;
+}
+
+const IncomeExpensesByCongregation = ({ 
+  transactionTypeFilter, 
+  onTransactionTypeChange 
+}: IncomeExpensesByCongregationProps) => {
   const { userRole } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
   const { data: financialRecords, isLoading } = useFinancialRecords();
@@ -40,6 +47,11 @@ const IncomeExpensesByCongregation = () => {
       filtered = filtered.filter(record => 
         assignedIds.includes(record.congregation_id || '')
       );
+    }
+
+    // Apply transaction type filter
+    if (transactionTypeFilter !== 'all') {
+      filtered = filtered.filter(record => record.type === transactionTypeFilter);
     }
 
     // Apply user filters
@@ -150,7 +162,21 @@ const IncomeExpensesByCongregation = () => {
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 p-4 bg-gray-50 rounded-lg">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 p-4 bg-gray-50 rounded-lg">
+        <div>
+          <Label htmlFor="transactionType">Tipo de Transação</Label>
+          <Select value={transactionTypeFilter} onValueChange={onTransactionTypeChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="income">Receita</SelectItem>
+              <SelectItem value="expense">Despesa</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <div>
           <Label htmlFor="congregation">Congregação</Label>
           <Select value={filters.congregationId} onValueChange={(value) => 
