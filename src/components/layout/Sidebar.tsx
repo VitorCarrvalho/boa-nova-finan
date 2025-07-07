@@ -170,6 +170,20 @@ const Sidebar = () => {
       roles: ['superadmin', 'admin', 'pastor']
     },
     {
+      title: 'Conciliações',
+      icon: Calculator,
+      href: '/conciliacoes',
+      roles: ['superadmin', 'admin', 'finance', 'pastor'],
+      requiresCongregationAccess: true
+    },
+    {
+      title: 'Congregações',
+      icon: Church,
+      href: '/congregacoes',
+      roles: ['superadmin', 'admin', 'pastor'],
+      requiresCongregationAccess: true
+    },
+    {
       title: 'Ministérios',
       icon: Heart,
       href: '/ministerios',
@@ -180,20 +194,6 @@ const Sidebar = () => {
       icon: Building2,
       href: '/departamentos',
       roles: ['superadmin', 'admin', 'pastor']
-    },
-    {
-      title: 'Congregações',
-      icon: Church,
-      href: '/congregacoes',
-      roles: ['superadmin', 'admin', 'pastor'],
-      requiresCongregationAccess: true
-    },
-    {
-      title: 'Conciliações',
-      icon: Calculator,
-      href: '/conciliacoes',
-      roles: ['superadmin', 'admin', 'finance', 'pastor'],
-      requiresCongregationAccess: true
     },
     {
       title: 'Fornecedores',
@@ -334,6 +334,48 @@ const Sidebar = () => {
           );
         })}
 
+        {/* Reports Collapsible Menu */}
+        {canAccessReports && (
+          <Collapsible open={reportsOpen} onOpenChange={setReportsOpen}>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                className={`w-full justify-start text-gray-700 hover:bg-gray-100 ${
+                  location.pathname.startsWith('/relatorios') ? 'bg-red-50 text-red-600' : ''
+                }`}
+              >
+                <BarChart3 className="mr-3 h-4 w-4" />
+                Relatórios
+                {reportsOpen ? (
+                  <ChevronDown className="ml-auto h-4 w-4" />
+                ) : (
+                  <ChevronRight className="ml-auto h-4 w-4" />
+                )}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="ml-4 space-y-1">
+              {reportSubmenus.map((submenu) => {
+                const isActive = location.pathname === submenu.href;
+                return (
+                  <Link key={submenu.href} to={submenu.href}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`w-full justify-start text-sm ${
+                        isActive 
+                          ? 'bg-red-600 text-white hover:bg-red-700' 
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {submenu.title}
+                    </Button>
+                  </Link>
+                );
+              })}
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+
         {/* Notifications Collapsible Menu */}
         {canAccessNotifications && (
           <Collapsible open={notificationsOpen} onOpenChange={setNotificationsOpen}>
@@ -369,48 +411,6 @@ const Sidebar = () => {
                       }`}
                     >
                       <Icon className="mr-2 h-3 w-3" />
-                      {submenu.title}
-                    </Button>
-                  </Link>
-                );
-              })}
-            </CollapsibleContent>
-          </Collapsible>
-        )}
-
-        {/* Reports Collapsible Menu */}
-        {canAccessReports && (
-          <Collapsible open={reportsOpen} onOpenChange={setReportsOpen}>
-            <CollapsibleTrigger asChild>
-              <Button
-                variant="ghost"
-                className={`w-full justify-start text-gray-700 hover:bg-gray-100 ${
-                  location.pathname.startsWith('/relatorios') ? 'bg-red-50 text-red-600' : ''
-                }`}
-              >
-                <BarChart3 className="mr-3 h-4 w-4" />
-                Relatórios
-                {reportsOpen ? (
-                  <ChevronDown className="ml-auto h-4 w-4" />
-                ) : (
-                  <ChevronRight className="ml-auto h-4 w-4" />
-                )}
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="ml-4 space-y-1">
-              {reportSubmenus.map((submenu) => {
-                const isActive = location.pathname === submenu.href;
-                return (
-                  <Link key={submenu.href} to={submenu.href}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`w-full justify-start text-sm ${
-                        isActive 
-                          ? 'bg-red-600 text-white hover:bg-red-700' 
-                          : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
                       {submenu.title}
                     </Button>
                   </Link>
