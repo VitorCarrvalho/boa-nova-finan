@@ -2,7 +2,7 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 export const useReconciliationExports = (
   reconciliations: any[], 
@@ -80,8 +80,8 @@ export const useReconciliationExports = (
 
     const headers = ['Congregação', ...months.map(m => m.label)];
     
-    // Use autoTable to create the table
-    (doc as any).autoTable({
+    // Use autoTable to create the table - correct usage
+    autoTable(doc, {
       head: [headers],
       body: tableData,
       startY: 60,
