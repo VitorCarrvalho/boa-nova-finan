@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,7 +20,14 @@ import Reports from "./pages/Reports";
 import Suppliers from "./pages/Suppliers";
 import NotFound from "./pages/NotFound";
 
-// New report pages
+// Notification pages
+import Notifications from "./pages/Notifications";
+import NewNotification from "./pages/notifications/NewNotification";
+import ScheduledMessages from "./pages/notifications/ScheduledMessages";
+import SentHistory from "./pages/notifications/SentHistory";
+import VideoLibrary from "./pages/notifications/VideoLibrary";
+
+// Report pages
 import FinancialReports from "./pages/reports/FinancialReports";
 import MembersReports from "./pages/reports/MembersReports";
 import EventsReports from "./pages/reports/EventsReports";
@@ -78,6 +86,35 @@ const App = () => (
                 <Reconciliations />
               </ProtectedRoute>
             } />
+            
+            {/* Notification routes - Admin only */}
+            <Route path="/notificacoes" element={
+              <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+                <Notifications />
+              </ProtectedRoute>
+            } />
+            <Route path="/notificacoes/nova" element={
+              <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+                <NewNotification />
+              </ProtectedRoute>
+            } />
+            <Route path="/notificacoes/agendadas" element={
+              <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+                <ScheduledMessages />
+              </ProtectedRoute>
+            } />
+            <Route path="/notificacoes/historico" element={
+              <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+                <SentHistory />
+              </ProtectedRoute>
+            } />
+            <Route path="/notificacoes/videos" element={
+              <ProtectedRoute requiredRoles={['admin', 'superadmin']}>
+                <VideoLibrary />
+              </ProtectedRoute>
+            } />
+
+            {/* Report routes */}
             <Route path="/relatorios" element={
               <ProtectedRoute>
                 <Reports />

@@ -18,7 +18,12 @@ import {
   Camera,
   BarChart3,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Bell,
+  MessageSquare,
+  Clock,
+  Send,
+  Video
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,6 +38,7 @@ const Sidebar = () => {
   const [uploading, setUploading] = React.useState(false);
   const [profileData, setProfileData] = React.useState<{ name: string; photo_url: string | null } | null>(null);
   const [reportsOpen, setReportsOpen] = React.useState(false);
+  const [notificationsOpen, setNotificationsOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (user) {
@@ -206,6 +212,14 @@ const Sidebar = () => {
     { title: 'Conciliações', href: '/relatorios/conciliacoes' }
   ];
 
+  // Notification submenus in alphabetical order
+  const notificationSubmenus = [
+    { title: 'Biblioteca de Vídeos', href: '/notificacoes/videos', icon: Video },
+    { title: 'Histórico Enviado', href: '/notificacoes/historico', icon: Send },
+    { title: 'Mensagens Agendadas', href: '/notificacoes/agendadas', icon: Clock },
+    { title: 'Nova Notificação', href: '/notificacoes/nova', icon: MessageSquare }
+  ];
+
   const visibleItems = menuItems.filter(item => {
     // Verificar se o usuário tem o role necessário
     if (!userRole || !item.roles.includes(userRole)) {
@@ -235,6 +249,9 @@ const Sidebar = () => {
 
   // Check if user can access reports
   const canAccessReports = userRole && ['superadmin', 'admin', 'finance', 'pastor'].includes(userRole);
+
+  // Check if user can access notifications (only admins)
+  const canAccessNotifications = userRole && ['superadmin', 'admin'].includes(userRole);
 
   if (!user || !profileData) {
     return (
@@ -316,6 +333,50 @@ const Sidebar = () => {
             </Link>
           );
         })}
+
+        {/* Notifications Collapsible Menu */}
+        {canAccessNotifications && (
+          <Collapsible open={notificationsOpen} onOpenChange={setNotificationsOpen}>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                className={`w-full justify-start text-gray-700 hover:bg-gray-100 ${
+                  location.pathname.startsWith('/notificacoes') ? 'bg-red-50 text-red-600' : ''
+                }`}
+              >
+                <Bell className="mr-3 h-4 w-4" />
+                Notificações
+                {notificationsOpen ? (
+                  <ChevronDown className="ml-auto h-4 w-4" />
+                ) : (
+                  <ChevronRight className="ml-auto h-4 w-4" />
+                )}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="ml-4 space-y-1">
+              {notificationSubmenus.map((submenu) => {
+                const isActive = location.pathname === submenu.href;
+                const Icon = submenu.icon;
+                return (
+                  <Link key={submenu.href} to={submenu.href}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`w-full justify-start text-sm ${
+                        isActive 
+                          ? 'bg-red-600 text-white hover:bg-red-700' 
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Icon className="mr-2 h-3 w-3" />
+                      {submenu.title}
+                    </Button>
+                  </Link>
+                );
+              })}
+            </CollapsibleContent>
+          </Collapsible>
+        )}
 
         {/* Reports Collapsible Menu */}
         {canAccessReports && (

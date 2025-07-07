@@ -412,6 +412,65 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          created_by: string
+          delivery_type: Database["public"]["Enums"]["delivery_type"]
+          error_message: string | null
+          id: string
+          message_content: string
+          message_type: Database["public"]["Enums"]["notification_type"]
+          n8n_payload: Json | null
+          recipient_profiles: Database["public"]["Enums"]["recipient_profile"][]
+          scheduled_time: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["notification_status"]
+          updated_at: string
+          video_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          delivery_type: Database["public"]["Enums"]["delivery_type"]
+          error_message?: string | null
+          id?: string
+          message_content: string
+          message_type: Database["public"]["Enums"]["notification_type"]
+          n8n_payload?: Json | null
+          recipient_profiles: Database["public"]["Enums"]["recipient_profile"][]
+          scheduled_time?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_status"]
+          updated_at?: string
+          video_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          delivery_type?: Database["public"]["Enums"]["delivery_type"]
+          error_message?: string | null
+          id?: string
+          message_content?: string
+          message_type?: Database["public"]["Enums"]["notification_type"]
+          n8n_payload?: Json | null
+          recipient_profiles?: Database["public"]["Enums"]["recipient_profile"][]
+          scheduled_time?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_status"]
+          updated_at?: string
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_library"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -546,6 +605,36 @@ export type Database = {
         }
         Relationships: []
       }
+      video_library: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          minio_video_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean
+          minio_video_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean
+          minio_video_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -557,6 +646,7 @@ export type Database = {
       }
     }
     Enums: {
+      delivery_type: "unico" | "agendado"
       event_type: "culto" | "conferencia" | "reuniao" | "evento_especial"
       financial_category:
         | "tithe"
@@ -571,7 +661,15 @@ export type Database = {
         | "project"
         | "utility"
       member_role: "member" | "worker" | "pastor"
+      notification_status:
+        | "scheduled"
+        | "sent"
+        | "error"
+        | "cancelled"
+        | "inactive"
+      notification_type: "texto" | "texto_com_video" | "video"
       payment_method: "cash" | "coin" | "pix" | "debit" | "credit"
+      recipient_profile: "pastores" | "financeiro" | "membros" | "todos"
       transaction_type: "income" | "expense"
       user_role: "superadmin" | "admin" | "finance" | "pastor" | "worker"
     }
@@ -701,6 +799,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      delivery_type: ["unico", "agendado"],
       event_type: ["culto", "conferencia", "reuniao", "evento_especial"],
       financial_category: [
         "tithe",
@@ -716,7 +815,16 @@ export const Constants = {
         "utility",
       ],
       member_role: ["member", "worker", "pastor"],
+      notification_status: [
+        "scheduled",
+        "sent",
+        "error",
+        "cancelled",
+        "inactive",
+      ],
+      notification_type: ["texto", "texto_com_video", "video"],
       payment_method: ["cash", "coin", "pix", "debit", "credit"],
+      recipient_profile: ["pastores", "financeiro", "membros", "todos"],
       transaction_type: ["income", "expense"],
       user_role: ["superadmin", "admin", "finance", "pastor", "worker"],
     },
