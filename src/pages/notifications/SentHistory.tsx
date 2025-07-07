@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -65,6 +64,14 @@ const SentHistory = () => {
       if (!user) throw new Error('Usuário não autenticado');
 
       // Create a new notification with the same data
+      const newN8nPayload = originalNotification.n8n_payload 
+        ? {
+            ...(originalNotification.n8n_payload as Record<string, any>),
+            tipo_disparo: 'unico',
+            criado_em: new Date().toISOString()
+          }
+        : null;
+
       const { error: insertError } = await supabase
         .from('notifications')
         .insert({
@@ -74,11 +81,7 @@ const SentHistory = () => {
           delivery_type: 'unico',
           recipient_profiles: originalNotification.recipient_profiles,
           created_by: user.id,
-          n8n_payload: originalNotification.n8n_payload ? {
-            ...originalNotification.n8n_payload,
-            tipo_disparo: 'unico',
-            criado_em: new Date().toISOString()
-          } : null,
+          n8n_payload: newN8nPayload,
           status: 'sent',
           sent_at: new Date().toISOString()
         });

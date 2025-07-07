@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import type { Database } from '@/integrations/supabase/types';
 
 type NotificationStatus = Database['public']['Enums']['notification_status'];
+type NotificationType = Database['public']['Enums']['notification_type'];
 
 const ScheduledMessages = () => {
   const { toast } = useToast();
@@ -39,7 +39,7 @@ const ScheduledMessages = () => {
       }
 
       if (typeFilter !== 'all') {
-        query = query.eq('message_type', typeFilter);
+        query = query.eq('message_type', typeFilter as NotificationType);
       }
       
       const { data, error } = await query;
