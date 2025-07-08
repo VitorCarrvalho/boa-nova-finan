@@ -20,12 +20,12 @@ export const useProfilePermissions = (profileId: string) => {
       if (!profileId) return [];
       
       const { data, error } = await supabase
-        .from('profile_permissions')
+        .from('profile_permissions' as any)
         .select('*')
         .eq('profile_id', profileId);
 
       if (error) throw error;
-      return (data || []) as ProfilePermission[];
+      return (data || []) as unknown as ProfilePermission[];
     },
     enabled: !!profileId,
   });
@@ -50,14 +50,14 @@ export const useSaveProfilePermissions = () => {
     }) => {
       // First, delete all existing permissions for this profile
       await supabase
-        .from('profile_permissions')
+        .from('profile_permissions' as any)
         .delete()
         .eq('profile_id', profileId);
 
       // Then insert the new permissions
       if (permissions.length > 0) {
         const { error } = await supabase
-          .from('profile_permissions')
+          .from('profile_permissions' as any)
           .insert(
             permissions.map(p => ({
               profile_id: profileId,
@@ -73,7 +73,7 @@ export const useSaveProfilePermissions = () => {
 
       // Log audit entry
       await supabase
-        .from('permission_audit_logs')
+        .from('permission_audit_logs' as any)
         .insert(
           permissions.map(p => ({
             profile_id: profileId,
