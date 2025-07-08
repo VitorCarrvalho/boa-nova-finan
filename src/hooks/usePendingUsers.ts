@@ -61,8 +61,8 @@ export const useApproveUser = () => {
       queryClient.invalidateQueries({ queryKey: ['pendingUsers'] });
       queryClient.invalidateQueries({ queryKey: ['systemUsers'] });
       toast({
-        title: "Usuário aprovado",
-        description: "O usuário foi aprovado com sucesso!",
+        title: "✅ Usuário aprovado",
+        description: "O usuário foi aprovado com sucesso! Um email de boas-vindas foi enviado com as informações de acesso.",
       });
     },
     onError: (error: any) => {

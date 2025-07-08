@@ -41,8 +41,8 @@ const PendingApprovals = () => {
 
   const handleApprove = async (userId: string, immediate = false) => {
     if (immediate) {
-      // Get default profile ID (membro)
-      const defaultProfile = accessProfiles?.find(p => p.name === 'membro');
+      // Get default profile ID (Membro)
+      const defaultProfile = accessProfiles?.find(p => p.name === 'Membro');
       await approveUser.mutateAsync({
         userId,
         profileId: defaultProfile?.id || '',
@@ -68,7 +68,7 @@ const PendingApprovals = () => {
 
   const openEditDialog = (user: any) => {
     setSelectedUser(user);
-    const defaultProfile = accessProfiles?.find(p => p.name === 'membro');
+    const defaultProfile = accessProfiles?.find(p => p.name === 'Membro');
     setApprovalData({
       profileId: defaultProfile?.id || '',
       congregationId: user.congregation?.id || '',
@@ -103,7 +103,8 @@ const PendingApprovals = () => {
           Contas a Aprovar
         </CardTitle>
         <CardDescription>
-          Usuários aguardando aprovação para acessar o sistema
+          Usuários aguardando aprovação para acessar o sistema.
+          Após a aprovação, os usuários receberão um email de boas-vindas com as informações de acesso.
         </CardDescription>
       </CardHeader>
       <CardContent>
