@@ -749,7 +749,7 @@ export type Database = {
       approve_user: {
         Args: {
           _user_id: string
-          _role: Database["public"]["Enums"]["user_role"]
+          _profile_id: string
           _congregation_id?: string
           _ministries?: string[]
           _approved_by?: string
