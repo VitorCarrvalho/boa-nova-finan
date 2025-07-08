@@ -3,30 +3,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+export interface SystemUser {
+  id: string;
+  name: string;
+  email: string | null;
+  role: string;
+}
+
 export interface UserProfileAssignment {
   id: string;
   user_id: string;
   profile_id: string;
   assigned_by: string;
   assigned_at: string;
-  profile: {
-    id: string;
-    name: string;
-    description: string | null;
-  };
-  user: {
-    id: string;
-    name: string;
-    email: string | null;
-  };
-}
-
-export interface SystemUser {
-  id: string;
-  name: string;
-  email: string | null;
-  role: string;
-  created_at: string;
 }
 
 export const useSystemUsers = () => {
@@ -35,11 +24,16 @@ export const useSystemUsers = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          id,
+          name,
+          email,
+          role
+        `)
         .order('name');
 
       if (error) throw error;
-      return (data || []) as unknown as SystemUser[];
+      return data || [];
     },
   });
 };
@@ -49,39 +43,37 @@ export const useUserProfileAssignments = () => {
     queryKey: ['user-profile-assignments'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('user_profile_assignments' as any)
+        .from('user_profile_assignments')
         .select(`
           *,
-          profile:access_profiles(id, name, description),
-          user:profiles(id, name, email)
+          profiles!user_profile_assignments_user_id_fkey(name, email),
+          access_profiles!user_profile_assignments_profile_id_fkey(name)
         `);
 
       if (error) throw error;
-      return (data || []) as unknown as UserProfileAssignment[];
+      return data || [];
     },
   });
 };
 
-export const useAssignUserProfile = () => {
+export const useAssignProfileToUser = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ 
-      userId, 
-      profileId 
-    }: { 
-      userId: string; 
-      profileId: string; 
-    }) => {
-      const { error } = await supabase
-        .from('user_profile_assignments' as any)
+    mutationFn: async ({ userId, profileId }: { userId: string; profileId: string }) => {
+      const { data, error } = await supabase
+        .from('user_profile_assignments')
         .insert([{
           user_id: userId,
-          profile_id: profileId
-        }]);
+          profile_id: profileId,
+          assigned_by: (await supabase.auth.getUser()).data.user?.id || ''
+        }])
+        .select()
+        .single();
 
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-profile-assignments'] });
@@ -100,14 +92,14 @@ export const useAssignUserProfile = () => {
   });
 };
 
-export const useRemoveUserProfile = () => {
+export const useRemoveProfileFromUser = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (assignmentId: string) => {
       const { error } = await supabase
-        .from('user_profile_assignments' as any)
+        .from('user_profile_assignments')
         .delete()
         .eq('id', assignmentId);
 
@@ -117,7 +109,7 @@ export const useRemoveUserProfile = () => {
       queryClient.invalidateQueries({ queryKey: ['user-profile-assignments'] });
       toast({
         title: "Sucesso",
-        description: "Atribuição de perfil removida com sucesso!",
+        description: "Perfil removido com sucesso!",
       });
     },
     onError: (error: any) => {
