@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      approval_audit_logs: {
+        Row: {
+          changed_by: string
+          congregation_id: string | null
+          created_at: string
+          id: string
+          ministries: string[] | null
+          new_role: Database["public"]["Enums"]["user_role"] | null
+          new_status: string
+          previous_role: Database["public"]["Enums"]["user_role"] | null
+          previous_status: string | null
+          rejection_reason: string | null
+          user_id: string
+        }
+        Insert: {
+          changed_by: string
+          congregation_id?: string | null
+          created_at?: string
+          id?: string
+          ministries?: string[] | null
+          new_role?: Database["public"]["Enums"]["user_role"] | null
+          new_status: string
+          previous_role?: Database["public"]["Enums"]["user_role"] | null
+          previous_status?: string | null
+          rejection_reason?: string | null
+          user_id: string
+        }
+        Update: {
+          changed_by?: string
+          congregation_id?: string | null
+          created_at?: string
+          id?: string
+          ministries?: string[] | null
+          new_role?: Database["public"]["Enums"]["user_role"] | null
+          new_status?: string
+          previous_role?: Database["public"]["Enums"]["user_role"] | null
+          previous_status?: string | null
+          rejection_reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_audit_logs_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action_type: string
@@ -473,33 +523,59 @@ export type Database = {
       }
       profiles: {
         Row: {
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
+          congregation_id: string | null
           created_at: string
           email: string | null
           id: string
+          ministries: string[] | null
           name: string
           photo_url: string | null
+          rejection_reason: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
         Insert: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          congregation_id?: string | null
           created_at?: string
           email?: string | null
           id: string
+          ministries?: string[] | null
           name: string
           photo_url?: string | null
+          rejection_reason?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Update: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          congregation_id?: string | null
           created_at?: string
           email?: string | null
           id?: string
+          ministries?: string[] | null
           name?: string
           photo_url?: string | null
+          rejection_reason?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reconciliations: {
         Row: {
@@ -640,9 +716,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_user: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["user_role"]
+          _congregation_id?: string
+          _ministries?: string[]
+          _approved_by?: string
+        }
+        Returns: boolean
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
+      }
+      reject_user: {
+        Args: {
+          _user_id: string
+          _rejection_reason?: string
+          _rejected_by?: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

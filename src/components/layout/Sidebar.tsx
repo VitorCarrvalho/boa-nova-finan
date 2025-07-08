@@ -24,7 +24,8 @@ import {
   MessageSquare,
   Clock,
   Send,
-  Video
+  Video,
+  Shield
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -434,19 +435,35 @@ const Sidebar = () => {
       {/* Bottom Actions */}
       <div className="p-4 border-t border-gray-200 space-y-2">
         {canAccessSettings && (
-          <Link to="/configuracoes">
-            <Button
-              variant="ghost"
-              className={`w-full justify-start ${
-                location.pathname.startsWith('/configuracoes') 
-                  ? 'bg-red-600 text-white hover:bg-red-700' 
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <Settings className="mr-3 h-4 w-4" />
-              Configurações
-            </Button>
-          </Link>
+          <>
+            <Link to="/gestao-acessos">
+              <Button
+                variant="ghost"
+                className={`w-full justify-start ${
+                  location.pathname.startsWith('/gestao-acessos') 
+                    ? 'bg-red-600 text-white hover:bg-red-700' 
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <Shield className="mr-3 h-4 w-4" />
+                Gestão de Acessos
+              </Button>
+            </Link>
+            
+            <Link to="/configuracoes">
+              <Button
+                variant="ghost"
+                className={`w-full justify-start ${
+                  location.pathname.startsWith('/configuracoes') 
+                    ? 'bg-red-600 text-white hover:bg-red-700' 
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <Settings className="mr-3 h-4 w-4" />
+                Configurações
+              </Button>
+            </Link>
+          </>
         )}
         
         <Button

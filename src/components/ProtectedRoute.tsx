@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
 import { Navigate, useLocation } from 'react-router-dom';
 
@@ -32,6 +33,27 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Check if user is approved (has access beyond pending status)
+  if (user && userRole === 'worker' && requiredRoles) {
+    // This could be a pending user - we need to check their actual approval status
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <h2 className="text-xl font-semibold mb-2">Acesso não aprovado</h2>
+          <p className="text-muted-foreground mb-4">
+            Seu acesso ainda não foi aprovado. Entre em contato com um administrador do sistema.
+          </p>
+          <Button 
+            onClick={() => window.location.href = '/auth'}
+            variant="outline"
+          >
+            Voltar ao Login
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   if (requiredRoles && userRole && !requiredRoles.includes(userRole)) {

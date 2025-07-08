@@ -23,6 +23,7 @@ import Suppliers from "@/pages/Suppliers";
 import Reports from "@/pages/Reports";
 import Notifications from "@/pages/Notifications";
 import Settings from "@/pages/Settings";
+import AccessManagement from "@/pages/AccessManagement";
 
 // Import notification pages
 import NewNotification from "@/pages/notifications/NewNotification";
@@ -182,6 +183,12 @@ const App = () => (
               <Route path="/configuracoes" element={
                 <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
                   <Settings />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/gestao-acessos" element={
+                <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
+                  <AccessManagement />
                 </ProtectedRoute>
               } />
               

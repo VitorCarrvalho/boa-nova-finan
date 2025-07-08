@@ -5,15 +5,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useCongregations } from '@/hooks/useCongregationData';
 
 const AuthPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [congregation, setCongregation] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, user } = useAuth();
+  const { data: congregations } = useCongregations();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -81,7 +85,7 @@ const AuthPage = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password || !name) {
+    if (!email || !password || !name || !congregation) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha todos os campos.",
@@ -103,7 +107,7 @@ const AuthPage = () => {
     console.log('Tentando fazer cadastro...');
 
     try {
-      const { error } = await signUp(email, password, name);
+      const { error } = await signUp(email, password, name, congregation);
 
       if (error) {
         console.log('Erro no cadastro:', error);
@@ -127,13 +131,14 @@ const AuthPage = () => {
       } else {
         toast({
           title: "Cadastro realizado com sucesso!",
-          description: "Você pode fazer login agora",
+          description: "Seu cadastro está em análise. Em breve um administrador aprovará seu acesso ao sistema.",
         });
         
         // Limpar campos e ir para a aba de login
         setName('');
         setEmail('');
         setPassword('');
+        setCongregation('');
         
         // Mudar para a aba de login
         const loginTab = document.querySelector('[value="signin"]') as HTMLElement;
@@ -232,6 +237,21 @@ const AuthPage = () => {
                     required
                     disabled={loading}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="congregation">Congregação</Label>
+                  <Select value={congregation} onValueChange={setCongregation} disabled={loading}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione sua congregação" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {congregations?.map((cong) => (
+                        <SelectItem key={cong.id} value={cong.id}>
+                          {cong.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Senha</Label>

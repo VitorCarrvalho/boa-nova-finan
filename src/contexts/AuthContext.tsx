@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,7 +9,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   userRole: UserRole | null;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, name: string, congregationId?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   loading: boolean;
@@ -70,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             try {
               const { data: profile, error } = await supabase
                 .from('profiles')
-                .select('role')
+                .select('role, approval_status')
                 .eq('id', session.user.id)
                 .single();
               
@@ -78,7 +77,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 console.log('Erro ao buscar perfil:', error);
                 setUserRole('worker'); // Role padrão
               } else {
-                setUserRole(profile?.role ?? 'worker');
+                // Only set role if user is approved
+                if (profile?.approval_status === 'approved') {
+                  setUserRole(profile?.role ?? 'worker');
+                } else {
+                  setUserRole('worker'); // Pending/rejected users get worker role (no access)
+                }
               }
             } catch (err) {
               console.log('Erro na busca do perfil:', err);
@@ -114,11 +118,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             try {
               const { data: profile } = await supabase
                 .from('profiles')
-                .select('role')
+                .select('role, approval_status')
                 .eq('id', session.user.id)
                 .single();
               
-              setUserRole(profile?.role ?? 'worker');
+              // Only set role if user is approved
+              if (profile?.approval_status === 'approved') {
+                setUserRole(profile?.role ?? 'worker');
+              } else {
+                setUserRole('worker'); // Pending/rejected users get worker role (no access)
+              }
             } catch (err) {
               console.log('Erro ao buscar perfil inicial:', err);
               setUserRole('worker');
@@ -139,7 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (email: string, password: string, name: string, congregationId?: string) => {
     try {
       console.log('Iniciando cadastro para:', email);
       
@@ -154,7 +163,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            name: name
+            name: name,
+            congregation_id: congregationId
           }
         }
       });
