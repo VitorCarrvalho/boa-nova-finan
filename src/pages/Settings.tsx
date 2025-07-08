@@ -2,7 +2,8 @@
 import React from 'react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, Users, Shield, Database } from 'lucide-react';
+import { Users, Shield, Database } from 'lucide-react';
+import UserManagement from '@/components/settings/UserManagement';
 
 const Settings = () => {
   return (
@@ -15,24 +16,10 @@ const Settings = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Usuários
-              </CardTitle>
-              <CardDescription>
-                Gerencie usuários e suas permissões no sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-500">
-                Funcionalidade de gerenciamento de usuários será implementada em breve.
-              </p>
-            </CardContent>
-          </Card>
+        {/* User Management Section */}
+        <UserManagement />
 
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

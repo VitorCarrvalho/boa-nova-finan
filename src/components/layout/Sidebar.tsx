@@ -140,7 +140,13 @@ const Sidebar = () => {
       'admin': 'Administrador',
       'finance': 'Financeiro',
       'pastor': 'Pastor',
-      'worker': 'Obreiro'
+      'worker': 'Obreiro',
+      'assistente': 'Assistente',
+      'analista': 'Analista',
+      'coordenador': 'Coordenador',
+      'gerente': 'Gerente',
+      'diretor': 'Diretor',
+      'presidente': 'Presidente'
     };
     return roleNames[role as keyof typeof roleNames] || role;
   };
@@ -150,7 +156,7 @@ const Sidebar = () => {
       title: 'Dashboard',
       icon: LayoutDashboard,
       href: '/dashboard',
-      roles: ['superadmin', 'admin', 'finance', 'pastor', 'worker']
+      roles: ['superadmin', 'admin', 'finance', 'pastor', 'worker', 'assistente', 'analista', 'coordenador', 'gerente', 'diretor', 'presidente']
     },
     {
       title: 'Financeiro',

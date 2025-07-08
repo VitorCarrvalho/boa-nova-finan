@@ -55,6 +55,12 @@ const MemberForm: React.FC<MemberFormProps> = ({ onSuccess, member }) => {
     'Segurança'
   ];
 
+  const memberRoleDisplayNames = {
+    'member': 'Membro',
+    'worker': 'Obreiro',
+    'pastor': 'Pastor'
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -182,9 +188,11 @@ const MemberForm: React.FC<MemberFormProps> = ({ onSuccess, member }) => {
                   <SelectValue placeholder="Selecione a função" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="member">Membro</SelectItem>
-                  <SelectItem value="worker">Obreiro</SelectItem>
-                  <SelectItem value="pastor">Pastor</SelectItem>
+                  {Object.entries(memberRoleDisplayNames).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

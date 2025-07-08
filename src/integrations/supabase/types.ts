@@ -671,7 +671,18 @@ export type Database = {
       payment_method: "cash" | "coin" | "pix" | "debit" | "credit"
       recipient_profile: "pastores" | "financeiro" | "membros" | "todos"
       transaction_type: "income" | "expense"
-      user_role: "superadmin" | "admin" | "finance" | "pastor" | "worker"
+      user_role:
+        | "superadmin"
+        | "admin"
+        | "finance"
+        | "pastor"
+        | "worker"
+        | "assistente"
+        | "analista"
+        | "coordenador"
+        | "gerente"
+        | "diretor"
+        | "presidente"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -826,7 +837,19 @@ export const Constants = {
       payment_method: ["cash", "coin", "pix", "debit", "credit"],
       recipient_profile: ["pastores", "financeiro", "membros", "todos"],
       transaction_type: ["income", "expense"],
-      user_role: ["superadmin", "admin", "finance", "pastor", "worker"],
+      user_role: [
+        "superadmin",
+        "admin",
+        "finance",
+        "pastor",
+        "worker",
+        "assistente",
+        "analista",
+        "coordenador",
+        "gerente",
+        "diretor",
+        "presidente",
+      ],
     },
   },
 } as const
