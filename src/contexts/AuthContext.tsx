@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUserRole('worker'); // Role padrão
               } else {
                 // Only set role if user is approved
-                if (profile?.approval_status === 'approved') {
+                if (profile?.approval_status === 'ativo') {
                   setUserRole(profile?.role ?? 'worker');
                 } else {
                   setUserRole('worker'); // Pending/rejected users get worker role (no access)
@@ -123,7 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .single();
               
               // Only set role if user is approved
-              if (profile?.approval_status === 'approved') {
+              if (profile?.approval_status === 'ativo') {
                 setUserRole(profile?.role ?? 'worker');
               } else {
                 setUserRole('worker'); // Pending/rejected users get worker role (no access)
@@ -194,6 +194,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         console.log('Erro no login:', error);
         return { error };
+      }
+      
+      // Check user approval status after successful login
+      if (data.user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('approval_status')
+          .eq('id', data.user.id)
+          .single();
+        
+        if (profileError) {
+          console.log('Erro ao verificar status de aprovação:', profileError);
+          return { error: profileError };
+        }
+        
+        if (profile?.approval_status === 'em_analise') {
+          // Sign out the user immediately
+          await supabase.auth.signOut();
+          return { 
+            error: { 
+              message: 'Seu cadastro está em análise. Aguarde aprovação para acessar o sistema.' 
+            } 
+          };
+        } else if (profile?.approval_status === 'rejeitado') {
+          // Sign out the user immediately
+          await supabase.auth.signOut();
+          return { 
+            error: { 
+              message: 'Seu cadastro foi rejeitado. Entre em contato com o administrador.' 
+            } 
+          };
+        }
       }
       
       console.log('Login realizado com sucesso:', data);

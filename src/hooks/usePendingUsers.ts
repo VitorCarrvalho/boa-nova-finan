@@ -22,7 +22,7 @@ export const usePendingUsers = () => {
           *,
           congregation:congregation_id (*)
         `)
-        .eq('approval_status', 'pending')
+        .eq('approval_status', 'em_analise')
         .order('created_at', { ascending: false });
 
       if (error) {

@@ -41,9 +41,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md">
-          <h2 className="text-xl font-semibold mb-2">Acesso não aprovado</h2>
+          <h2 className="text-xl font-semibold mb-2">Seu cadastro está em análise</h2>
           <p className="text-muted-foreground mb-4">
-            Seu acesso ainda não foi aprovado. Entre em contato com um administrador do sistema.
+            Aguarde aprovação para acessar o sistema.
           </p>
           <Button 
             onClick={() => window.location.href = '/auth'}

@@ -9,9 +9,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { CheckCircle, XCircle, Clock, Edit } from 'lucide-react';
 import { usePendingUsers, useApproveUser, useRejectUser } from '@/hooks/usePendingUsers';
-import UserRoleDropdown from '@/components/settings/UserRoleDropdown';
 import { useCongregations } from '@/hooks/useCongregationData';
 import { useMinistries } from '@/hooks/useMinistryData';
+import { useAccessProfiles } from '@/hooks/useAccessProfiles';
 import { Database } from '@/integrations/supabase/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -23,6 +23,7 @@ const PendingApprovals = () => {
   const { data: pendingUsers, isLoading } = usePendingUsers();
   const { data: congregations } = useCongregations();
   const { data: ministries } = useMinistries();
+  const { data: accessProfiles } = useAccessProfiles();
   const approveUser = useApproveUser();
   const rejectUser = useRejectUser();
 
@@ -166,10 +167,27 @@ const PendingApprovals = () => {
                             <div className="space-y-4">
                               <div>
                                 <Label>Perfil</Label>
-                                <UserRoleDropdown
+                                <Select
                                   value={approvalData.role}
-                                  onValueChange={(role) => setApprovalData(prev => ({ ...prev, role }))}
-                                />
+                                  onValueChange={(role) => setApprovalData(prev => ({ ...prev, role: role as UserRole }))}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Selecione o perfil" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {accessProfiles?.map((profile) => {
+                                      const roleValue = profile.name.toLowerCase() === 'admin' ? 'admin' 
+                                        : profile.name.toLowerCase() === 'pastor' ? 'pastor'
+                                        : profile.name.toLowerCase() === 'membro' ? 'worker'
+                                        : 'worker';
+                                      return (
+                                        <SelectItem key={profile.id} value={roleValue}>
+                                          {profile.name}
+                                        </SelectItem>
+                                      );
+                                    })}
+                                  </SelectContent>
+                                </Select>
                               </div>
                               
                               <div>

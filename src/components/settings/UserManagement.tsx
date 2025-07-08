@@ -23,7 +23,7 @@ const UserManagement = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('approval_status', 'approved')
+        .eq('approval_status', 'ativo')
         .order('name');
 
       if (error) throw error;
