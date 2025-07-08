@@ -14,6 +14,28 @@ export interface SystemUserWithMember {
   member: Member;
 }
 
+export const useSystemUsers = () => {
+  return useQuery({
+    queryKey: ['systemUsers'],
+    queryFn: async () => {
+      console.log('Fetching all system users');
+      
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching profiles:', error);
+        throw error;
+      }
+
+      console.log('Profiles fetched:', profiles);
+      return profiles;
+    },
+  });
+};
+
 export const useSystemUsersWithMemberRoles = (memberRoles: Database['public']['Enums']['member_role'][]) => {
   return useQuery({
     queryKey: ['systemUsersWithMemberRoles', memberRoles],
