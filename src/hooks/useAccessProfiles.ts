@@ -18,7 +18,7 @@ export const useAccessProfiles = () => {
     queryKey: ['access-profiles'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('access_profiles')
+        .from('access_profiles' as any)
         .select('*')
         .order('name');
 
@@ -35,7 +35,7 @@ export const useCreateAccessProfile = () => {
   return useMutation({
     mutationFn: async (profile: { name: string; description?: string }) => {
       const { data, error } = await supabase
-        .from('access_profiles')
+        .from('access_profiles' as any)
         .insert([profile])
         .select()
         .single();
@@ -67,7 +67,7 @@ export const useUpdateAccessProfile = () => {
   return useMutation({
     mutationFn: async ({ id, ...updates }: { id: string; name?: string; description?: string }) => {
       const { data, error } = await supabase
-        .from('access_profiles')
+        .from('access_profiles' as any)
         .update(updates)
         .eq('id', id)
         .select()
@@ -100,7 +100,7 @@ export const useDeleteAccessProfile = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('access_profiles')
+        .from('access_profiles' as any)
         .delete()
         .eq('id', id);
 

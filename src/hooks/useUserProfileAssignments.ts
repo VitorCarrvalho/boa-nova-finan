@@ -9,47 +9,34 @@ export interface UserProfileAssignment {
   profile_id: string;
   assigned_by: string;
   assigned_at: string;
-  access_profiles: {
+  profile?: {
+    id: string;
     name: string;
     description: string | null;
   };
 }
 
-export interface UserWithProfiles {
-  id: string;
-  name: string;
-  email: string | null;
-  role: string;
-  user_profile_assignments: UserProfileAssignment[];
-}
-
-export const useUsersWithProfiles = () => {
+export const useUserProfileAssignments = (userId?: string) => {
   return useQuery({
-    queryKey: ['users-with-profiles'],
+    queryKey: ['user-profile-assignments', userId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
+      let query = supabase
+        .from('user_profile_assignments' as any)
         .select(`
-          id,
-          name,
-          email,
-          role,
-          user_profile_assignments (
-            id,
-            profile_id,
-            assigned_by,
-            assigned_at,
-            access_profiles (
-              name,
-              description
-            )
-          )
-        `)
-        .order('name');
+          *,
+          profile:access_profiles(id, name, description)
+        `);
+
+      if (userId) {
+        query = query.eq('user_id', userId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
-      return data as UserWithProfiles[];
+      return data as UserProfileAssignment[];
     },
+    enabled: true,
   });
 };
 
@@ -60,18 +47,20 @@ export const useAssignProfileToUser = () => {
   return useMutation({
     mutationFn: async ({ userId, profileId }: { userId: string; profileId: string }) => {
       const { data, error } = await supabase
-        .from('user_profile_assignments')
+        .from('user_profile_assignments' as any)
         .insert([{
           user_id: userId,
-          profile_id: profileId
+          profile_id: profileId,
+          assigned_by: (await supabase.auth.getUser()).data.user?.id
         }])
-        .select();
+        .select()
+        .single();
 
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users-with-profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['user-profile-assignments'] });
       toast({
         title: "Sucesso",
         description: "Perfil atribuído ao usuário com sucesso!",
@@ -94,7 +83,7 @@ export const useRemoveProfileFromUser = () => {
   return useMutation({
     mutationFn: async ({ userId, profileId }: { userId: string; profileId: string }) => {
       const { error } = await supabase
-        .from('user_profile_assignments')
+        .from('user_profile_assignments' as any)
         .delete()
         .eq('user_id', userId)
         .eq('profile_id', profileId);
@@ -102,7 +91,7 @@ export const useRemoveProfileFromUser = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users-with-profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['user-profile-assignments'] });
       toast({
         title: "Sucesso",
         description: "Perfil removido do usuário com sucesso!",
