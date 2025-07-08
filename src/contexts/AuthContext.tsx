@@ -155,13 +155,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Limpar estado antes do cadastro
       cleanupAuthState();
       
-      const redirectUrl = `${window.location.origin}/`;
-      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: redirectUrl,
           data: {
             name: name,
             congregation_id: congregationId

@@ -9,11 +9,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Edit, Copy, Trash2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useAccessProfiles, useCreateAccessProfile, useUpdateAccessProfile, useDeleteAccessProfile } from '@/hooks/useAccessProfiles';
 
 interface ModulePermission {
   module: string;
-  submodule?: string;
   permissions: {
     view: boolean;
     insert: boolean;
@@ -22,29 +21,7 @@ interface ModulePermission {
   };
 }
 
-interface AccessProfile {
-  id: string;
-  name: string;
-  description: string;
-  permissions: ModulePermission[];
-}
-
-// Sample data - this would come from the database
-const sampleProfiles: AccessProfile[] = [
-  {
-    id: '1',
-    name: 'Admin',
-    description: 'Acesso total ao sistema',
-    permissions: []
-  },
-  {
-    id: '2', 
-    name: 'Pastor',
-    description: 'Acesso pastoral completo',
-    permissions: []
-  }
-];
-
+// System modules configuration
 const systemModules = [
   { name: 'dashboard', label: 'Dashboard' },
   { name: 'financeiro', label: 'Financeiro' },
@@ -60,44 +37,86 @@ const systemModules = [
 ];
 
 const ProfileConfiguration = () => {
-  const [profiles, setProfiles] = useState<AccessProfile[]>(sampleProfiles);
-  const [selectedProfile, setSelectedProfile] = useState<AccessProfile | null>(null);
+  const { data: profiles, isLoading } = useAccessProfiles();
+  const createProfile = useCreateAccessProfile();
+  const updateProfile = useUpdateAccessProfile();
+  const deleteProfile = useDeleteAccessProfile();
+  const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    permissions: systemModules.map(module => ({
-      module: module.name,
-      permissions: { view: false, insert: false, edit: false, delete: false }
-    }))
+    permissions: systemModules.reduce((acc, module) => ({
+      ...acc,
+      [module.name]: { view: false, insert: false, edit: false, delete: false }
+    }), {} as Record<string, any>)
   });
-  const { toast } = useToast();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleCreateProfile = () => {
-    // This would save to the database
-    toast({
-      title: "Perfil criado",
-      description: "O perfil foi criado com sucesso!",
-    });
+  const handleCreateProfile = async () => {
+    try {
+      await createProfile.mutateAsync({
+        name: formData.name,
+        description: formData.description,
+        permissions: formData.permissions
+      });
+      
+      // Reset form and close dialog
+      setFormData({
+        name: '',
+        description: '',
+        permissions: systemModules.reduce((acc, module) => ({
+          ...acc,
+          [module.name]: { view: false, insert: false, edit: false, delete: false }
+        }), {} as Record<string, any>)
+      });
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error('Error creating profile:', error);
+    }
   };
 
-  const handleDuplicateProfile = (profile: AccessProfile) => {
+  const handleDuplicateProfile = (profile: any) => {
     setFormData({
       name: `${profile.name} (Cópia)`,
-      description: profile.description,
-      permissions: profile.permissions
+      description: profile.description || '',
+      permissions: profile.permissions || systemModules.reduce((acc, module) => ({
+        ...acc,
+        [module.name]: { view: false, insert: false, edit: false, delete: false }
+      }), {} as Record<string, any>)
     });
+    setIsDialogOpen(true);
   };
 
-  const handlePermissionChange = (moduleIndex: number, permissionType: string, checked: boolean) => {
+  const handlePermissionChange = (moduleName: string, permissionType: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      permissions: prev.permissions.map((perm, index) => 
-        index === moduleIndex 
-          ? { ...perm, permissions: { ...perm.permissions, [permissionType]: checked } }
-          : perm
-      )
+      permissions: {
+        ...prev.permissions,
+        [moduleName]: {
+          ...prev.permissions[moduleName],
+          [permissionType]: checked
+        }
+      }
     }));
   };
+
+  const handleDeleteProfile = async (profileId: string) => {
+    try {
+      await deleteProfile.mutateAsync(profileId);
+    } catch (error) {
+      console.error('Error deleting profile:', error);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">Carregando perfis...</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -110,9 +129,9 @@ const ProfileConfiguration = () => {
                 Gerencie perfis de acesso e suas permissões
               </CardDescription>
             </div>
-            <Dialog>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button onClick={() => setIsDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Novo Perfil
                 </Button>
@@ -147,7 +166,7 @@ const ProfileConfiguration = () => {
                   <div>
                     <h3 className="text-lg font-medium mb-4">Permissões por Módulo</h3>
                     <div className="space-y-4">
-                      {systemModules.map((module, moduleIndex) => (
+                      {systemModules.map((module) => (
                         <Card key={module.name} className="p-4">
                           <h4 className="font-medium mb-3">{module.label}</h4>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -155,9 +174,9 @@ const ProfileConfiguration = () => {
                               <div key={permission} className="flex items-center space-x-2">
                                 <Checkbox
                                   id={`${module.name}-${permission}`}
-                                  checked={formData.permissions[moduleIndex]?.permissions[permission as 'view' | 'insert' | 'edit' | 'delete'] || false}
+                                  checked={formData.permissions[module.name]?.[permission] || false}
                                   onCheckedChange={(checked) => 
-                                    handlePermissionChange(moduleIndex, permission, checked as boolean)
+                                    handlePermissionChange(module.name, permission, checked as boolean)
                                   }
                                 />
                                 <Label 
@@ -177,8 +196,12 @@ const ProfileConfiguration = () => {
                   </div>
 
                   <div className="flex gap-2 pt-4">
-                    <Button onClick={handleCreateProfile} className="flex-1">
-                      Criar Perfil
+                    <Button 
+                      onClick={handleCreateProfile} 
+                      className="flex-1"
+                      disabled={createProfile.isPending}
+                    >
+                      {createProfile.isPending ? 'Criando...' : 'Criar Perfil'}
                     </Button>
                   </div>
                 </div>
@@ -198,7 +221,7 @@ const ProfileConfiguration = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {profiles.map((profile) => (
+                {profiles?.map((profile) => (
                   <TableRow key={profile.id}>
                     <TableCell className="font-medium">{profile.name}</TableCell>
                     <TableCell>{profile.description}</TableCell>
@@ -217,7 +240,12 @@ const ProfileConfiguration = () => {
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="destructive">
+                        <Button 
+                          size="sm" 
+                          variant="destructive"
+                          onClick={() => handleDeleteProfile(profile.id)}
+                          disabled={deleteProfile.isPending}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>

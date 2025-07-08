@@ -130,8 +130,8 @@ const AuthPage = () => {
         });
       } else {
         toast({
-          title: "Cadastro realizado com sucesso!",
-          description: "Seu cadastro está em análise. Em breve um administrador aprovará seu acesso ao sistema.",
+          title: "Cadastro recebido e está em análise.",
+          description: "Você será notificado após aprovação.",
         });
         
         // Limpar campos e ir para a aba de login

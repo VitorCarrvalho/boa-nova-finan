@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSystemUsers } from '@/hooks/useSystemUsers';
+import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import UserRoleDropdown from './UserRoleDropdown';
@@ -15,18 +16,29 @@ type UserRole = Database['public']['Enums']['user_role'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
 const UserManagement = () => {
-  const { data: users, isLoading, refetch } = useSystemUsers();
+  // Only show approved users
+  const { data: users, isLoading, refetch } = useQuery({
+    queryKey: ['approvedUsers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('approval_status', 'approved')
+        .order('name');
+
+      if (error) throw error;
+      return data;
+    },
+  });
   const { toast } = useToast();
   const [editingUser, setEditingUser] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<{ name: string; role: UserRole }>({
-    name: '',
+  const [editForm, setEditForm] = useState<{ role: UserRole }>({
     role: 'worker'
   });
 
   const handleEditUser = (user: Profile) => {
     setEditingUser(user.id);
     setEditForm({
-      name: user.name,
       role: user.role
     });
   };
@@ -36,7 +48,6 @@ const UserManagement = () => {
       const { error } = await supabase
         .from('profiles')
         .update({
-          name: editForm.name,
           role: editForm.role
         })
         .eq('id', userId);
@@ -61,7 +72,7 @@ const UserManagement = () => {
 
   const handleCancelEdit = () => {
     setEditingUser(null);
-    setEditForm({ name: '', role: 'worker' });
+    setEditForm({ role: 'worker' });
   };
 
   if (isLoading) {
@@ -79,7 +90,7 @@ const UserManagement = () => {
       <CardHeader>
         <CardTitle>Gerenciamento de Usuários</CardTitle>
         <CardDescription>
-          Gerencie os usuários do sistema e suas permissões
+          Gerencie usuários aprovados e seus perfis de acesso
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -88,22 +99,12 @@ const UserManagement = () => {
             <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex-1 space-y-2">
                 {editingUser === user.id ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor={`name-${user.id}`}>Nome</Label>
-                      <Input
-                        id={`name-${user.id}`}
-                        value={editForm.name}
-                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor={`role-${user.id}`}>Cargo</Label>
-                      <UserRoleDropdown
-                        value={editForm.role}
-                        onValueChange={(role) => setEditForm({ ...editForm, role })}
-                      />
-                    </div>
+                  <div>
+                    <Label htmlFor={`role-${user.id}`}>Perfil de Acesso</Label>
+                    <UserRoleDropdown
+                      value={editForm.role}
+                      onValueChange={(role) => setEditForm({ role })}
+                    />
                   </div>
                 ) : (
                   <div>
