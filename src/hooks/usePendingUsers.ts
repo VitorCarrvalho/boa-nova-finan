@@ -43,13 +43,13 @@ export const useApproveUser = () => {
   return useMutation({
     mutationFn: async (params: {
       userId: string;
-      role: Database['public']['Enums']['user_role'];
+      profileId: string;
       congregationId?: string;
       ministries?: string[];
     }) => {
       const { data, error } = await supabase.rpc('approve_user', {
         _user_id: params.userId,
-        _role: params.role,
+        _profile_id: params.profileId,
         _congregation_id: params.congregationId || null,
         _ministries: params.ministries || null,
       });

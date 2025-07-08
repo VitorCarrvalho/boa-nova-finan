@@ -29,11 +29,11 @@ const PendingApprovals = () => {
 
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [approvalData, setApprovalData] = useState<{
-    role: UserRole;
+    profileId: string;
     congregationId: string;
     ministries: string[];
   }>({
-    role: 'worker',
+    profileId: '',
     congregationId: '',
     ministries: []
   });
@@ -41,14 +41,16 @@ const PendingApprovals = () => {
 
   const handleApprove = async (userId: string, immediate = false) => {
     if (immediate) {
+      // Get default profile ID (membro)
+      const defaultProfile = accessProfiles?.find(p => p.name === 'membro');
       await approveUser.mutateAsync({
         userId,
-        role: 'worker',
+        profileId: defaultProfile?.id || '',
       });
     } else {
       await approveUser.mutateAsync({
         userId,
-        role: approvalData.role,
+        profileId: approvalData.profileId,
         congregationId: approvalData.congregationId || undefined,
         ministries: approvalData.ministries.length > 0 ? approvalData.ministries : undefined,
       });
@@ -66,8 +68,9 @@ const PendingApprovals = () => {
 
   const openEditDialog = (user: any) => {
     setSelectedUser(user);
+    const defaultProfile = accessProfiles?.find(p => p.name === 'membro');
     setApprovalData({
-      role: 'worker',
+      profileId: defaultProfile?.id || '',
       congregationId: user.congregation?.id || '',
       ministries: []
     });
@@ -168,24 +171,18 @@ const PendingApprovals = () => {
                               <div>
                                 <Label>Perfil</Label>
                                 <Select
-                                  value={approvalData.role}
-                                  onValueChange={(role) => setApprovalData(prev => ({ ...prev, role: role as UserRole }))}
+                                  value={approvalData.profileId}
+                                  onValueChange={(profileId) => setApprovalData(prev => ({ ...prev, profileId }))}
                                 >
                                   <SelectTrigger>
                                     <SelectValue placeholder="Selecione o perfil" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {accessProfiles?.map((profile) => {
-                                      const roleValue = profile.name.toLowerCase() === 'admin' ? 'admin' 
-                                        : profile.name.toLowerCase() === 'pastor' ? 'pastor'
-                                        : profile.name.toLowerCase() === 'membro' ? 'worker'
-                                        : 'worker';
-                                      return (
-                                        <SelectItem key={profile.id} value={roleValue}>
-                                          {profile.name}
-                                        </SelectItem>
-                                      );
-                                    })}
+                                    {accessProfiles?.map((profile) => (
+                                      <SelectItem key={profile.id} value={profile.id}>
+                                        {profile.name}
+                                      </SelectItem>
+                                    ))}
                                   </SelectContent>
                                 </Select>
                               </div>
