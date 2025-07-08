@@ -1,16 +1,10 @@
 
 import React from 'react';
 import Layout from '@/components/layout/Layout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Users } from 'lucide-react';
-import ProfileList from '@/components/settings/ProfileList';
-import PermissionMatrix from '@/components/settings/PermissionMatrix';
-import { AccessProfile } from '@/hooks/useAccessProfiles';
+import { Settings as SettingsIcon, Users, Shield, Database } from 'lucide-react';
 
 const Settings = () => {
-  const [selectedProfile, setSelectedProfile] = React.useState<AccessProfile | null>(null);
-
   return (
     <Layout>
       <div className="space-y-6">
@@ -21,54 +15,58 @@ const Settings = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="access-management">
-          <TabsList>
-            <TabsTrigger value="access-management" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Gestão de Acesso
-            </TabsTrigger>
-            <TabsTrigger value="profile-assignment" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Atribuição de Perfis
-            </TabsTrigger>
-          </TabsList>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Usuários
+              </CardTitle>
+              <CardDescription>
+                Gerencie usuários e suas permissões no sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-500">
+                Funcionalidade de gerenciamento de usuários será implementada em breve.
+              </p>
+            </CardContent>
+          </Card>
 
-          <TabsContent value="access-management">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gestão de Acesso</CardTitle>
-                <CardDescription>
-                  Crie e gerencie perfis de acesso com permissões granulares para todos os módulos do sistema
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="flex min-h-[600px]">
-                  <ProfileList
-                    selectedProfile={selectedProfile}
-                    onSelectProfile={setSelectedProfile}
-                  />
-                  <PermissionMatrix selectedProfile={selectedProfile} />
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Segurança
+              </CardTitle>
+              <CardDescription>
+                Configurações de segurança e autenticação
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-500">
+                Configurações de segurança serão implementadas em breve.
+              </p>
+            </CardContent>
+          </Card>
 
-          <TabsContent value="profile-assignment">
-            <Card>
-              <CardHeader>
-                <CardTitle>Atribuição de Perfis</CardTitle>
-                <CardDescription>
-                  Atribua perfis de acesso aos usuários do sistema
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center text-gray-500 py-8">
-                  <p>Funcionalidade de atribuição de perfis será implementada em breve</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5" />
+                Sistema
+              </CardTitle>
+              <CardDescription>
+                Configurações gerais do sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-500">
+                Configurações do sistema serão implementadas em breve.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </Layout>
   );

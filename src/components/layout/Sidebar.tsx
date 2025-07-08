@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
@@ -253,6 +254,9 @@ const Sidebar = () => {
   // Check if user can access notifications (only admins)
   const canAccessNotifications = userRole && ['superadmin', 'admin'].includes(userRole);
 
+  // Check if user can access settings (only admins)
+  const canAccessSettings = userRole && ['superadmin', 'admin'].includes(userRole);
+
   if (!user || !profileData) {
     return (
       <div className="w-64 bg-white border-r border-gray-200 min-h-screen flex items-center justify-center">
@@ -423,19 +427,21 @@ const Sidebar = () => {
 
       {/* Bottom Actions */}
       <div className="p-4 border-t border-gray-200 space-y-2">
-        <Link to="/configuracoes">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${
-              location.pathname.startsWith('/configuracoes') 
-                ? 'bg-red-600 text-white hover:bg-red-700' 
-                : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <Settings className="mr-3 h-4 w-4" />
-            Configurações
-          </Button>
-        </Link>
+        {canAccessSettings && (
+          <Link to="/configuracoes">
+            <Button
+              variant="ghost"
+              className={`w-full justify-start ${
+                location.pathname.startsWith('/configuracoes') 
+                  ? 'bg-red-600 text-white hover:bg-red-700' 
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <Settings className="mr-3 h-4 w-4" />
+              Configurações
+            </Button>
+          </Link>
+        )}
         
         <Button
           variant="ghost"
