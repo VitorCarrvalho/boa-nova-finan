@@ -766,6 +766,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_current_user_permissions: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
@@ -776,6 +780,10 @@ export type Database = {
           _rejection_reason?: string
           _rejected_by?: string
         }
+        Returns: boolean
+      }
+      user_has_permission: {
+        Args: { _module: string; _action?: string }
         Returns: boolean
       }
     }
