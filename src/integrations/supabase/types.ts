@@ -563,6 +563,7 @@ export type Database = {
           ministries: string[] | null
           name: string
           photo_url: string | null
+          profile_id: string | null
           rejection_reason: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
@@ -578,6 +579,7 @@ export type Database = {
           ministries?: string[] | null
           name: string
           photo_url?: string | null
+          profile_id?: string | null
           rejection_reason?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
@@ -593,6 +595,7 @@ export type Database = {
           ministries?: string[] | null
           name?: string
           photo_url?: string | null
+          profile_id?: string | null
           rejection_reason?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
@@ -603,6 +606,13 @@ export type Database = {
             columns: ["congregation_id"]
             isOneToOne: false
             referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "access_profiles"
             referencedColumns: ["id"]
           },
         ]
