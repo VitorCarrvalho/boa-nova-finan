@@ -23,7 +23,7 @@ export const useAccessProfiles = () => {
         .order('name');
 
       if (error) throw error;
-      return data as AccessProfile[];
+      return (data || []) as AccessProfile[];
     },
   });
 };
