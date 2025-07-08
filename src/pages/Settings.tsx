@@ -2,8 +2,7 @@
 import React from 'react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Shield, Database } from 'lucide-react';
-import UserManagement from '@/components/settings/UserManagement';
+import { Shield, Database } from 'lucide-react';
 
 const Settings = () => {
   return (
@@ -15,9 +14,6 @@ const Settings = () => {
             Gerencie as configurações do sistema
           </p>
         </div>
-
-        {/* User Management Section */}
-        <UserManagement />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card>
