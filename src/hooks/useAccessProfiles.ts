@@ -23,7 +23,7 @@ export const useAccessProfiles = () => {
         .order('name');
 
       if (error) throw error;
-      return (data || []) as AccessProfile[];
+      return (data || []) as unknown as AccessProfile[];
     },
   });
 };
@@ -41,7 +41,7 @@ export const useCreateAccessProfile = () => {
         .single();
 
       if (error) throw error;
-      return data as AccessProfile;
+      return data as unknown as AccessProfile;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['access-profiles'] });
@@ -74,7 +74,7 @@ export const useUpdateAccessProfile = () => {
         .single();
 
       if (error) throw error;
-      return data as AccessProfile;
+      return data as unknown as AccessProfile;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['access-profiles'] });
