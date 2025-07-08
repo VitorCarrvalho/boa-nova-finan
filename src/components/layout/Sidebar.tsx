@@ -423,14 +423,19 @@ const Sidebar = () => {
 
       {/* Bottom Actions */}
       <div className="p-4 border-t border-gray-200 space-y-2">
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-gray-700 hover:bg-gray-100"
-          onClick={() => {}}
-        >
-          <Settings className="mr-3 h-4 w-4" />
-          Configurações
-        </Button>
+        <Link to="/configuracoes">
+          <Button
+            variant="ghost"
+            className={`w-full justify-start ${
+              location.pathname.startsWith('/configuracoes') 
+                ? 'bg-red-600 text-white hover:bg-red-700' 
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <Settings className="mr-3 h-4 w-4" />
+            Configurações
+          </Button>
+        </Link>
         
         <Button
           variant="ghost"
