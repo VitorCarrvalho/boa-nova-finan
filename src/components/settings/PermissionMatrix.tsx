@@ -24,7 +24,7 @@ const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ selectedProfile }) 
   React.useEffect(() => {
     if (existingPermissions) {
       const permissionSet = new Set(
-        existingPermissions.map(p => 
+        existingPermissions.map((p: ProfilePermission) => 
           `${p.module}${p.submodule ? `::${p.submodule}` : ''}${p.sub_submodule ? `::${p.sub_submodule}` : ''}::${p.action}`
         )
       );

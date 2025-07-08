@@ -18,12 +18,12 @@ export const useAccessProfiles = () => {
     queryKey: ['access-profiles'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('access_profiles')
+        .from('access_profiles' as any)
         .select('*')
         .order('name');
 
       if (error) throw error;
-      return data || [];
+      return (data || []) as AccessProfile[];
     },
   });
 };
@@ -35,13 +35,13 @@ export const useCreateAccessProfile = () => {
   return useMutation({
     mutationFn: async (profile: { name: string; description?: string }) => {
       const { data, error } = await supabase
-        .from('access_profiles')
+        .from('access_profiles' as any)
         .insert([profile])
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+      return data as AccessProfile;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['access-profiles'] });
@@ -67,14 +67,14 @@ export const useUpdateAccessProfile = () => {
   return useMutation({
     mutationFn: async ({ id, ...updates }: { id: string; name?: string; description?: string }) => {
       const { data, error } = await supabase
-        .from('access_profiles')
+        .from('access_profiles' as any)
         .update(updates)
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+      return data as AccessProfile;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['access-profiles'] });
@@ -100,7 +100,7 @@ export const useDeleteAccessProfile = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('access_profiles')
+        .from('access_profiles' as any)
         .delete()
         .eq('id', id);
 
