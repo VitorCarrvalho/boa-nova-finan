@@ -25,7 +25,7 @@ export const useProfilePermissions = (profileId: string) => {
         .eq('profile_id', profileId);
 
       if (error) throw error;
-      return (data || []) as ProfilePermission[];
+      return (data || []) as unknown as ProfilePermission[];
     },
     enabled: !!profileId,
   });

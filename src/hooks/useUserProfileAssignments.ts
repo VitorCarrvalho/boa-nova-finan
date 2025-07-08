@@ -39,7 +39,7 @@ export const useSystemUsers = () => {
         .order('name');
 
       if (error) throw error;
-      return (data || []) as SystemUser[];
+      return (data || []) as unknown as SystemUser[];
     },
   });
 };
@@ -57,7 +57,7 @@ export const useUserProfileAssignments = () => {
         `);
 
       if (error) throw error;
-      return (data || []) as UserProfileAssignment[];
+      return (data || []) as unknown as UserProfileAssignment[];
     },
   });
 };
