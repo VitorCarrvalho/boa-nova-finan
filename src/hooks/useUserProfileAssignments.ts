@@ -15,7 +15,7 @@ export const useUserProfileAssignments = (userId?: string) => {
   return useQuery({
     queryKey: ['user-profile-assignments', userId],
     queryFn: async () => {
-      let query = supabase.from('user_profile_assignments' as any).select(`
+      let query = supabase.from('user_profile_assignments').select(`
         *,
         profile:access_profiles(*)
       `);
@@ -27,7 +27,7 @@ export const useUserProfileAssignments = (userId?: string) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      return (data || []) as unknown as UserProfileAssignment[];
+      return (data || []) as UserProfileAssignment[];
     },
     enabled: !userId || !!userId, // Always enabled, but filtered if userId provided
   });
@@ -40,7 +40,7 @@ export const useAssignProfileToUser = () => {
   return useMutation({
     mutationFn: async ({ userId, profileId }: { userId: string; profileId: string }) => {
       const { data, error } = await supabase
-        .from('user_profile_assignments' as any)
+        .from('user_profile_assignments')
         .insert([{
           user_id: userId,
           profile_id: profileId,
@@ -50,7 +50,7 @@ export const useAssignProfileToUser = () => {
         .single();
 
       if (error) throw error;
-      return data as unknown as UserProfileAssignment;
+      return data as UserProfileAssignment;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-profile-assignments'] });
@@ -76,7 +76,7 @@ export const useRemoveProfileFromUser = () => {
   return useMutation({
     mutationFn: async ({ userId, profileId }: { userId: string; profileId: string }) => {
       const { error } = await supabase
-        .from('user_profile_assignments' as any)
+        .from('user_profile_assignments')
         .delete()
         .eq('user_id', userId)
         .eq('profile_id', profileId);
