@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
@@ -229,7 +228,7 @@ const Sidebar = () => {
     { title: 'Nova Notificação', href: '/notificacoes/nova', icon: MessageSquare }
   ];
 
-  // Financial submenus for accounts payable
+  // Financial submenus for accounts payable - REMOVIDO ANALISTA da aba "Autorizar Contas"
   const financialSubmenus = [
     { 
       title: 'Incluir Nova Conta', 
@@ -244,7 +243,7 @@ const Sidebar = () => {
     { 
       title: 'Autorizar Contas', 
       href: '/accounts-payable/authorize',
-      roles: ['gerente', 'diretor', 'presidente', 'admin', 'superadmin']
+      roles: ['gerente', 'diretor', 'presidente', 'admin', 'superadmin'] // REMOVIDO 'analista'
     },
     { 
       title: 'Contas Aprovadas', 

@@ -1,13 +1,16 @@
+
 import React, { useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAccountsPayable } from '@/hooks/useAccountsPayable';
+import { useAuth } from '@/contexts/AuthContext';
 import AccountPayableList from '@/components/accounts-payable/AccountPayableList';
 import { Search } from 'lucide-react';
 
 const ApprovedAccounts = () => {
+  const { userRole } = useAuth();
   const [filters, setFilters] = useState({
     search: '',
     date_from: '',
@@ -25,6 +28,9 @@ const ApprovedAccounts = () => {
     account.description.toLowerCase().includes(filters.search.toLowerCase()) ||
     account.payee_name.toLowerCase().includes(filters.search.toLowerCase())
   );
+
+  // Verificar se o usuário pode marcar contas como pagas
+  const canMarkAsPaid = userRole && ['analista', 'finance', 'gerente', 'admin', 'superadmin'].includes(userRole);
 
   return (
     <Layout>
@@ -85,7 +91,7 @@ const ApprovedAccounts = () => {
         <AccountPayableList 
           accounts={filteredAccounts || []} 
           isLoading={isLoading}
-          showPaymentActions={true}
+          showPaymentActions={canMarkAsPaid}
         />
       </div>
     </Layout>

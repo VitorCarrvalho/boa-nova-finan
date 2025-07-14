@@ -19,7 +19,7 @@ const PendingApproval = () => {
   });
 
   // Determinar quais status o usuário pode ver baseado no seu perfil
-  const getApprovalStatuses = () => {
+  const getViewableStatuses = () => {
     console.log('UserRole:', userRole);
     
     switch (userRole) {
@@ -40,6 +40,12 @@ const PendingApproval = () => {
         // Presidentes podem ver contas no nível president
         return ['pending_president'];
       
+      case 'finance':
+      case 'analista':
+      case 'pastor':
+        // Outros perfis financeiros podem ver todos os status
+        return ['pending_management', 'pending_director', 'pending_president'];
+      
       default:
         // Outros perfis não podem ver contas pendentes de aprovação
         return [];
@@ -47,10 +53,10 @@ const PendingApproval = () => {
   };
 
   // Obter status que o usuário pode ver
-  const userApprovalStatuses = getApprovalStatuses();
+  const userViewableStatuses = getViewableStatuses();
   
   // Se não há status que o usuário pode ver, não buscar dados
-  const shouldFetch = userApprovalStatuses.length > 0;
+  const shouldFetch = userViewableStatuses.length > 0;
 
   const { data: accounts, isLoading } = useAccountsPayable({
     status: filters.status && filters.status !== 'all' ? filters.status : undefined,
@@ -60,7 +66,7 @@ const PendingApproval = () => {
   // Filtrar contas que o usuário pode ver e aplicar filtros de busca
   const filteredAccounts = shouldFetch ? accounts?.filter(account => {
     // Primeiro filtro: verificar se o usuário pode ver este status
-    const canView = userApprovalStatuses.includes(account.status);
+    const canView = userViewableStatuses.includes(account.status);
     console.log(`Account ${account.id} status: ${account.status}, Can view: ${canView}`);
     
     // Segundo filtro: aplicar busca textual
@@ -73,7 +79,7 @@ const PendingApproval = () => {
 
   console.log('Total accounts:', accounts?.length);
   console.log('Filtered accounts:', filteredAccounts?.length);
-  console.log('User approval statuses:', userApprovalStatuses);
+  console.log('User viewable statuses:', userViewableStatuses);
 
   return (
     <Layout>
@@ -81,7 +87,7 @@ const PendingApproval = () => {
         <div>
           <h1 className="text-3xl font-bold">Pendentes de Aprovação</h1>
           <p className="text-muted-foreground mt-2">
-            Contas aguardando aprovação no sistema
+            Contas aguardando aprovação no sistema (somente visualização)
           </p>
         </div>
 
@@ -105,13 +111,13 @@ const PendingApproval = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os status</SelectItem>
-                    {userApprovalStatuses.includes('pending_management') && (
+                    {userViewableStatuses.includes('pending_management') && (
                       <SelectItem value="pending_management">Pendente - Gerência</SelectItem>
                     )}
-                    {userApprovalStatuses.includes('pending_director') && (
+                    {userViewableStatuses.includes('pending_director') && (
                       <SelectItem value="pending_director">Pendente - Diretoria</SelectItem>
                     )}
-                    {userApprovalStatuses.includes('pending_president') && (
+                    {userViewableStatuses.includes('pending_president') && (
                       <SelectItem value="pending_president">Pendente - Presidência</SelectItem>
                     )}
                   </SelectContent>
@@ -148,6 +154,7 @@ const PendingApproval = () => {
             accounts={filteredAccounts || []} 
             isLoading={isLoading}
             showActions={false}
+            showApprovalActions={false}
           />
         )}
       </div>
