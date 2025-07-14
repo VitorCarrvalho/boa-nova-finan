@@ -154,8 +154,37 @@ export const useCreateAccountPayable = () => {
 
   return useMutation({
     mutationFn: async (data: CreateAccountPayableData) => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('Usuário não autenticado');
+      console.log('Tentando criar conta a pagar...');
+      
+      // Verificar autenticação
+      const { data: user, error: authError } = await supabase.auth.getUser();
+      if (authError || !user.user) {
+        console.error('Erro de autenticação:', authError);
+        throw new Error('Usuário não autenticado');
+      }
+
+      console.log('Usuário autenticado:', user.user.id);
+
+      // Verificar papel do usuário
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, approval_status, name')
+        .eq('id', user.user.id)
+        .single();
+
+      console.log('Perfil do usuário:', profile);
+
+      if (!profile || profile.approval_status !== 'ativo') {
+        throw new Error('Usuário não aprovado no sistema');
+      }
+
+      // Verificar se o usuário tem permissão para criar contas a pagar
+      const allowedRoles = ['assistente', 'analista', 'gerente', 'pastor'];
+      if (!allowedRoles.includes(profile.role)) {
+        throw new Error(`Sem permissão. Papel atual: ${profile.role}. Papéis permitidos: ${allowedRoles.join(', ')}`);
+      }
+
+      console.log('Inserindo dados:', { ...data, requested_by: user.user.id });
 
       const { data: result, error } = await supabase
         .from('accounts_payable')
@@ -166,7 +195,12 @@ export const useCreateAccountPayable = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro na inserção:', error);
+        throw error;
+      }
+      
+      console.log('Conta criada com sucesso:', result);
       return result;
     },
     onSuccess: () => {
