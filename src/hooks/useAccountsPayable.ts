@@ -421,20 +421,26 @@ export const useMarkAsPaid = () => {
     mutationFn: async ({ 
       accountId, 
       attachmentUrl,
-      attachmentFilename
+      attachmentFilename,
+      notes
     }: { 
       accountId: string; 
       attachmentUrl?: string;
       attachmentFilename?: string;
+      notes?: string;
     }) => {
+      const updateData: any = {
+        status: 'paid',
+        paid_at: new Date().toISOString(),
+      };
+
+      if (attachmentUrl) updateData.attachment_url = attachmentUrl;
+      if (attachmentFilename) updateData.attachment_filename = attachmentFilename;
+      if (notes) updateData.observations = notes;
+
       const { error } = await supabase
         .from('accounts_payable')
-        .update({ 
-          status: 'paid',
-          paid_at: new Date().toISOString(),
-          attachment_url: attachmentUrl,
-          attachment_filename: attachmentFilename
-        })
+        .update(updateData)
         .eq('id', accountId);
 
       if (error) throw error;

@@ -6,11 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AccountPayable, useApproveAccount, useRejectAccount, useMarkAsPaid } from '@/hooks/useAccountsPayable';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Eye, Check, X, Upload, AlertTriangle } from 'lucide-react';
+import { Eye, Check, X, Upload, AlertTriangle, FileText } from 'lucide-react';
 import AccountPayableDetails from './AccountPayableDetails';
 
 interface AccountPayableListProps {
@@ -32,7 +35,13 @@ const AccountPayableList: React.FC<AccountPayableListProps> = ({
   const [rejectionReason, setRejectionReason] = useState('');
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [accountToReject, setAccountToReject] = useState<AccountPayable | null>(null);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [accountToPay, setAccountToPay] = useState<AccountPayable | null>(null);
+  const [paymentFile, setPaymentFile] = useState<File | null>(null);
+  const [paymentNotes, setPaymentNotes] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
+  const { userRole } = useAuth();
   const approveMutation = useApproveAccount();
   const rejectMutation = useRejectAccount();
   const markAsPaidMutation = useMarkAsPaid();
@@ -91,10 +100,68 @@ const AccountPayableList: React.FC<AccountPayableListProps> = ({
     }
   };
 
+  // Função para verificar se o usuário pode aprovar determinado status
+  const canApprove = (account: AccountPayable) => {
+    if (!userRole) return false;
+    
+    switch (account.status) {
+      case 'pending_management':
+        return userRole === 'gerente';
+      case 'pending_director':
+        return userRole === 'diretor';
+      case 'pending_president':
+        return userRole === 'presidente';
+      default:
+        return false;
+    }
+  };
+
   const handleMarkAsPaid = (account: AccountPayable) => {
-    markAsPaidMutation.mutate({
-      accountId: account.id,
-    });
+    setAccountToPay(account);
+    setIsPaymentDialogOpen(true);
+  };
+
+  const uploadPaymentProof = async (file: File): Promise<{url: string, filename: string}> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
+    const filePath = `payment-proofs/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('accounts-payable-attachments')
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('accounts-payable-attachments')
+      .getPublicUrl(filePath);
+
+    return { url: publicUrl, filename: file.name };
+  };
+
+  const confirmPayment = async () => {
+    if (!accountToPay || !paymentFile) return;
+
+    setIsUploading(true);
+    try {
+      const { url, filename } = await uploadPaymentProof(paymentFile);
+      
+      markAsPaidMutation.mutate({
+        accountId: accountToPay.id,
+        attachmentUrl: url,
+        attachmentFilename: filename,
+        notes: paymentNotes
+      });
+      
+      setIsPaymentDialogOpen(false);
+      setPaymentFile(null);
+      setPaymentNotes('');
+      setAccountToPay(null);
+    } catch (error) {
+      console.error('Erro no upload:', error);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   if (isLoading) {
@@ -175,7 +242,7 @@ const AccountPayableList: React.FC<AccountPayableListProps> = ({
                     </DialogContent>
                   </Dialog>
 
-                  {showApprovalActions && (
+                  {showApprovalActions && canApprove(account) && (
                     <>
                       <Button
                         variant="default"
@@ -253,6 +320,82 @@ const AccountPayableList: React.FC<AccountPayableListProps> = ({
                 disabled={!rejectionReason.trim() || rejectMutation.isPending}
               >
                 {rejectMutation.isPending ? 'Rejeitando...' : 'Confirmar Rejeição'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Comprovante de Pagamento */}
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Marcar como Pago</DialogTitle>
+            <DialogDescription>
+              Faça upload do comprovante de pagamento para confirmar o pagamento desta conta.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {accountToPay && (
+              <div className="bg-muted p-3 rounded-md">
+                <p className="font-medium">{accountToPay.description}</p>
+                <p className="text-sm text-muted-foreground">
+                  Valor: R$ {accountToPay.amount.toFixed(2)} - {accountToPay.payee_name}
+                </p>
+              </div>
+            )}
+            
+            <div>
+              <Label htmlFor="payment-proof">Comprovante de Pagamento *</Label>
+              <Input
+                id="payment-proof"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => setPaymentFile(e.target.files?.[0] || null)}
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Formatos aceitos: PDF, JPG, PNG
+              </p>
+            </div>
+
+            {paymentFile && (
+              <div className="flex items-center gap-2 p-2 bg-green-50 rounded-md">
+                <FileText className="h-4 w-4 text-green-600" />
+                <span className="text-sm text-green-700">{paymentFile.name}</span>
+              </div>
+            )}
+
+            <div>
+              <Label htmlFor="payment-notes">Observações (opcional)</Label>
+              <Textarea
+                id="payment-notes"
+                placeholder="Observações sobre o pagamento..."
+                value={paymentNotes}
+                onChange={(e) => setPaymentNotes(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsPaymentDialogOpen(false);
+                  setPaymentFile(null);
+                  setPaymentNotes('');
+                  setAccountToPay(null);
+                }}
+                disabled={isUploading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="default"
+                onClick={confirmPayment}
+                disabled={!paymentFile || isUploading || markAsPaidMutation.isPending}
+              >
+                {isUploading || markAsPaidMutation.isPending ? 'Processando...' : 'Confirmar Pagamento'}
               </Button>
             </div>
           </div>
