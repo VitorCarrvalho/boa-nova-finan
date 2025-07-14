@@ -150,6 +150,13 @@ export type Database = {
             referencedRelation: "congregations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "accounts_payable_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       accounts_payable_approvals: {
