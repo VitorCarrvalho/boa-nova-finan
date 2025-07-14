@@ -44,6 +44,152 @@ export type Database = {
         }
         Relationships: []
       }
+      accounts_payable: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          attachment_filename: string | null
+          attachment_url: string | null
+          bank_account: string | null
+          bank_agency: string | null
+          bank_name: string | null
+          category_id: string
+          congregation_id: string
+          created_at: string
+          description: string
+          due_date: string
+          id: string
+          invoice_number: string | null
+          is_recurring: boolean
+          observations: string | null
+          paid_at: string | null
+          payee_name: string
+          payment_method: string
+          recurrence_frequency: string | null
+          rejected_at: string | null
+          rejection_reason: string | null
+          requested_at: string
+          requested_by: string
+          status: Database["public"]["Enums"]["account_payable_status"]
+          updated_at: string
+          urgency_description: string | null
+          urgency_level: Database["public"]["Enums"]["urgency_level"]
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          attachment_filename?: string | null
+          attachment_url?: string | null
+          bank_account?: string | null
+          bank_agency?: string | null
+          bank_name?: string | null
+          category_id: string
+          congregation_id: string
+          created_at?: string
+          description: string
+          due_date: string
+          id?: string
+          invoice_number?: string | null
+          is_recurring?: boolean
+          observations?: string | null
+          paid_at?: string | null
+          payee_name: string
+          payment_method: string
+          recurrence_frequency?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          requested_by: string
+          status?: Database["public"]["Enums"]["account_payable_status"]
+          updated_at?: string
+          urgency_description?: string | null
+          urgency_level?: Database["public"]["Enums"]["urgency_level"]
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          attachment_filename?: string | null
+          attachment_url?: string | null
+          bank_account?: string | null
+          bank_agency?: string | null
+          bank_name?: string | null
+          category_id?: string
+          congregation_id?: string
+          created_at?: string
+          description?: string
+          due_date?: string
+          id?: string
+          invoice_number?: string | null
+          is_recurring?: boolean
+          observations?: string | null
+          paid_at?: string | null
+          payee_name?: string
+          payment_method?: string
+          recurrence_frequency?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          requested_by?: string
+          status?: Database["public"]["Enums"]["account_payable_status"]
+          updated_at?: string
+          urgency_description?: string | null
+          urgency_level?: Database["public"]["Enums"]["urgency_level"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_payable_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounts_payable_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accounts_payable_approvals: {
+        Row: {
+          account_payable_id: string
+          action: string
+          approval_level: string
+          approved_by: string
+          created_at: string
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          account_payable_id: string
+          action: string
+          approval_level: string
+          approved_by: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          account_payable_id?: string
+          action?: string
+          approval_level?: string
+          approved_by?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_payable_approvals_account_payable_id_fkey"
+            columns: ["account_payable_id"]
+            isOneToOne: false
+            referencedRelation: "accounts_payable"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       approval_audit_logs: {
         Row: {
           changed_by: string
@@ -319,6 +465,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      expense_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       financial_records: {
         Row: {
@@ -788,6 +961,13 @@ export type Database = {
       }
     }
     Enums: {
+      account_payable_status:
+        | "pending_management"
+        | "pending_director"
+        | "pending_president"
+        | "approved"
+        | "paid"
+        | "rejected"
       delivery_type: "unico" | "agendado"
       event_type: "culto" | "conferencia" | "reuniao" | "evento_especial"
       financial_category:
@@ -813,6 +993,7 @@ export type Database = {
       payment_method: "cash" | "coin" | "pix" | "debit" | "credit"
       recipient_profile: "pastores" | "financeiro" | "membros" | "todos"
       transaction_type: "income" | "expense"
+      urgency_level: "normal" | "urgent"
       user_role:
         | "superadmin"
         | "admin"
@@ -952,6 +1133,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_payable_status: [
+        "pending_management",
+        "pending_director",
+        "pending_president",
+        "approved",
+        "paid",
+        "rejected",
+      ],
       delivery_type: ["unico", "agendado"],
       event_type: ["culto", "conferencia", "reuniao", "evento_especial"],
       financial_category: [
@@ -979,6 +1168,7 @@ export const Constants = {
       payment_method: ["cash", "coin", "pix", "debit", "credit"],
       recipient_profile: ["pastores", "financeiro", "membros", "todos"],
       transaction_type: ["income", "expense"],
+      urgency_level: ["normal", "urgent"],
       user_role: [
         "superadmin",
         "admin",
