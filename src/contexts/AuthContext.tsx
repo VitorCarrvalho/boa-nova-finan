@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -53,17 +54,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('Configurando AuthProvider...');
+    console.log('AuthProvider - Configurando AuthProvider...');
     
     // Configurar listener de mudanças de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.email);
+        console.log('AuthProvider - Auth state change:', event, session?.user?.email);
         
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          console.log('AuthProvider - User authenticated, fetching role...');
           // Buscar role do usuário - usar setTimeout para evitar deadlock
           setTimeout(async () => {
             try {
@@ -73,23 +75,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .eq('id', session.user.id)
                 .single();
               
+              console.log('AuthProvider - Profile data:', profile);
+              
               if (error) {
-                console.log('Erro ao buscar perfil:', error);
+                console.log('AuthProvider - Erro ao buscar perfil:', error);
                 setUserRole('worker'); // Role padrão
               } else {
                 // Only set role if user is approved
                 if (profile?.approval_status === 'ativo') {
+                  console.log('AuthProvider - Setting user role:', profile.role);
                   setUserRole(profile?.role ?? 'worker');
                 } else {
+                  console.log('AuthProvider - User not approved, setting worker role');
                   setUserRole('worker'); // Pending/rejected users get worker role (no access)
                 }
               }
             } catch (err) {
-              console.log('Erro na busca do perfil:', err);
+              console.log('AuthProvider - Erro na busca do perfil:', err);
               setUserRole('worker');
             }
           }, 100);
         } else {
+          console.log('AuthProvider - No user, clearing role');
           setUserRole(null);
         }
         
@@ -100,20 +107,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Verificar sessão existente
     const checkSession = async () => {
       try {
+        console.log('AuthProvider - Checking existing session...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.log('Erro ao verificar sessão:', error);
+          console.log('AuthProvider - Erro ao verificar sessão:', error);
           cleanupAuthState();
           setLoading(false);
           return;
         }
 
-        console.log('Sessão existente:', session?.user?.email);
+        console.log('AuthProvider - Sessão existente:', session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          console.log('AuthProvider - Existing user found, fetching role...');
           setTimeout(async () => {
             try {
               const { data: profile } = await supabase
@@ -122,14 +131,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .eq('id', session.user.id)
                 .single();
               
+              console.log('AuthProvider - Initial profile data:', profile);
+              
               // Only set role if user is approved
               if (profile?.approval_status === 'ativo') {
+                console.log('AuthProvider - Setting initial user role:', profile.role);
                 setUserRole(profile?.role ?? 'worker');
               } else {
+                console.log('AuthProvider - Initial user not approved, setting worker role');
                 setUserRole('worker'); // Pending/rejected users get worker role (no access)
               }
             } catch (err) {
-              console.log('Erro ao buscar perfil inicial:', err);
+              console.log('AuthProvider - Erro ao buscar perfil inicial:', err);
               setUserRole('worker');
             }
           }, 100);
@@ -137,7 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         setLoading(false);
       } catch (err) {
-        console.log('Erro geral na verificação de sessão:', err);
+        console.log('AuthProvider - Erro geral na verificação de sessão:', err);
         cleanupAuthState();
         setLoading(false);
       }

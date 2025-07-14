@@ -76,6 +76,16 @@ export const useAccountsPayable = (filters?: {
   return useQuery({
     queryKey: ['accounts-payable', filters],
     queryFn: async () => {
+      console.log('useAccountsPayable - Starting query with filters:', filters);
+      
+      // Verificar usuário autenticado
+      const { data: user } = await supabase.auth.getUser();
+      console.log('useAccountsPayable - Current user:', user?.user?.id);
+      
+      // Verificar role do usuário
+      const { data: userRole } = await supabase.rpc('get_current_user_role');
+      console.log('useAccountsPayable - Current user role:', userRole);
+      
       let query = supabase
         .from('accounts_payable')
         .select(`
@@ -87,20 +97,32 @@ export const useAccountsPayable = (filters?: {
         .order('created_at', { ascending: false });
 
       if (filters?.status) {
+        console.log('useAccountsPayable - Applying status filter:', filters.status);
         query = query.eq('status', filters.status as any);
       }
       if (filters?.congregation_id) {
+        console.log('useAccountsPayable - Applying congregation filter:', filters.congregation_id);
         query = query.eq('congregation_id', filters.congregation_id);
       }
       if (filters?.date_from) {
+        console.log('useAccountsPayable - Applying date_from filter:', filters.date_from);
         query = query.gte('due_date', filters.date_from);
       }
       if (filters?.date_to) {
+        console.log('useAccountsPayable - Applying date_to filter:', filters.date_to);
         query = query.lte('due_date', filters.date_to);
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      
+      console.log('useAccountsPayable - Query result:', { data, error });
+      console.log('useAccountsPayable - Number of accounts returned:', data?.length);
+      
+      if (error) {
+        console.error('useAccountsPayable - Query error:', error);
+        throw error;
+      }
+      
       return data as any[];
     },
   });

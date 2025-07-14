@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,26 +39,22 @@ const AuthorizeAccounts = () => {
     }
   };
 
-  // Obter status que o usuário pode aprovar
+  // Obter status que o usuário pode aprovar (apenas para UI)
   const userApprovalStatuses = getApprovalStatuses();
   
   // Se não há status que o usuário pode aprovar, não buscar dados
   const shouldFetch = userApprovalStatuses.length > 0;
-  
+
+  console.log('Should fetch:', shouldFetch);
+  console.log('User approval statuses:', userApprovalStatuses);
+  console.log('Status filter:', statusFilter);
+
   const { data: accounts, isLoading } = useAccountsPayable({
     status: statusFilter && statusFilter !== 'all' ? statusFilter : undefined,
   });
 
-  // Filtrar contas que o usuário pode aprovar
-  const approvableAccounts = shouldFetch ? accounts?.filter(account => {
-    const canApprove = userApprovalStatuses.includes(account.status);
-    console.log(`Account ${account.id} status: ${account.status}, Can approve: ${canApprove}`);
-    return canApprove;
-  }) : [];
-
-  console.log('Total accounts:', accounts?.length);
-  console.log('Approvable accounts:', approvableAccounts?.length);
-  console.log('User approval statuses:', userApprovalStatuses);
+  console.log('Total accounts fetched:', accounts?.length);
+  console.log('Accounts data:', accounts);
 
   return (
     <Layout>
@@ -112,7 +109,7 @@ const AuthorizeAccounts = () => {
           </Card>
         ) : (
           <AccountPayableList 
-            accounts={approvableAccounts || []} 
+            accounts={accounts || []} 
             isLoading={isLoading}
             showApprovalActions={true}
           />
