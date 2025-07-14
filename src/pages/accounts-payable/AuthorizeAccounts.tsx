@@ -8,7 +8,7 @@ import AccountPayableList from '@/components/accounts-payable/AccountPayableList
 
 const AuthorizeAccounts = () => {
   const { user } = useAuth();
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   // Determinar quais status o usuário pode aprovar baseado no seu perfil
   const getApprovalStatuses = () => {
