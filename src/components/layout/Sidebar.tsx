@@ -41,6 +41,7 @@ const Sidebar = () => {
   const [profileData, setProfileData] = React.useState<{ name: string; photo_url: string | null } | null>(null);
   const [reportsOpen, setReportsOpen] = React.useState(false);
   const [notificationsOpen, setNotificationsOpen] = React.useState(false);
+  const [financialOpen, setFinancialOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (user) {
@@ -163,7 +164,7 @@ const Sidebar = () => {
       title: 'Financeiro',
       icon: DollarSign,
       href: '/financeiro',
-      roles: ['superadmin', 'admin', 'finance']
+      roles: ['superadmin', 'admin', 'finance', 'assistente', 'analista', 'gerente', 'pastor', 'diretor', 'presidente']
     },
     {
       title: 'Membros',
@@ -228,6 +229,35 @@ const Sidebar = () => {
     { title: 'Nova Notificação', href: '/notificacoes/nova', icon: MessageSquare }
   ];
 
+  // Financial submenus for accounts payable
+  const financialSubmenus = [
+    { 
+      title: 'Incluir Nova Conta', 
+      href: '/accounts-payable/new',
+      roles: ['assistente', 'analista', 'gerente', 'pastor']
+    },
+    { 
+      title: 'Pendentes de Aprovação', 
+      href: '/accounts-payable/pending-approval',
+      roles: ['superadmin', 'admin', 'finance', 'assistente', 'analista', 'gerente', 'pastor', 'diretor', 'presidente']
+    },
+    { 
+      title: 'Autorizar Contas', 
+      href: '/accounts-payable/authorize',
+      roles: ['gerente', 'diretor', 'presidente', 'admin', 'superadmin']
+    },
+    { 
+      title: 'Contas Aprovadas', 
+      href: '/accounts-payable/approved',
+      roles: ['superadmin', 'admin', 'finance', 'assistente', 'analista', 'gerente', 'pastor']
+    },
+    { 
+      title: 'Contas Pagas', 
+      href: '/accounts-payable/paid',
+      roles: ['superadmin', 'admin', 'finance', 'assistente', 'analista', 'gerente', 'pastor', 'diretor', 'presidente']
+    }
+  ];
+
   const visibleItems = menuItems.filter(item => {
     // Verificar se o usuário tem o role necessário
     if (!userRole || !item.roles.includes(userRole)) {
@@ -260,6 +290,9 @@ const Sidebar = () => {
 
   // Check if user can access notifications (only admins)
   const canAccessNotifications = userRole && ['superadmin', 'admin'].includes(userRole);
+
+  // Check if user can access financial submenus
+  const canAccessFinancial = userRole && ['superadmin', 'admin', 'finance', 'assistente', 'analista', 'gerente', 'pastor', 'diretor', 'presidente'].includes(userRole);
 
   // Check if user can access settings (only admins)
   const canAccessSettings = userRole && ['superadmin', 'admin'].includes(userRole);
@@ -327,6 +360,68 @@ const Sidebar = () => {
         {visibleItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.href;
+          
+          // Special handling for Financial menu with submenu
+          if (item.title === 'Financeiro' && canAccessFinancial) {
+            return (
+              <Collapsible key={item.title} open={financialOpen} onOpenChange={setFinancialOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start text-gray-700 hover:bg-gray-100 ${
+                      location.pathname.startsWith('/accounts-payable') || location.pathname === '/financeiro' ? 'bg-red-50 text-red-600' : ''
+                    }`}
+                  >
+                    <Icon className="mr-3 h-4 w-4" />
+                    {item.title}
+                    {financialOpen ? (
+                      <ChevronDown className="ml-auto h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="ml-auto h-4 w-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="ml-4 space-y-1">
+                  {/* Traditional Financial Link */}
+                  <Link to={item.href}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`w-full justify-start text-sm ${
+                        location.pathname === item.href
+                          ? 'bg-red-600 text-white hover:bg-red-700' 
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      Receitas e Despesas
+                    </Button>
+                  </Link>
+                  
+                  {/* Accounts Payable Submenus */}
+                  {financialSubmenus
+                    .filter(submenu => !userRole || submenu.roles.includes(userRole))
+                    .map((submenu) => {
+                      const isActive = location.pathname === submenu.href;
+                      return (
+                        <Link key={submenu.href} to={submenu.href}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={`w-full justify-start text-sm ${
+                              isActive 
+                                ? 'bg-red-600 text-white hover:bg-red-700' 
+                                : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                          >
+                            {submenu.title}
+                          </Button>
+                        </Link>
+                      );
+                    })}
+                </CollapsibleContent>
+              </Collapsible>
+            );
+          }
           
           return (
             <Link key={item.href} to={item.href}>

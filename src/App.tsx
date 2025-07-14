@@ -38,6 +38,13 @@ import MembersReports from "@/pages/reports/MembersReports";
 import ReconciliationsReports from "@/pages/reports/ReconciliationsReports";
 import SuppliersReports from "@/pages/reports/SuppliersReports";
 
+// Import accounts payable pages
+import NewAccount from "@/pages/accounts-payable/NewAccount";
+import PendingApproval from "@/pages/accounts-payable/PendingApproval";
+import AuthorizeAccounts from "@/pages/accounts-payable/AuthorizeAccounts";
+import ApprovedAccounts from "@/pages/accounts-payable/ApprovedAccounts";
+import PaidAccounts from "@/pages/accounts-payable/PaidAccounts";
+
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -189,6 +196,37 @@ const App = () => (
               <Route path="/gestao-acessos" element={
                 <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
                   <AccessManagement />
+                </ProtectedRoute>
+              } />
+              
+              {/* Accounts Payable Routes */}
+              <Route path="/accounts-payable/new" element={
+                <ProtectedRoute requiredRoles={['assistente', 'analista', 'gerente', 'pastor']}>
+                  <NewAccount />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/accounts-payable/pending-approval" element={
+                <ProtectedRoute>
+                  <PendingApproval />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/accounts-payable/authorize" element={
+                <ProtectedRoute requiredRoles={['gerente', 'diretor', 'presidente', 'admin', 'superadmin']}>
+                  <AuthorizeAccounts />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/accounts-payable/approved" element={
+                <ProtectedRoute>
+                  <ApprovedAccounts />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/accounts-payable/paid" element={
+                <ProtectedRoute>
+                  <PaidAccounts />
                 </ProtectedRoute>
               } />
               
