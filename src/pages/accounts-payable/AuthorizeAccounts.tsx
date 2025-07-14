@@ -18,7 +18,7 @@ const AuthorizeAccounts = () => {
   };
 
   const { data: accounts, isLoading } = useAccountsPayable({
-    status: statusFilter || undefined,
+    status: statusFilter && statusFilter !== 'all' ? statusFilter : undefined,
   });
 
   // Filtrar contas que o usuário pode aprovar
@@ -54,7 +54,7 @@ const AuthorizeAccounts = () => {
                   <SelectValue placeholder="Todos os status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os status</SelectItem>
+                  <SelectItem value="all">Todos os status</SelectItem>
                   <SelectItem value="pending_management">Pendente - Gerência</SelectItem>
                   <SelectItem value="pending_director">Pendente - Diretoria</SelectItem>
                   <SelectItem value="pending_president">Pendente - Presidência</SelectItem>
