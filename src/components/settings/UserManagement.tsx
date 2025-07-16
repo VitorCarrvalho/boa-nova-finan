@@ -2,27 +2,31 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useSystemUsers } from '@/hooks/useSystemUsers';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import UserRoleDropdown from './UserRoleDropdown';
+import AccessProfileDropdown from './AccessProfileDropdown';
 import { Database } from '@/integrations/supabase/types';
 import { Pencil, Save, X } from 'lucide-react';
 
-type UserRole = Database['public']['Enums']['user_role'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
 const UserManagement = () => {
-  // Only show approved users
+  // Only show approved users with access profiles
   const { data: users, isLoading, refetch } = useQuery({
     queryKey: ['approvedUsers'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          *,
+          access_profiles:profile_id (
+            id,
+            name,
+            description
+          )
+        `)
         .eq('approval_status', 'ativo')
         .order('name');
 
@@ -32,14 +36,14 @@ const UserManagement = () => {
   });
   const { toast } = useToast();
   const [editingUser, setEditingUser] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<{ role: UserRole }>({
-    role: 'worker'
+  const [editForm, setEditForm] = useState<{ profileId: string | null }>({
+    profileId: null
   });
 
   const handleEditUser = (user: Profile) => {
     setEditingUser(user.id);
     setEditForm({
-      role: user.role
+      profileId: user.profile_id
     });
   };
 
@@ -48,7 +52,7 @@ const UserManagement = () => {
       const { error } = await supabase
         .from('profiles')
         .update({
-          role: editForm.role
+          profile_id: editForm.profileId
         })
         .eq('id', userId);
 
@@ -72,7 +76,7 @@ const UserManagement = () => {
 
   const handleCancelEdit = () => {
     setEditingUser(null);
-    setEditForm({ role: 'worker' });
+    setEditForm({ profileId: null });
   };
 
   if (isLoading) {
@@ -100,17 +104,19 @@ const UserManagement = () => {
               <div className="flex-1 space-y-2">
                 {editingUser === user.id ? (
                   <div>
-                    <Label htmlFor={`role-${user.id}`}>Perfil de Acesso</Label>
-                    <UserRoleDropdown
-                      value={editForm.role}
-                      onValueChange={(role) => setEditForm({ role })}
+                    <Label htmlFor={`profile-${user.id}`}>Perfil de Acesso</Label>
+                    <AccessProfileDropdown
+                      value={editForm.profileId}
+                      onValueChange={(profileId) => setEditForm({ profileId })}
                     />
                   </div>
                 ) : (
                   <div>
                     <div className="font-medium">{user.name}</div>
                     <div className="text-sm text-gray-500">{user.email}</div>
-                    <div className="text-sm capitalize text-blue-600">{user.role}</div>
+                    <div className="text-sm text-blue-600">
+                      {user.access_profiles?.name || 'Sem perfil atribuído'}
+                    </div>
                   </div>
                 )}
               </div>
