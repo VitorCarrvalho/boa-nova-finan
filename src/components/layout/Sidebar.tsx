@@ -371,7 +371,7 @@ const Sidebar = () => {
             </div>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-xs text-gray-500 capitalize">
-                {profileData.access_profile_name || getRoleDisplayName(userRole || '')}
+                {profileData.access_profile_name || 'Membro'}
               </span>
               <div className="w-2 h-2 bg-green-500 rounded-full" title="Online"></div>
             </div>

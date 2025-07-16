@@ -74,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             try {
               const { data: profile, error } = await supabase
                 .from('profiles')
-                .select('role, approval_status')
+                .select('role, approval_status, access_profiles(name)')
                 .eq('id', session.user.id)
                 .single();
               
@@ -144,7 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             try {
               const { data: profile } = await supabase
                 .from('profiles')
-                .select('role, approval_status')
+                .select('role, approval_status, access_profiles(name)')
                 .eq('id', session.user.id)
                 .single();
               
@@ -242,7 +242,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.user) {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('approval_status')
+          .select('approval_status, access_profiles(name)')
           .eq('id', data.user.id)
           .single();
         
@@ -298,6 +298,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const hasPermission = (module: string, action: string): boolean => {
+    console.log(`hasPermission called - module: ${module}, action: ${action}, userRole: ${userRole}, userPermissions:`, userPermissions);
+    
     // Fallback para administradores sempre terem acesso aos módulos críticos
     if (userRole === 'admin' || userRole === 'superadmin') {
       if (module === 'gestao-acessos' || module === 'configuracoes') {
@@ -305,8 +307,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
     
-    if (!userPermissions) return false;
-    return userPermissions[module]?.[action] === true;
+    if (!userPermissions) {
+      console.log('No userPermissions found');
+      return false;
+    }
+    
+    const hasAccess = userPermissions[module]?.[action] === true;
+    console.log(`Permission result for ${module}.${action}: ${hasAccess}`);
+    return hasAccess;
   };
 
   const value = {
