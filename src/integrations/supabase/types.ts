@@ -247,6 +247,48 @@ export type Database = {
           },
         ]
       }
+      attachment_downloads: {
+        Row: {
+          account_payable_id: string
+          downloaded_at: string
+          downloaded_by: string
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+        }
+        Insert: {
+          account_payable_id: string
+          downloaded_at?: string
+          downloaded_by: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+        }
+        Update: {
+          account_payable_id?: string
+          downloaded_at?: string
+          downloaded_by?: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachment_downloads_account_payable_id_fkey"
+            columns: ["account_payable_id"]
+            isOneToOne: false
+            referencedRelation: "accounts_payable"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attachment_downloads_downloaded_by_fkey"
+            columns: ["downloaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action_type: string

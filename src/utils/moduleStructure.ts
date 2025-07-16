@@ -61,59 +61,6 @@ export const MODULE_STRUCTURE: Module[] = [
           { key: 'export', label: 'Exportar', applicable: true },
         ],
       },
-      {
-        key: 'accounts_payable',
-        label: 'Contas a Pagar',
-        actions: [
-          { key: 'view', label: 'Visualizar', applicable: true },
-          { key: 'insert', label: 'Inserir', applicable: true },
-          { key: 'edit', label: 'Editar', applicable: true },
-          { key: 'delete', label: 'Excluir', applicable: true },
-          { key: 'approve', label: 'Aprovar', applicable: true },
-          { key: 'export', label: 'Exportar', applicable: true },
-        ],
-        subSubModules: [
-          {
-            key: 'new_account',
-            label: 'Incluir Nova Conta',
-            actions: [
-              { key: 'view', label: 'Visualizar', applicable: true },
-              { key: 'insert', label: 'Inserir', applicable: true },
-            ],
-          },
-          {
-            key: 'pending_approval',
-            label: 'Pendentes de Aprovação',
-            actions: [
-              { key: 'view', label: 'Visualizar', applicable: true },
-            ],
-          },
-          {
-            key: 'authorize_accounts',
-            label: 'Autorizar Contas',
-            actions: [
-              { key: 'view', label: 'Visualizar', applicable: true },
-              { key: 'approve', label: 'Aprovar', applicable: true },
-            ],
-          },
-          {
-            key: 'approved_accounts',
-            label: 'Contas Aprovadas',
-            actions: [
-              { key: 'view', label: 'Visualizar', applicable: true },
-              { key: 'edit', label: 'Editar', applicable: true },
-            ],
-          },
-          {
-            key: 'paid_accounts',
-            label: 'Contas Pagas',
-            actions: [
-              { key: 'view', label: 'Visualizar', applicable: true },
-              { key: 'export', label: 'Exportar', applicable: true },
-            ],
-          },
-        ],
-      },
     ],
   },
   {
@@ -243,10 +190,64 @@ export const MODULE_STRUCTURE: Module[] = [
     icon: 'Calculator',
     actions: [
       { key: 'view', label: 'Visualizar', applicable: true },
+      { key: 'submit', label: 'Enviar', applicable: true },
+      { key: 'approve', label: 'Aprovar', applicable: true },
+      { key: 'reject', label: 'Reprovar', applicable: true },
+      { key: 'export', label: 'Exportar', applicable: true },
+    ],
+  },
+  {
+    key: 'contas-pagar',
+    label: 'Contas a Pagar',
+    icon: 'CreditCard',
+    actions: [
+      { key: 'view', label: 'Visualizar', applicable: true },
       { key: 'insert', label: 'Inserir', applicable: true },
       { key: 'edit', label: 'Editar', applicable: true },
+      { key: 'delete', label: 'Excluir', applicable: true },
       { key: 'approve', label: 'Aprovar', applicable: true },
       { key: 'export', label: 'Exportar', applicable: true },
+    ],
+    subModules: [
+      {
+        key: 'new_account',
+        label: 'Incluir Nova Conta',
+        actions: [
+          { key: 'view', label: 'Visualizar', applicable: true },
+          { key: 'insert', label: 'Inserir', applicable: true },
+        ],
+      },
+      {
+        key: 'pending_approval',
+        label: 'Pendentes de Aprovação',
+        actions: [
+          { key: 'view', label: 'Visualizar', applicable: true },
+        ],
+      },
+      {
+        key: 'authorize_accounts',
+        label: 'Autorizar Contas',
+        actions: [
+          { key: 'view', label: 'Visualizar', applicable: true },
+          { key: 'approve', label: 'Aprovar', applicable: true },
+        ],
+      },
+      {
+        key: 'approved_accounts',
+        label: 'Contas Aprovadas',
+        actions: [
+          { key: 'view', label: 'Visualizar', applicable: true },
+          { key: 'edit', label: 'Editar', applicable: true },
+        ],
+      },
+      {
+        key: 'paid_accounts',
+        label: 'Contas Pagas',
+        actions: [
+          { key: 'view', label: 'Visualizar', applicable: true },
+          { key: 'export', label: 'Exportar', applicable: true },
+        ],
+      },
     ],
   },
   {

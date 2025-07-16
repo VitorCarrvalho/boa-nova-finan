@@ -10,8 +10,9 @@ import {
   Users, 
   Calendar, 
   Building2, 
-  Heart, 
+  Heart,
   Truck,
+  CreditCard,
   LogOut,
   Settings,
   Church,
@@ -175,6 +176,13 @@ const Sidebar = () => {
       module: 'financeiro'
     },
     {
+      title: 'Contas a Pagar',
+      icon: CreditCard,
+      href: '/accounts-payable',
+      module: 'contas-pagar',
+      hasSubmenu: true
+    },
+    {
       title: 'Membros',
       icon: Users,
       href: '/membros',
@@ -238,7 +246,7 @@ const Sidebar = () => {
   ];
 
   // Financial submenus for accounts payable - REMOVIDO ANALISTA da aba "Autorizar Contas"
-  const financialSubmenus = [
+  const accountsPayableSubmenus = [
     { 
       title: 'Incluir Nova Conta', 
       href: '/accounts-payable/new',
@@ -301,6 +309,12 @@ const Sidebar = () => {
 
   // Check if user can access financial submenus
   const canAccessFinancial = canViewModule('financeiro');
+  
+  // Check if user can access accounts payable
+  const canAccessAccountsPayable = canViewModule('contas-pagar');
+  
+  // State for accounts payable submenu
+  const [accountsPayableOpen, setAccountsPayableOpen] = React.useState(false);
 
   // Check if user can access settings (only admins)
   const canAccessSettings = canViewModule('configuracoes') || userRole === 'admin' || userRole === 'superadmin';
@@ -372,20 +386,39 @@ const Sidebar = () => {
           const Icon = item.icon;
           const isActive = location.pathname === item.href;
           
-          // Special handling for Financial menu with submenu
+          // Special handling for Financial menu (only receitas e despesas now)
           if (item.title === 'Financeiro' && canAccessFinancial) {
             return (
-              <Collapsible key={item.title} open={financialOpen} onOpenChange={setFinancialOpen}>
+              <Link key={item.href} to={item.href}>
+                <Button
+                  variant={isActive ? "default" : "ghost"}
+                  className={`w-full justify-start ${
+                    isActive 
+                      ? 'bg-red-600 text-white hover:bg-red-700' 
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <Icon className="mr-3 h-4 w-4" />
+                  {item.title}
+                </Button>
+              </Link>
+            );
+          }
+          
+          // Special handling for Accounts Payable menu with submenu
+          if (item.title === 'Contas a Pagar' && canAccessAccountsPayable) {
+            return (
+              <Collapsible key={item.title} open={accountsPayableOpen} onOpenChange={setAccountsPayableOpen}>
                 <CollapsibleTrigger asChild>
                   <Button
                     variant="ghost"
                     className={`w-full justify-start text-gray-700 hover:bg-gray-100 ${
-                      location.pathname.startsWith('/accounts-payable') || location.pathname === '/financeiro' ? 'bg-red-50 text-red-600' : ''
+                      location.pathname.startsWith('/accounts-payable') ? 'bg-red-50 text-red-600' : ''
                     }`}
                   >
                     <Icon className="mr-3 h-4 w-4" />
                     {item.title}
-                    {financialOpen ? (
+                    {accountsPayableOpen ? (
                       <ChevronDown className="ml-auto h-4 w-4" />
                     ) : (
                       <ChevronRight className="ml-auto h-4 w-4" />
@@ -393,23 +426,7 @@ const Sidebar = () => {
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="ml-4 space-y-1">
-                  {/* Traditional Financial Link */}
-                  <Link to={item.href}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`w-full justify-start text-sm ${
-                        location.pathname === item.href
-                          ? 'bg-red-600 text-white hover:bg-red-700' 
-                          : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      Receitas e Despesas
-                    </Button>
-                  </Link>
-                  
-                  {/* Accounts Payable Submenus */}
-                  {financialSubmenus
+                  {accountsPayableSubmenus
                     .filter(submenu => !userRole || submenu.roles.includes(userRole))
                     .map((submenu) => {
                       const isActive = location.pathname === submenu.href;

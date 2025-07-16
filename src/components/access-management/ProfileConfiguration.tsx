@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Edit, Copy, Trash2 } from 'lucide-react';
 import { useAccessProfiles, useCreateAccessProfile, useUpdateAccessProfile, useDeleteAccessProfile } from '@/hooks/useAccessProfiles';
+import { MODULE_STRUCTURE } from '@/utils/moduleStructure';
 
 interface ModulePermission {
   module: string;
@@ -21,21 +22,17 @@ interface ModulePermission {
   };
 }
 
-// System modules configuration
-const systemModules = [
-  { name: 'dashboard', label: 'Dashboard' },
-  { name: 'financeiro', label: 'Financeiro' },
-  { name: 'membros', label: 'Membros' },
-  { name: 'eventos', label: 'Eventos' },
-  { name: 'congregacoes', label: 'Congregações' },
-  { name: 'ministerios', label: 'Ministérios' },
-  { name: 'departamentos', label: 'Departamentos' },
-  { name: 'fornecedores', label: 'Fornecedores' },
-  { name: 'relatorios', label: 'Relatórios' },
-  { name: 'notificacoes', label: 'Notificações' },
-  { name: 'conciliacoes', label: 'Conciliações' },
-  { name: 'contas-pagar', label: 'Contas a Pagar' },
-];
+// Use dynamic modules from structure instead of hardcoded
+const systemModules = MODULE_STRUCTURE.map(module => ({
+  name: module.key,
+  label: module.label,
+  actions: module.actions.map(action => action.key),
+  subModules: module.subModules?.map(sub => ({
+    name: sub.key,
+    label: sub.label,
+    actions: sub.actions.map(action => action.key)
+  })) || []
+}));
 
 const ProfileConfiguration = () => {
   const { data: profiles, isLoading } = useAccessProfiles();
@@ -46,10 +43,28 @@ const ProfileConfiguration = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    permissions: systemModules.reduce((acc, module) => ({
-      ...acc,
-      [module.name]: { view: false, insert: false, edit: false, delete: false }
-    }), {} as Record<string, any>)
+    permissions: systemModules.reduce((acc, module) => {
+      const modulePermissions = module.actions.reduce((modAcc, action) => ({
+        ...modAcc,
+        [action]: false
+      }), {} as Record<string, boolean>);
+
+      const subModulePermissions = module.subModules.reduce((subAcc, subModule) => ({
+        ...subAcc,
+        [subModule.name]: subModule.actions.reduce((subModAcc, action) => ({
+          ...subModAcc,
+          [action]: false
+        }), {} as Record<string, boolean>)
+      }), {} as Record<string, any>);
+
+      return {
+        ...acc,
+        [module.name]: {
+          ...modulePermissions,
+          ...subModulePermissions
+        }
+      };
+    }, {} as Record<string, any>)
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -85,10 +100,28 @@ const ProfileConfiguration = () => {
     setFormData({
       name: '',
       description: '',
-      permissions: systemModules.reduce((acc, module) => ({
-        ...acc,
-        [module.name]: { view: false, insert: false, edit: false, delete: false }
-      }), {} as Record<string, any>)
+      permissions: systemModules.reduce((acc, module) => {
+        const modulePermissions = module.actions.reduce((modAcc, action) => ({
+          ...modAcc,
+          [action]: false
+        }), {} as Record<string, boolean>);
+
+        const subModulePermissions = module.subModules.reduce((subAcc, subModule) => ({
+          ...subAcc,
+          [subModule.name]: subModule.actions.reduce((subModAcc, action) => ({
+            ...subModAcc,
+            [action]: false
+          }), {} as Record<string, boolean>)
+        }), {} as Record<string, any>);
+
+        return {
+          ...acc,
+          [module.name]: {
+            ...modulePermissions,
+            ...subModulePermissions
+          }
+        };
+      }, {} as Record<string, any>)
     });
     setIsEditing(false);
     setEditingProfile(null);
@@ -123,13 +156,34 @@ const ProfileConfiguration = () => {
   const handleEditProfile = (profile: any) => {
     setEditingProfile(profile);
     setIsEditing(true);
+    
+    const defaultPermissions = systemModules.reduce((acc, module) => {
+      const modulePermissions = module.actions.reduce((modAcc, action) => ({
+        ...modAcc,
+        [action]: false
+      }), {} as Record<string, boolean>);
+
+      const subModulePermissions = module.subModules.reduce((subAcc, subModule) => ({
+        ...subAcc,
+        [subModule.name]: subModule.actions.reduce((subModAcc, action) => ({
+          ...subModAcc,
+          [action]: false
+        }), {} as Record<string, boolean>)
+      }), {} as Record<string, any>);
+
+      return {
+        ...acc,
+        [module.name]: {
+          ...modulePermissions,
+          ...subModulePermissions
+        }
+      };
+    }, {} as Record<string, any>);
+
     setFormData({
       name: profile.name,
       description: profile.description || '',
-      permissions: profile.permissions || systemModules.reduce((acc, module) => ({
-        ...acc,
-        [module.name]: { view: false, insert: false, edit: false, delete: false }
-      }), {} as Record<string, any>)
+      permissions: profile.permissions || defaultPermissions
     });
     setIsDialogOpen(true);
   };
@@ -141,25 +195,49 @@ const ProfileConfiguration = () => {
 
   const handleDuplicateProfile = (profile: any) => {
     resetForm();
+    
+    const defaultPermissions = systemModules.reduce((acc, module) => {
+      const modulePermissions = module.actions.reduce((modAcc, action) => ({
+        ...modAcc,
+        [action]: false
+      }), {} as Record<string, boolean>);
+
+      const subModulePermissions = module.subModules.reduce((subAcc, subModule) => ({
+        ...subAcc,
+        [subModule.name]: subModule.actions.reduce((subModAcc, action) => ({
+          ...subModAcc,
+          [action]: false
+        }), {} as Record<string, boolean>)
+      }), {} as Record<string, any>);
+
+      return {
+        ...acc,
+        [module.name]: {
+          ...modulePermissions,
+          ...subModulePermissions
+        }
+      };
+    }, {} as Record<string, any>);
+
     setFormData({
       name: `${profile.name} (Cópia)`,
       description: profile.description || '',
-      permissions: profile.permissions || systemModules.reduce((acc, module) => ({
-        ...acc,
-        [module.name]: { view: false, insert: false, edit: false, delete: false }
-      }), {} as Record<string, any>)
+      permissions: profile.permissions || defaultPermissions
     });
     setIsDialogOpen(true);
   };
 
-  const handlePermissionChange = (moduleName: string, permissionType: string, checked: boolean) => {
+  const handlePermissionChange = (moduleName: string, permissionType: string, checked: boolean, subModuleName?: string) => {
     setFormData(prev => ({
       ...prev,
       permissions: {
         ...prev.permissions,
         [moduleName]: {
           ...prev.permissions[moduleName],
-          [permissionType]: checked
+          [subModuleName || permissionType]: subModuleName ? {
+            ...prev.permissions[moduleName][subModuleName],
+            [permissionType]: checked
+          } : checked
         }
       }
     }));
@@ -167,11 +245,17 @@ const ProfileConfiguration = () => {
 
   // Calculate global state (all permissions across all modules)
   const calculateGlobalState = () => {
-    const allPermissions = systemModules.flatMap(module => 
-      ['view', 'insert', 'edit', 'delete'].map(action => 
+    const allPermissions = systemModules.flatMap(module => {
+      const modulePermissions = module.actions.map(action => 
         formData.permissions[module.name]?.[action] || false
-      )
-    );
+      );
+      const subModulePermissions = module.subModules.flatMap(subModule =>
+        subModule.actions.map(action =>
+          formData.permissions[module.name]?.[subModule.name]?.[action] || false
+        )
+      );
+      return [...modulePermissions, ...subModulePermissions];
+    });
     
     const checkedCount = allPermissions.filter(Boolean).length;
     const totalCount = allPermissions.length;
@@ -181,15 +265,23 @@ const ProfileConfiguration = () => {
     return 'indeterminate';
   };
 
-  // Calculate module state (all actions within a module)
+  // Calculate module state (all actions within a module including submodules)
   const calculateModuleState = (moduleName: string) => {
-    const actions = ['view', 'insert', 'edit', 'delete'];
-    const modulePermissions = actions.map(action => 
+    const module = systemModules.find(m => m.name === moduleName);
+    if (!module) return 'unchecked';
+    
+    const modulePermissions = module.actions.map(action => 
       formData.permissions[moduleName]?.[action] || false
     );
+    const subModulePermissions = module.subModules.flatMap(subModule =>
+      subModule.actions.map(action =>
+        formData.permissions[moduleName]?.[subModule.name]?.[action] || false
+      )
+    );
     
-    const checkedCount = modulePermissions.filter(Boolean).length;
-    const totalCount = modulePermissions.length;
+    const allPermissions = [...modulePermissions, ...subModulePermissions];
+    const checkedCount = allPermissions.filter(Boolean).length;
+    const totalCount = allPermissions.length;
     
     if (checkedCount === 0) return 'unchecked';
     if (checkedCount === totalCount) return 'checked';
@@ -203,12 +295,26 @@ const ProfileConfiguration = () => {
     
     const newPermissions = { ...formData.permissions };
     systemModules.forEach(module => {
-      newPermissions[module.name] = {
-        view: shouldCheck,
-        insert: shouldCheck,
-        edit: shouldCheck,
-        delete: shouldCheck
-      };
+      // Set module-level actions
+      module.actions.forEach(action => {
+        newPermissions[module.name] = {
+          ...newPermissions[module.name],
+          [action]: shouldCheck
+        };
+      });
+      
+      // Set submodule actions
+      module.subModules.forEach(subModule => {
+        subModule.actions.forEach(action => {
+          newPermissions[module.name] = {
+            ...newPermissions[module.name],
+            [subModule.name]: {
+              ...newPermissions[module.name]?.[subModule.name],
+              [action]: shouldCheck
+            }
+          };
+        });
+      });
     });
     
     setFormData(prev => ({
@@ -221,17 +327,31 @@ const ProfileConfiguration = () => {
   const handleSelectAllModule = (moduleName: string) => {
     const moduleState = calculateModuleState(moduleName);
     const shouldCheck = moduleState !== 'checked';
+    const module = systemModules.find(m => m.name === moduleName);
+    if (!module) return;
+    
+    const newModulePermissions = { ...formData.permissions[moduleName] };
+    
+    // Set module-level actions
+    module.actions.forEach(action => {
+      newModulePermissions[action] = shouldCheck;
+    });
+    
+    // Set submodule actions
+    module.subModules.forEach(subModule => {
+      subModule.actions.forEach(action => {
+        newModulePermissions[subModule.name] = {
+          ...newModulePermissions[subModule.name],
+          [action]: shouldCheck
+        };
+      });
+    });
     
     setFormData(prev => ({
       ...prev,
       permissions: {
         ...prev.permissions,
-        [moduleName]: {
-          view: shouldCheck,
-          insert: shouldCheck,
-          edit: shouldCheck,
-          delete: shouldCheck
-        }
+        [moduleName]: newModulePermissions
       }
     }));
   };
@@ -336,27 +456,75 @@ const ProfileConfiguration = () => {
                               </Label>
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {['view', 'insert', 'edit', 'delete'].map((permission) => (
-                              <div key={permission} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={`${module.name}-${permission}`}
-                                  checked={formData.permissions[module.name]?.[permission] || false}
-                                  onCheckedChange={(checked) => 
-                                    handlePermissionChange(module.name, permission, checked as boolean)
-                                  }
-                                />
-                                <Label 
-                                  htmlFor={`${module.name}-${permission}`}
-                                  className="text-sm"
-                                >
-                                  {permission === 'view' ? 'Visualizar' :
-                                   permission === 'insert' ? 'Incluir' :
-                                   permission === 'edit' ? 'Editar' : 'Remover'}
-                                </Label>
-                              </div>
-                            ))}
+                          
+                          {/* Module-level actions */}
+                          <div className="mb-4">
+                            <div className="text-sm font-medium mb-2">Ações Gerais:</div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              {module.actions.map((action) => (
+                                <div key={action} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`${module.name}-${action}`}
+                                    checked={formData.permissions[module.name]?.[action] || false}
+                                    onCheckedChange={(checked) => 
+                                      handlePermissionChange(module.name, action, checked as boolean)
+                                    }
+                                  />
+                                  <Label 
+                                    htmlFor={`${module.name}-${action}`}
+                                    className="text-sm"
+                                  >
+                                    {action === 'view' ? 'Visualizar' :
+                                     action === 'insert' ? 'Incluir' :
+                                     action === 'edit' ? 'Editar' :
+                                     action === 'delete' ? 'Remover' :
+                                     action === 'submit' ? 'Enviar' :
+                                     action === 'approve' ? 'Aprovar' :
+                                     action === 'reject' ? 'Reprovar' :
+                                     action === 'export' ? 'Exportar' :
+                                     action === 'inactivate' ? 'Inativar' :
+                                     action === 'send_notification' ? 'Enviar Notificação' : action}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
                           </div>
+
+                          {/* Submodules */}
+                          {module.subModules.length > 0 && (
+                            <div className="space-y-3">
+                              <div className="text-sm font-medium">Submódulos:</div>
+                              {module.subModules.map((subModule) => (
+                                <div key={subModule.name} className="border rounded p-3 bg-gray-50">
+                                  <div className="text-sm font-medium mb-2">{subModule.label}:</div>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                    {subModule.actions.map((action) => (
+                                      <div key={action} className="flex items-center space-x-2">
+                                        <Checkbox
+                                          id={`${module.name}-${subModule.name}-${action}`}
+                                          checked={formData.permissions[module.name]?.[subModule.name]?.[action] || false}
+                                          onCheckedChange={(checked) => 
+                                            handlePermissionChange(module.name, action, checked as boolean, subModule.name)
+                                          }
+                                        />
+                                        <Label 
+                                          htmlFor={`${module.name}-${subModule.name}-${action}`}
+                                          className="text-xs"
+                                        >
+                                          {action === 'view' ? 'Ver' :
+                                           action === 'insert' ? 'Incluir' :
+                                           action === 'edit' ? 'Editar' :
+                                           action === 'delete' ? 'Remover' :
+                                           action === 'approve' ? 'Aprovar' :
+                                           action === 'export' ? 'Exportar' : action}
+                                        </Label>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </Card>
                       ))}
                     </div>
