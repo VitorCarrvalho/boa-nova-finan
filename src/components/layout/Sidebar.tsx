@@ -198,8 +198,7 @@ const Sidebar = () => {
       title: 'Conciliações',
       icon: Calculator,
       href: '/conciliacoes',
-      module: 'conciliacoes',
-      requiresCongregationAccess: true
+      module: 'conciliacoes'
     },
     {
       title: 'Congregações',

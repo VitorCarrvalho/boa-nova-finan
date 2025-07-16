@@ -15,7 +15,7 @@ interface ReconciliationTableProps {
 const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliations, onEdit }) => {
   const updateMutation = useUpdateReconciliation();
   const { userRole } = useAuth();
-  const { canEditModule, canApproveModule } = usePermissions();
+  const { canEditModule, hasPermission } = usePermissions();
 
   const handleApprove = async (reconciliation: any) => {
     await updateMutation.mutateAsync({
@@ -54,10 +54,10 @@ const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliatio
     }
   };
 
-  const isAdmin = userRole === 'admin' || userRole === 'superadmin';
+  const canApprove = hasPermission('conciliacoes', 'approve');
+  const canReject = hasPermission('conciliacoes', 'reject');
   const isPastor = userRole === 'pastor';
   const canEdit = canEditModule('conciliacoes');
-  const canApprove = canApproveModule('conciliacoes');
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -128,29 +128,31 @@ const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliatio
                       </Button>
                     )}
                     
-                    {/* Approval buttons - only if user has approve permission and reconciliation is pending */}
-                    {canApprove && reconciliation.status === 'pending' && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleApprove(reconciliation)}
-                          className="text-green-600 hover:text-green-700"
-                          title="Aprovar"
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleReject(reconciliation)}
-                          className="text-red-600 hover:text-red-700"
-                          title="Reprovar"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </>
-                    )}
+                     {/* Approval buttons - only if user has approve permission and reconciliation is pending */}
+                     {canApprove && reconciliation.status === 'pending' && (
+                       <>
+                         <Button
+                           variant="ghost"
+                           size="sm"
+                           onClick={() => handleApprove(reconciliation)}
+                           className="text-green-600 hover:text-green-700"
+                           title="Aprovar"
+                         >
+                           <Check className="h-4 w-4" />
+                         </Button>
+                         {canReject && (
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={() => handleReject(reconciliation)}
+                             className="text-red-600 hover:text-red-700"
+                             title="Reprovar"
+                           >
+                             <X className="h-4 w-4" />
+                           </Button>
+                         )}
+                       </>
+                     )}
                   </div>
                 </td>
               </tr>

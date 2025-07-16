@@ -87,9 +87,7 @@ const App = () => (
               } />
               
               <Route path="/conciliacoes" element={
-                <ProtectedRoute 
-                  requiresCongregationAccess={true}
-                >
+                <ProtectedRoute>
                   <Reconciliations />
                 </ProtectedRoute>
               } />

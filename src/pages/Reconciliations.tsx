@@ -17,7 +17,7 @@ const Reconciliations = () => {
   const { data: reconciliations, isLoading } = useReconciliations();
   const { userRole } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
-  const { canViewModule, canInsertModule } = usePermissions();
+  const { canViewModule, hasPermission } = usePermissions();
 
   const handleEdit = (reconciliation: any) => {
     setEditingReconciliation(reconciliation);
@@ -31,7 +31,7 @@ const Reconciliations = () => {
 
   const isAdmin = userRole === 'admin' || userRole === 'superadmin';
   const isPastor = userRole === 'pastor';
-  const canSubmit = canInsertModule('conciliacoes') && (isPastor ? congregationAccess?.hasAccess : true);
+  const canSubmit = hasPermission('conciliacoes', 'submit');
   
   // Verificar se o usuário pode visualizar o módulo
   const canView = canViewModule('conciliacoes');
@@ -87,10 +87,10 @@ const Reconciliations = () => {
           )}
         </div>
 
-        {!canSubmit && isPastor && (
+        {!canSubmit && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <p className="text-yellow-800">
-              Você não possui acesso para enviar conciliações. Entre em contato com o administrador.
+              Você não possui permissão para enviar conciliações. Entre em contato com o administrador.
             </p>
           </div>
         )}
