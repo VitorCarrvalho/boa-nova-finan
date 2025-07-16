@@ -811,6 +811,7 @@ export type Database = {
           month: string
           online_pix: number | null
           pix: number | null
+          reconciliation_date: string
           sent_by: string | null
           sent_date: string | null
           status: string
@@ -830,6 +831,7 @@ export type Database = {
           month: string
           online_pix?: number | null
           pix?: number | null
+          reconciliation_date?: string
           sent_by?: string | null
           sent_date?: string | null
           status?: string
@@ -849,6 +851,7 @@ export type Database = {
           month?: string
           online_pix?: number | null
           pix?: number | null
+          reconciliation_date?: string
           sent_by?: string | null
           sent_date?: string | null
           status?: string

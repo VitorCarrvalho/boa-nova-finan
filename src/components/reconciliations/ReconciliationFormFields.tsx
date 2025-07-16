@@ -50,13 +50,13 @@ const ReconciliationFormFields: React.FC<ReconciliationFormFieldsProps> = ({
         />
 
         <div>
-          <Label htmlFor="month">Mês/Ano *</Label>
+          <Label htmlFor="reconciliation_date">Data da Conciliação *</Label>
           <Input
-            id="month"
-            type="month"
-            {...register('month', { required: 'Mês é obrigatório' })}
+            id="reconciliation_date"
+            type="date"
+            {...register('reconciliation_date', { required: 'Data da conciliação é obrigatória' })}
           />
-          {errors.month && <p className="text-red-500 text-sm mt-1">{errors.month.message}</p>}
+          {errors.reconciliation_date && <p className="text-red-500 text-sm mt-1">{errors.reconciliation_date.message}</p>}
         </div>
       </div>
 

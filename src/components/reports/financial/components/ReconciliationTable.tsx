@@ -15,6 +15,7 @@ const ReconciliationTable = ({ reconciliations, congregations }: ReconciliationT
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>Data da Conciliação</TableHead>
             <TableHead>Mês</TableHead>
             <TableHead>Congregação</TableHead>
             <TableHead>Status</TableHead>
@@ -26,6 +27,12 @@ const ReconciliationTable = ({ reconciliations, congregations }: ReconciliationT
         <TableBody>
           {reconciliations.map((reconciliation) => (
             <TableRow key={reconciliation.id}>
+              <TableCell>
+                {reconciliation.reconciliation_date 
+                  ? format(new Date(reconciliation.reconciliation_date), 'dd/MM/yyyy', { locale: ptBR })
+                  : '-'
+                }
+              </TableCell>
               <TableCell>
                 {format(new Date(reconciliation.month), 'MM/yyyy', { locale: ptBR })}
               </TableCell>
@@ -61,7 +68,7 @@ const ReconciliationTable = ({ reconciliations, congregations }: ReconciliationT
           ))}
           {reconciliations.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                 Nenhuma conciliação encontrada
               </TableCell>
             </TableRow>

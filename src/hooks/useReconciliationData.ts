@@ -65,8 +65,8 @@ export const useCreateReconciliation = () => {
         throw new Error('Congregação é obrigatória');
       }
       
-      if (!reconciliationData.month) {
-        throw new Error('Mês é obrigatório');
+      if (!reconciliationData.reconciliation_date) {
+        throw new Error('Data da conciliação é obrigatória');
       }
       
       // Ensure status is always pending for new reconciliations

@@ -9,6 +9,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 
 type ReconciliationFormData = {
   congregation_id: string;
+  reconciliation_date: string;
   month: string;
   total_income: number;
   pix: number;
@@ -52,23 +53,23 @@ export const useReconciliationForm = ({ reconciliation, onClose }: UseReconcilia
     return '';
   }, [reconciliation, userRole, availableCongregations]);
 
-  // Convert date from database format to month input format
-  const formatMonthForInput = (dateString: string) => {
+  // Format functions for date handling
+  const formatDateForInput = (dateString: string): string => {
     if (!dateString) return '';
     const date = new Date(dateString);
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    return date.toISOString().split('T')[0];
   };
 
-  // Convert month input format to first day of the month for database
-  const formatMonthForDatabase = (monthString: string) => {
-    if (!monthString) return '';
-    return `${monthString}-01`;
+  const formatDateForDatabase = (dateString: string): string => {
+    if (!dateString) return '';
+    return dateString;
   };
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ReconciliationFormData>({
     defaultValues: {
       congregation_id: defaultCongregationId,
-      month: reconciliation?.month ? formatMonthForInput(reconciliation.month) : '',
+      reconciliation_date: reconciliation ? formatDateForInput(reconciliation.reconciliation_date) : '',
+      month: reconciliation ? formatDateForInput(reconciliation.month) : '',
       total_income: reconciliation?.total_income ? Number(reconciliation.total_income) : 0,
       pix: reconciliation?.pix ? Number(reconciliation.pix) : 0,
       online_pix: reconciliation?.online_pix ? Number(reconciliation.online_pix) : 0,
@@ -110,14 +111,15 @@ export const useReconciliationForm = ({ reconciliation, onClose }: UseReconcilia
         throw new Error('Congregação é obrigatória');
       }
       
-      if (!data.month) {
-        throw new Error('Mês é obrigatório');
+      if (!data.reconciliation_date) {
+        throw new Error('Data da conciliação é obrigatória');
       }
 
       // For pastors, always force status to pending and ensure congregation_id is valid
       const submissionData = {
         congregation_id: data.congregation_id,
-        month: formatMonthForDatabase(data.month), // Convert to database format
+        reconciliation_date: formatDateForDatabase(data.reconciliation_date),
+        month: '', // Will be auto-populated by database trigger
         total_income: totalIncome,
         pix: Number(data.pix) || 0,
         online_pix: Number(data.online_pix) || 0,

@@ -68,6 +68,9 @@ const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliatio
                 Congregação
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Data da Conciliação
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Mês/Ano
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -91,6 +94,12 @@ const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliatio
                   <div className="text-sm font-medium text-gray-900">
                     {reconciliation.congregations?.name || 'N/A'}
                   </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {reconciliation.reconciliation_date ? 
+                    new Date(reconciliation.reconciliation_date).toLocaleDateString('pt-BR') : 
+                    '-'
+                  }
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {formatMonth(reconciliation.month)}
