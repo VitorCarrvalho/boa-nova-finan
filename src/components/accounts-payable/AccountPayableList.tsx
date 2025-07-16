@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AccountPayable, useApproveAccount, useRejectAccount, useMarkAsPaid } from '@/hooks/useAccountsPayable';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Eye, Check, X, Upload, AlertTriangle, FileText } from 'lucide-react';
@@ -42,6 +43,7 @@ const AccountPayableList: React.FC<AccountPayableListProps> = ({
   const [isUploading, setIsUploading] = useState(false);
 
   const { userRole } = useAuth();
+  const { hasPermission } = usePermissions();
   const approveMutation = useApproveAccount();
   const rejectMutation = useRejectAccount();
   const markAsPaidMutation = useMarkAsPaid();
@@ -104,13 +106,17 @@ const AccountPayableList: React.FC<AccountPayableListProps> = ({
   const canApprove = (account: AccountPayable) => {
     if (!userRole) return false;
     
+    // Verificar se tem permissão básica para aprovar contas-pagar
+    if (!hasPermission('contas-pagar', 'approve')) return false;
+    
+    // Mapear status para níveis de aprovação baseado nos perfis
+    // Por enquanto, simplificado - todos com permissão de approve podem aprovar qualquer nível
+    // Futuramente pode ser refinado com verificações mais granulares por nível
     switch (account.status) {
       case 'pending_management':
-        return userRole === 'gerente';
       case 'pending_director':
-        return userRole === 'diretor';
       case 'pending_president':
-        return userRole === 'presidente';
+        return hasPermission('contas-pagar', 'approve');
       default:
         return false;
     }

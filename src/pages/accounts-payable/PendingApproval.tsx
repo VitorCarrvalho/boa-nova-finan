@@ -6,80 +6,43 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAccountsPayable } from '@/hooks/useAccountsPayable';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import AccountPayableList from '@/components/accounts-payable/AccountPayableList';
 import { Search } from 'lucide-react';
 
 const PendingApproval = () => {
-  const { userRole } = useAuth();
+  const { canViewModule } = usePermissions();
   const [filters, setFilters] = useState({
     status: 'all',
     congregation_id: '',
     search: '',
   });
 
-  // Determinar quais status o usuário pode ver baseado no seu perfil
-  const getViewableStatuses = () => {
-    console.log('UserRole:', userRole);
-    
-    switch (userRole) {
-      case 'admin':
-      case 'superadmin':
-        // Admins podem ver contas em qualquer nível de aprovação
-        return ['pending_management', 'pending_director', 'pending_president'];
-      
-      case 'gerente':
-        // Gerentes podem ver contas no nível management
-        return ['pending_management'];
-      
-      case 'diretor':
-        // Diretores podem ver contas no nível director
-        return ['pending_director'];
-      
-      case 'presidente':
-        // Presidentes podem ver contas no nível president
-        return ['pending_president'];
-      
-      case 'finance':
-      case 'analista':
-      case 'pastor':
-        // Outros perfis financeiros podem ver todos os status
-        return ['pending_management', 'pending_director', 'pending_president'];
-      
-      default:
-        // Outros perfis não podem ver contas pendentes de aprovação
-        return [];
-    }
-  };
-
-  // Obter status que o usuário pode ver
-  const userViewableStatuses = getViewableStatuses();
+  const canView = canViewModule('contas-pagar');
   
-  // Se não há status que o usuário pode ver, não buscar dados
-  const shouldFetch = userViewableStatuses.length > 0;
+  // Se não tem permissão para ver contas-pagar, não buscar dados
+  const shouldFetch = canView;
 
   const { data: accounts, isLoading } = useAccountsPayable({
     status: filters.status && filters.status !== 'all' ? filters.status : undefined,
     congregation_id: filters.congregation_id || undefined,
   });
 
-  // Filtrar contas que o usuário pode ver e aplicar filtros de busca
+  // Filtrar contas pendentes (todos os status de pending) e aplicar filtros de busca
   const filteredAccounts = shouldFetch ? accounts?.filter(account => {
-    // Primeiro filtro: verificar se o usuário pode ver este status
-    const canView = userViewableStatuses.includes(account.status);
-    console.log(`Account ${account.id} status: ${account.status}, Can view: ${canView}`);
+    // Primeiro filtro: apenas status pendentes
+    const isPending = ['pending_management', 'pending_director', 'pending_president'].includes(account.status);
     
     // Segundo filtro: aplicar busca textual
     const matchesSearch = !filters.search || 
       account.description.toLowerCase().includes(filters.search.toLowerCase()) ||
       account.payee_name.toLowerCase().includes(filters.search.toLowerCase());
     
-    return canView && matchesSearch;
+    return isPending && matchesSearch;
   }) : [];
 
   console.log('Total accounts:', accounts?.length);
   console.log('Filtered accounts:', filteredAccounts?.length);
-  console.log('User viewable statuses:', userViewableStatuses);
 
   return (
     <Layout>
@@ -111,15 +74,9 @@ const PendingApproval = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os status</SelectItem>
-                    {userViewableStatuses.includes('pending_management') && (
-                      <SelectItem value="pending_management">Pendente - Gerência</SelectItem>
-                    )}
-                    {userViewableStatuses.includes('pending_director') && (
-                      <SelectItem value="pending_director">Pendente - Diretoria</SelectItem>
-                    )}
-                    {userViewableStatuses.includes('pending_president') && (
-                      <SelectItem value="pending_president">Pendente - Presidência</SelectItem>
-                    )}
+                    <SelectItem value="pending_management">Pendente - Gerência</SelectItem>
+                    <SelectItem value="pending_director">Pendente - Diretoria</SelectItem>
+                    <SelectItem value="pending_president">Pendente - Presidência</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

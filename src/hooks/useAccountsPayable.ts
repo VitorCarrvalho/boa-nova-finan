@@ -200,10 +200,14 @@ export const useCreateAccountPayable = () => {
         throw new Error('Usuário não aprovado no sistema');
       }
 
-      // Verificar se o usuário tem permissão para criar contas a pagar
-      const allowedRoles = ['assistente', 'analista', 'gerente', 'pastor'];
-      if (!allowedRoles.includes(profile.role)) {
-        throw new Error(`Sem permissão. Papel atual: ${profile.role}. Papéis permitidos: ${allowedRoles.join(', ')}`);
+      // Verificar permissão granular para criar contas a pagar
+      const { data: hasPermission } = await supabase.rpc('user_has_permission', {
+        _module: 'contas-pagar',
+        _action: 'insert'
+      });
+
+      if (!hasPermission) {
+        throw new Error('Você não tem permissão para criar contas a pagar');
       }
 
       console.log('Inserindo dados:', { ...data, requested_by: user.user.id });

@@ -4,75 +4,32 @@ import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAccountsPayable } from '@/hooks/useAccountsPayable';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import AccountPayableList from '@/components/accounts-payable/AccountPayableList';
 
 const AuthorizeAccounts = () => {
-  const { user, userRole } = useAuth();
+  const { canApproveModule } = usePermissions();
 
-  // Determinar qual status o usuário pode aprovar baseado no seu perfil
-  const getUserSpecificStatus = () => {
-    console.log('UserRole:', userRole);
-    
-    switch (userRole) {
-      case 'gerente':
-        return 'pending_management';
-      
-      case 'diretor':
-        return 'pending_director';
-      
-      case 'presidente':
-        return 'pending_president';
-      
-      case 'admin':
-      case 'superadmin':
-        // Admins podem ver todos os status, manter comportamento atual
-        return undefined;
-      
-      default:
-        return null; // Outros perfis não podem ver nada
-    }
-  };
-
-  // Obter status específico do usuário
-  const userSpecificStatus = getUserSpecificStatus();
+  const canApprove = canApproveModule('contas-pagar');
   
-  // Se não há status que o usuário pode ver, não buscar dados
-  const shouldFetch = userSpecificStatus !== null;
+  // Se não tem permissão para aprovar contas-pagar, não buscar dados
+  const shouldFetch = canApprove;
 
   console.log('Should fetch:', shouldFetch);
-  console.log('User specific status:', userSpecificStatus);
 
-  const { data: accounts, isLoading } = useAccountsPayable({
-    status: userSpecificStatus,
-  });
-
-  console.log('Total accounts fetched:', accounts?.length);
-  console.log('Accounts data:', accounts);
-
-  // Para admins, mostrar seletor de status (comportamento atual)
-  const showStatusFilter = userRole === 'admin' || userRole === 'superadmin';
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const { data: adminAccounts, isLoading: adminLoading } = useAccountsPayable({
-    status: showStatusFilter && statusFilter !== 'all' ? statusFilter : undefined,
+  const { data: accounts, isLoading } = useAccountsPayable({
+    status: statusFilter !== 'all' ? statusFilter : undefined,
   });
 
-  const finalAccounts = showStatusFilter ? adminAccounts : accounts;
-  const finalLoading = showStatusFilter ? adminLoading : isLoading;
+  // Filtrar apenas contas pendentes de aprovação
+  const pendingAccounts = accounts?.filter(account => 
+    ['pending_management', 'pending_director', 'pending_president'].includes(account.status)
+  ) || [];
 
-  const getStatusDisplayName = () => {
-    switch (userSpecificStatus) {
-      case 'pending_management':
-        return 'Pendente - Gerência';
-      case 'pending_director':
-        return 'Pendente - Diretoria';
-      case 'pending_president':
-        return 'Pendente - Presidência';
-      default:
-        return 'Todas as contas';
-    }
-  };
+  console.log('Total accounts fetched:', accounts?.length);
+  console.log('Pending accounts:', pendingAccounts?.length);
 
   return (
     <Layout>
@@ -84,48 +41,32 @@ const AuthorizeAccounts = () => {
           </p>
         </div>
 
-        {showStatusFilter ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Filtros</CardTitle>
-              <CardDescription>
-                Filtre as contas por status de aprovação
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Select
-                  value={statusFilter}
-                  onValueChange={setStatusFilter}
-                >
-                  <SelectTrigger className="w-full md:w-[250px]">
-                    <SelectValue placeholder="Todos os status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os status</SelectItem>
-                    <SelectItem value="pending_management">Pendente - Gerência</SelectItem>
-                    <SelectItem value="pending_director">Pendente - Diretoria</SelectItem>
-                    <SelectItem value="pending_president">Pendente - Presidência</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-        ) : userSpecificStatus && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Filtro Ativo</CardTitle>
-              <CardDescription>
-                Exibindo apenas contas do seu nível de aprovação
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm font-medium">
-                Status: {getStatusDisplayName()}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <Card>
+          <CardHeader>
+            <CardTitle>Filtros</CardTitle>
+            <CardDescription>
+              Filtre as contas por status de aprovação
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Select
+                value={statusFilter}
+                onValueChange={setStatusFilter}
+              >
+                <SelectTrigger className="w-full md:w-[250px]">
+                  <SelectValue placeholder="Todos os status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value="pending_management">Pendente - Gerência</SelectItem>
+                  <SelectItem value="pending_director">Pendente - Diretoria</SelectItem>
+                  <SelectItem value="pending_president">Pendente - Presidência</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
 
         {!shouldFetch ? (
           <Card>
@@ -137,8 +78,8 @@ const AuthorizeAccounts = () => {
           </Card>
         ) : (
           <AccountPayableList 
-            accounts={finalAccounts || []} 
-            isLoading={finalLoading}
+            accounts={pendingAccounts} 
+            isLoading={isLoading}
             showApprovalActions={true}
           />
         )}

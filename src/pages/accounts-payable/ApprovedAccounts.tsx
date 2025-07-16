@@ -5,17 +5,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAccountsPayable } from '@/hooks/useAccountsPayable';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import AccountPayableList from '@/components/accounts-payable/AccountPayableList';
 import { Search } from 'lucide-react';
 
 const ApprovedAccounts = () => {
-  const { userRole } = useAuth();
+  const { canViewModule, canEditModule } = usePermissions();
   const [filters, setFilters] = useState({
     search: '',
     date_from: '',
     date_to: '',
   });
+
+  const canView = canViewModule('contas-pagar');
+  const canMarkAsPaid = canEditModule('contas-pagar');
 
   const { data: accounts, isLoading } = useAccountsPayable({
     status: 'approved',
@@ -29,8 +32,15 @@ const ApprovedAccounts = () => {
     account.payee_name.toLowerCase().includes(filters.search.toLowerCase())
   );
 
-  // Verificar se o usuário pode marcar contas como pagas
-  const canMarkAsPaid = userRole && ['analista', 'finance', 'gerente', 'admin', 'superadmin'].includes(userRole);
+  if (!canView) {
+    return (
+      <Layout>
+        <div className="text-center p-8">
+          <p className="text-gray-500">Você não tem permissão para acessar este módulo.</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>

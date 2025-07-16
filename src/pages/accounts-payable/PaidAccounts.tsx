@@ -5,15 +5,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAccountsPayable } from '@/hooks/useAccountsPayable';
+import { usePermissions } from '@/hooks/usePermissions';
 import AccountPayableList from '@/components/accounts-payable/AccountPayableList';
 import { Search, Download } from 'lucide-react';
 
 const PaidAccounts = () => {
+  const { canViewModule, canExportModule } = usePermissions();
   const [filters, setFilters] = useState({
     search: '',
     date_from: '',
     date_to: '',
   });
+
+  const canView = canViewModule('contas-pagar');
+  const canExport = canExportModule('contas-pagar');
 
   const { data: accounts, isLoading } = useAccountsPayable({
     status: 'paid',
@@ -32,6 +37,16 @@ const PaidAccounts = () => {
     console.log('Exportar contas pagas');
   };
 
+  if (!canView) {
+    return (
+      <Layout>
+        <div className="text-center p-8">
+          <p className="text-gray-500">Você não tem permissão para acessar este módulo.</p>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -42,10 +57,12 @@ const PaidAccounts = () => {
               Histórico de contas pagas
             </p>
           </div>
-          <Button onClick={handleExport} variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Exportar
-          </Button>
+          {canExport && (
+            <Button onClick={handleExport} variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Exportar
+            </Button>
+          )}
         </div>
 
         <Card>
