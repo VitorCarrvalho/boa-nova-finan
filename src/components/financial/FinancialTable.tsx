@@ -13,11 +13,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Download, Edit, Trash2 } from 'lucide-react';
 import { useFinancialRecords } from '@/hooks/useFinancialData';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const FinancialTable = () => {
   const { data: records, isLoading } = useFinancialRecords();
-  const { userRole } = useAuth();
+  const { canEditModule, canDeleteModule, canExportModule } = usePermissions();
+  
+  const canEdit = canEditModule('financeiro');
+  const canDelete = canDeleteModule('financeiro');
+  const canExport = canExportModule('financeiro');
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -114,10 +118,12 @@ const FinancialTable = () => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Registros Financeiros</CardTitle>
-        <Button onClick={exportToCSV} variant="outline" size="sm">
-          <Download className="mr-2 h-4 w-4" />
-          Exportar CSV
-        </Button>
+        {canExport && (
+          <Button onClick={exportToCSV} variant="outline" size="sm">
+            <Download className="mr-2 h-4 w-4" />
+            Exportar CSV
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -130,7 +136,7 @@ const FinancialTable = () => {
                 <TableHead>Valor</TableHead>
                 <TableHead>Método</TableHead>
                 <TableHead>Evento</TableHead>
-                <TableHead>Ações</TableHead>
+                {(canEdit || canDelete) && <TableHead>Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -164,27 +170,27 @@ const FinancialTable = () => {
                       </div>
                     )}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      {(userRole === 'superadmin' || userRole === 'admin' || userRole === 'finance') && (
-                        <>
+                  {(canEdit || canDelete) && (
+                    <TableCell>
+                      <div className="flex gap-2">
+                        {canEdit && (
                           <Button variant="outline" size="sm">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          {userRole === 'superadmin' && (
-                            <Button variant="outline" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
+                        )}
+                        {canDelete && (
+                          <Button variant="outline" size="sm">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
               {(!records || records.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={(canEdit || canDelete) ? 7 : 6} className="text-center py-8 text-gray-500">
                     Nenhum registro encontrado
                   </TableCell>
                 </TableRow>

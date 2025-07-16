@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2 } from 'lucide-react';
 import { useDeleteCongregation } from '@/hooks/useCongregationData';
 import { useMembers } from '@/hooks/useMemberData';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import type { Database } from '@/integrations/supabase/types';
 
 type Congregation = Database['public']['Tables']['congregations']['Row'];
@@ -18,7 +18,10 @@ interface CongregationTableProps {
 const CongregationTable: React.FC<CongregationTableProps> = ({ congregations, onEdit }) => {
   const deleteMutation = useDeleteCongregation();
   const { data: members = [] } = useMembers();
-  const { userRole } = useAuth();
+  const { canEditModule, canDeleteModule } = usePermissions();
+  
+  const canEdit = canEditModule('congregacoes');
+  const canDelete = canDeleteModule('congregacoes');
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir esta congregação?')) {
@@ -43,8 +46,6 @@ const CongregationTable: React.FC<CongregationTableProps> = ({ congregations, on
     );
   };
 
-  // Only admins and superadmins can manage congregations
-  const canManageCongregations = userRole === 'admin' || userRole === 'superadmin';
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -70,7 +71,7 @@ const CongregationTable: React.FC<CongregationTableProps> = ({ congregations, on
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
-              {canManageCongregations && (
+              {(canEdit || canDelete) && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ações
                 </th>
@@ -118,10 +119,10 @@ const CongregationTable: React.FC<CongregationTableProps> = ({ congregations, on
                       {congregation.is_active ? 'Ativa' : 'Inativa'}
                     </Badge>
                   </td>
-                  {canManageCongregations && (
+                  {(canEdit || canDelete) && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
-                        {onEdit && (
+                        {onEdit && canEdit && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -130,14 +131,16 @@ const CongregationTable: React.FC<CongregationTableProps> = ({ congregations, on
                             <Edit className="h-4 w-4" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(congregation.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canDelete && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(congregation.id)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   )}

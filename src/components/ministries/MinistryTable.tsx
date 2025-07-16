@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useMinistries, useDeleteMinistry } from '@/hooks/useMinistryData';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   Table,
   TableBody,
@@ -17,7 +18,11 @@ import MinistryForm from './MinistryForm';
 const MinistryTable = () => {
   const { data: ministries, isLoading } = useMinistries();
   const deleteMinistry = useDeleteMinistry();
+  const { canEditModule, canDeleteModule } = usePermissions();
   const [editingMinistry, setEditingMinistry] = useState<any>(null);
+  
+  const canEdit = canEditModule('ministerios');
+  const canDelete = canDeleteModule('ministerios');
 
   const handleDelete = (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir este ministério?')) {
@@ -42,7 +47,7 @@ const MinistryTable = () => {
               <TableHead>Nome</TableHead>
               <TableHead>Descrição</TableHead>
               <TableHead>Líder</TableHead>
-              <TableHead className="w-32">Ações</TableHead>
+              {(canEdit || canDelete) && <TableHead className="w-32">Ações</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -51,30 +56,36 @@ const MinistryTable = () => {
                 <TableCell className="font-medium">{ministry.name}</TableCell>
                 <TableCell>{ministry.description || '-'}</TableCell>
                 <TableCell>{ministry.leader?.name || '-'}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingMinistry(ministry)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(ministry.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
+                {(canEdit || canDelete) && (
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {canEdit && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingMinistry(ministry)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canDelete && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(ministry.id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
             {ministries?.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={(canEdit || canDelete) ? 4 : 3} className="text-center py-8 text-gray-500">
                   Nenhum ministério encontrado
                 </TableCell>
               </TableRow>

@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useSuppliers, useDeleteSupplier } from '@/hooks/useSupplierData';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   Table,
   TableBody,
@@ -17,7 +18,11 @@ import SupplierForm from './SupplierForm';
 const SupplierTable = () => {
   const { data: suppliers, isLoading } = useSuppliers();
   const deleteSupplier = useDeleteSupplier();
+  const { canEditModule, canDeleteModule } = usePermissions();
   const [editingSupplier, setEditingSupplier] = useState<any>(null);
+  
+  const canEdit = canEditModule('fornecedores');
+  const canDelete = canDeleteModule('fornecedores');
 
   const handleDelete = (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir este fornecedor?')) {
@@ -44,7 +49,7 @@ const SupplierTable = () => {
               <TableHead>Telefone</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Serviços</TableHead>
-              <TableHead className="w-32">Ações</TableHead>
+              {(canEdit || canDelete) && <TableHead className="w-32">Ações</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -55,30 +60,36 @@ const SupplierTable = () => {
                 <TableCell>{supplier.phone || '-'}</TableCell>
                 <TableCell>{supplier.email || '-'}</TableCell>
                 <TableCell>{supplier.services || '-'}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingSupplier(supplier)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(supplier.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
+                {(canEdit || canDelete) && (
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {canEdit && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingSupplier(supplier)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canDelete && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(supplier.id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
             {suppliers?.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={(canEdit || canDelete) ? 6 : 5} className="text-center py-8 text-gray-500">
                   Nenhum fornecedor encontrado
                 </TableCell>
               </TableRow>

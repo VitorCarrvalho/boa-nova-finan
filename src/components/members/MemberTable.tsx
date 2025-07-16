@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, Edit, Search, Filter } from 'lucide-react';
 import { useMembers } from '@/hooks/useMemberData';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Database } from '@/integrations/supabase/types';
 
 type Member = Database['public']['Tables']['members']['Row'];
@@ -26,10 +26,13 @@ interface MemberTableProps {
 
 const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
   const { data: members, isLoading } = useMembers();
-  const { userRole } = useAuth();
+  const { canEditModule, canExportModule } = usePermissions();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  
+  const canEdit = canEditModule('membros');
+  const canExport = canExportModule('membros');
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-';
@@ -117,10 +120,12 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
       <CardHeader>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <CardTitle>Membros da Igreja</CardTitle>
-          <Button onClick={exportToCSV} variant="outline" size="sm">
-            <Download className="mr-2 h-4 w-4" />
-            Exportar CSV
-          </Button>
+          {canExport && (
+            <Button onClick={exportToCSV} variant="outline" size="sm">
+              <Download className="mr-2 h-4 w-4" />
+              Exportar CSV
+            </Button>
+          )}
         </div>
         
         <div className="flex flex-col md:flex-row gap-4 mt-4">
@@ -170,7 +175,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
                 <TableHead>Ministérios</TableHead>
                 <TableHead>Data Ingresso</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Ações</TableHead>
+                {canEdit && <TableHead>Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -212,8 +217,8 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
                       {member.is_active ? 'Ativo' : 'Inativo'}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    {(userRole === 'superadmin' || userRole === 'admin' || userRole === 'pastor') && (
+                  {canEdit && (
+                    <TableCell>
                       <Button 
                         variant="outline" 
                         size="sm"
@@ -221,13 +226,13 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                    )}
-                  </TableCell>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
               {filteredMembers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={canEdit ? 7 : 6} className="text-center py-8 text-gray-500">
                     Nenhum membro encontrado
                   </TableCell>
                 </TableRow>

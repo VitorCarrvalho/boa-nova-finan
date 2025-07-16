@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useEvents, useDeleteEvent } from '@/hooks/useEventData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,7 @@ type ChurchEvent = Database['public']['Tables']['church_events']['Row'] & {
 const EventTable = () => {
   const { data: events, isLoading } = useEvents();
   const deleteEvent = useDeleteEvent();
-  const { userRole } = useAuth();
+  const { canViewModule, canInsertModule, canEditModule, canDeleteModule } = usePermissions();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -87,7 +87,9 @@ const EventTable = () => {
     setIsFormOpen(true);
   };
 
-  const canManageEvents = userRole && ['superadmin', 'admin', 'pastor'].includes(userRole);
+  const canInsert = canInsertModule('eventos');
+  const canEdit = canEditModule('eventos');
+  const canDelete = canDeleteModule('eventos');
 
   if (isLoading) {
     return (
@@ -111,7 +113,7 @@ const EventTable = () => {
                 Gerencie os eventos, cultos e atividades da igreja
               </CardDescription>
             </div>
-            {canManageEvents && (
+            {canInsert && (
               <Button onClick={handleNewEvent} className="bg-red-600 hover:bg-red-700">
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Evento
@@ -163,7 +165,7 @@ const EventTable = () => {
                     <TableHead>Local</TableHead>
                     <TableHead>Organizador</TableHead>
                     <TableHead>Participantes</TableHead>
-                    {canManageEvents && <TableHead className="text-right">Ações</TableHead>}
+                    {(canEdit || canDelete) && <TableHead className="text-right">Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -218,41 +220,45 @@ const EventTable = () => {
                           {event.max_attendees && ` / ${event.max_attendees}`}
                         </div>
                       </TableCell>
-                      {canManageEvents && (
+                      {(canEdit || canDelete) && (
                         <TableCell className="text-right">
                           <div className="flex justify-end space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(event)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm" className="text-red-600">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Tem certeza que deseja excluir o evento "{event.title}"? 
-                                    Esta ação não pode ser desfeita.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete(event.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Excluir
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            {canEdit && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(event)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {canDelete && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="text-red-600">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Tem certeza que deseja excluir o evento "{event.title}"? 
+                                      Esta ação não pode ser desfeita.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDelete(event.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
                           </div>
                         </TableCell>
                       )}
