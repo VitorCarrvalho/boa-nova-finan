@@ -58,15 +58,15 @@ export const useFinancialForm = () => {
     },
   });
 
-  // Fetch pastors for selection
+  // Fetch pastors for selection from profiles table
   const { data: pastors } = useQuery({
     queryKey: ['pastors'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('members')
+        .from('profiles')
         .select('id, name, email')
         .eq('role', 'pastor')
-        .eq('is_active', true)
+        .eq('approval_status', 'ativo')
         .order('name');
 
       if (error) throw error;
@@ -80,20 +80,12 @@ export const useFinancialForm = () => {
     queryFn: async () => {
       if (!user?.id || userRole !== 'pastor') return null;
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile?.email) return null;
-
       const { data: pastor, error } = await supabase
-        .from('members')
+        .from('profiles')
         .select('id, name, email')
-        .eq('email', profile.email)
+        .eq('id', user.id)
         .eq('role', 'pastor')
-        .eq('is_active', true)
+        .eq('approval_status', 'ativo')
         .maybeSingle();
 
       if (error) throw error;

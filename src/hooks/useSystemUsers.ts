@@ -94,7 +94,20 @@ export const useSystemUsersWithMemberRoles = (memberRoles: Database['public']['E
 };
 
 export const useSystemPastors = () => {
-  return useSystemUsersWithMemberRoles(['pastor']);
+  return useQuery({
+    queryKey: ['system-pastors'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, name, email, role')
+        .eq('role', 'pastor')
+        .eq('approval_status', 'ativo')
+        .order('name');
+
+      if (error) throw error;
+      return data;
+    },
+  });
 };
 
 export const useSystemFinanceUsers = () => {
