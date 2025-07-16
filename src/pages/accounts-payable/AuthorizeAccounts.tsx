@@ -8,9 +8,9 @@ import { usePermissions } from '@/hooks/usePermissions';
 import AccountPayableList from '@/components/accounts-payable/AccountPayableList';
 
 const AuthorizeAccounts = () => {
-  const { canApproveModule } = usePermissions();
+  const { canViewAuthorizeAccounts } = usePermissions();
 
-  const canApprove = canApproveModule('contas-pagar');
+  const canApprove = canViewAuthorizeAccounts();
   
   // Se não tem permissão para aprovar contas-pagar, não buscar dados
   const shouldFetch = canApprove;

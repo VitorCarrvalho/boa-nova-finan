@@ -11,14 +11,14 @@ import AccountPayableList from '@/components/accounts-payable/AccountPayableList
 import { Search } from 'lucide-react';
 
 const PendingApproval = () => {
-  const { canViewModule } = usePermissions();
+  const { canViewPendingApproval } = usePermissions();
   const [filters, setFilters] = useState({
     status: 'all',
     congregation_id: '',
     search: '',
   });
 
-  const canView = canViewModule('contas-pagar');
+  const canView = canViewPendingApproval();
   
   // Se não tem permissão para ver contas-pagar, não buscar dados
   const shouldFetch = canView;

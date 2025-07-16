@@ -36,7 +36,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 const Sidebar = () => {
   const { signOut, userRole, user } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
-  const { canViewModule } = usePermissions();
+  const { canViewModule, canViewNewAccount, canViewPendingApproval, canViewAuthorizeAccounts, canViewApprovedAccounts, canViewPaidAccounts } = usePermissions();
   const location = useLocation();
   const { toast } = useToast();
   const [uploading, setUploading] = React.useState(false);
@@ -244,32 +244,32 @@ const Sidebar = () => {
     { title: 'Nova Notificação', href: '/notificacoes/nova', icon: MessageSquare }
   ];
 
-  // Financial submenus for accounts payable - REMOVIDO ANALISTA da aba "Autorizar Contas"
+  // Financial submenus for accounts payable - usando permissões granulares
   const accountsPayableSubmenus = [
     { 
       title: 'Incluir Nova Conta', 
       href: '/accounts-payable/new',
-      roles: ['assistente', 'analista', 'gerente', 'pastor']
+      checkPermission: () => canViewNewAccount()
     },
     { 
       title: 'Pendentes de Aprovação', 
       href: '/accounts-payable/pending-approval',
-      roles: ['superadmin', 'admin', 'finance', 'assistente', 'analista', 'gerente', 'pastor', 'diretor', 'presidente']
+      checkPermission: () => canViewPendingApproval()
     },
     { 
       title: 'Autorizar Contas', 
       href: '/accounts-payable/authorize',
-      roles: ['gerente', 'diretor', 'presidente', 'admin', 'superadmin'] // REMOVIDO 'analista'
+      checkPermission: () => canViewAuthorizeAccounts()
     },
     { 
       title: 'Contas Aprovadas', 
       href: '/accounts-payable/approved',
-      roles: ['superadmin', 'admin', 'finance', 'assistente', 'analista', 'gerente', 'pastor']
+      checkPermission: () => canViewApprovedAccounts()
     },
     { 
       title: 'Contas Pagas', 
       href: '/accounts-payable/paid',
-      roles: ['superadmin', 'admin', 'finance', 'assistente', 'analista', 'gerente', 'pastor', 'diretor', 'presidente']
+      checkPermission: () => canViewPaidAccounts()
     }
   ];
 
@@ -426,7 +426,7 @@ const Sidebar = () => {
                 </CollapsibleTrigger>
                 <CollapsibleContent className="ml-4 space-y-1">
                   {accountsPayableSubmenus
-                    .filter(submenu => !userRole || submenu.roles.includes(userRole))
+                    .filter(submenu => submenu.checkPermission())
                     .map((submenu) => {
                       const isActive = location.pathname === submenu.href;
                       return (

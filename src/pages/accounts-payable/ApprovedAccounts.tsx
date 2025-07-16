@@ -10,14 +10,14 @@ import AccountPayableList from '@/components/accounts-payable/AccountPayableList
 import { Search } from 'lucide-react';
 
 const ApprovedAccounts = () => {
-  const { canViewModule, canEditModule } = usePermissions();
+  const { canViewApprovedAccounts, canEditModule } = usePermissions();
   const [filters, setFilters] = useState({
     search: '',
     date_from: '',
     date_to: '',
   });
 
-  const canView = canViewModule('contas-pagar');
+  const canView = canViewApprovedAccounts();
   const canMarkAsPaid = canEditModule('contas-pagar');
 
   const { data: accounts, isLoading } = useAccountsPayable({
