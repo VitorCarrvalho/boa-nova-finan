@@ -51,31 +51,69 @@ const ProfileConfiguration = () => {
     }), {} as Record<string, any>)
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<any>(null);
 
-  const handleCreateProfile = async () => {
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      permissions: systemModules.reduce((acc, module) => ({
+        ...acc,
+        [module.name]: { view: false, insert: false, edit: false, delete: false }
+      }), {} as Record<string, any>)
+    });
+    setIsEditing(false);
+    setEditingProfile(null);
+  };
+
+  const handleSaveProfile = async () => {
     try {
-      await createProfile.mutateAsync({
-        name: formData.name,
-        description: formData.description,
-        permissions: formData.permissions
-      });
+      if (isEditing && editingProfile) {
+        await updateProfile.mutateAsync({
+          id: editingProfile.id,
+          updates: {
+            name: formData.name,
+            description: formData.description,
+            permissions: formData.permissions
+          }
+        });
+      } else {
+        await createProfile.mutateAsync({
+          name: formData.name,
+          description: formData.description,
+          permissions: formData.permissions
+        });
+      }
       
-      // Reset form and close dialog
-      setFormData({
-        name: '',
-        description: '',
-        permissions: systemModules.reduce((acc, module) => ({
-          ...acc,
-          [module.name]: { view: false, insert: false, edit: false, delete: false }
-        }), {} as Record<string, any>)
-      });
+      resetForm();
       setIsDialogOpen(false);
     } catch (error) {
-      console.error('Error creating profile:', error);
+      console.error('Error saving profile:', error);
     }
   };
 
+  const handleEditProfile = (profile: any) => {
+    setEditingProfile(profile);
+    setIsEditing(true);
+    setFormData({
+      name: profile.name,
+      description: profile.description || '',
+      permissions: profile.permissions || systemModules.reduce((acc, module) => ({
+        ...acc,
+        [module.name]: { view: false, insert: false, edit: false, delete: false }
+      }), {} as Record<string, any>)
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleCreateNewProfile = () => {
+    resetForm();
+    setIsDialogOpen(true);
+  };
+
   const handleDuplicateProfile = (profile: any) => {
+    resetForm();
     setFormData({
       name: `${profile.name} (Cópia)`,
       description: profile.description || '',
@@ -129,18 +167,21 @@ const ProfileConfiguration = () => {
                 Gerencie perfis de acesso e suas permissões
               </CardDescription>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) resetForm();
+            }}>
               <DialogTrigger asChild>
-                <Button onClick={() => setIsDialogOpen(true)}>
+                <Button onClick={handleCreateNewProfile}>
                   <Plus className="h-4 w-4 mr-2" />
                   Novo Perfil
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Criar Novo Perfil</DialogTitle>
+                  <DialogTitle>{isEditing ? 'Editar Perfil' : 'Criar Novo Perfil'}</DialogTitle>
                   <DialogDescription>
-                    Configure as permissões para o novo perfil
+                    {isEditing ? 'Atualize as permissões do perfil' : 'Configure as permissões para o novo perfil'}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-6">
@@ -197,11 +238,14 @@ const ProfileConfiguration = () => {
 
                   <div className="flex gap-2 pt-4">
                     <Button 
-                      onClick={handleCreateProfile} 
+                      onClick={handleSaveProfile} 
                       className="flex-1"
-                      disabled={createProfile.isPending}
+                      disabled={createProfile.isPending || updateProfile.isPending}
                     >
-                      {createProfile.isPending ? 'Criando...' : 'Criar Perfil'}
+                      {createProfile.isPending || updateProfile.isPending ? 
+                        (isEditing ? 'Atualizando...' : 'Criando...') : 
+                        (isEditing ? 'Atualizar Perfil' : 'Criar Perfil')
+                      }
                     </Button>
                   </div>
                 </div>
@@ -230,7 +274,11 @@ const ProfileConfiguration = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleEditProfile(profile)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button 
