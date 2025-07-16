@@ -83,10 +83,12 @@ export const useRejectUser = () => {
     mutationFn: async (params: {
       userId: string;
       rejectionReason?: string;
+      allowReapply?: boolean;
     }) => {
       const { data, error } = await supabase.rpc('reject_user', {
         _user_id: params.userId,
         _rejection_reason: params.rejectionReason || null,
+        _allow_reapply: params.allowReapply || false,
       });
 
       if (error) throw error;

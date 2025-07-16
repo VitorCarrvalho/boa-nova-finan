@@ -38,6 +38,7 @@ const PendingApprovals = () => {
     ministries: []
   });
   const [rejectionReason, setRejectionReason] = useState('');
+  const [allowReapply, setAllowReapply] = useState(false);
 
   const handleApprove = async (userId: string, immediate = false) => {
     if (immediate) {
@@ -61,9 +62,11 @@ const PendingApprovals = () => {
   const handleReject = async (userId: string) => {
     await rejectUser.mutateAsync({
       userId,
-      rejectionReason
+      rejectionReason,
+      allowReapply
     });
     setRejectionReason('');
+    setAllowReapply(false);
   };
 
   const openEditDialog = (user: any) => {
@@ -267,6 +270,16 @@ const PendingApprovals = () => {
                                   onChange={(e) => setRejectionReason(e.target.value)}
                                   placeholder="Descreva o motivo da rejeição..."
                                 />
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id="allowReapply"
+                                  checked={allowReapply}
+                                  onCheckedChange={(checked) => setAllowReapply(checked as boolean)}
+                                />
+                                <Label htmlFor="allowReapply" className="text-sm font-normal">
+                                  Permitir que o usuário se recadastre
+                                </Label>
                               </div>
                               <div className="flex gap-2">
                                 <Button

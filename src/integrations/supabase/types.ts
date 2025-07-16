@@ -955,11 +955,18 @@ export type Database = {
         Returns: Database["public"]["Enums"]["user_role"]
       }
       reject_user: {
-        Args: {
-          _user_id: string
-          _rejection_reason?: string
-          _rejected_by?: string
-        }
+        Args:
+          | {
+              _user_id: string
+              _rejection_reason?: string
+              _rejected_by?: string
+            }
+          | {
+              _user_id: string
+              _rejection_reason?: string
+              _rejected_by?: string
+              _allow_reapply?: boolean
+            }
         Returns: boolean
       }
       user_has_permission: {
