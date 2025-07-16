@@ -298,8 +298,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const hasPermission = (module: string, action: string): boolean => {
-    console.log(`hasPermission called - module: ${module}, action: ${action}, userRole: ${userRole}, userPermissions:`, userPermissions);
-    
     // Fallback para administradores sempre terem acesso aos módulos críticos
     if (userRole === 'admin' || userRole === 'superadmin') {
       if (module === 'gestao-acessos' || module === 'configuracoes') {
@@ -307,14 +305,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
     
-    if (!userPermissions) {
-      console.log('No userPermissions found');
-      return false;
-    }
-    
-    const hasAccess = userPermissions[module]?.[action] === true;
-    console.log(`Permission result for ${module}.${action}: ${hasAccess}`);
-    return hasAccess;
+    if (!userPermissions) return false;
+    return userPermissions[module]?.[action] === true;
   };
 
   const value = {
