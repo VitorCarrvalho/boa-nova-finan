@@ -55,9 +55,17 @@ const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliatio
   };
 
   const canApprove = hasPermission('conciliacoes', 'approve');
-  const canReject = hasPermission('conciliacoes', 'reject');
-  const isPastor = userRole === 'pastor';
-  const canEdit = canEditModule('conciliacoes');
+  const canReject = hasPermission('conciliacoes', 'approve'); // Rejeitar é parte da permissão de aprovar
+  const { user } = useAuth();
+  
+  const canEditReconciliation = (reconciliation: any) => {
+    // Admins podem editar qualquer conciliação
+    if (canApprove) return true;
+    // Usuários podem editar apenas suas próprias conciliações pendentes
+    return hasPermission('conciliacoes', 'insert') && 
+           reconciliation.sent_by === user?.id && 
+           reconciliation.status === 'pending';
+  };
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -116,8 +124,8 @@ const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliatio
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex space-x-2">
-                    {/* Edit button - only if user has edit permission */}
-                    {canEdit && (
+                    {/* Edit button - only if user can edit this specific reconciliation */}
+                    {canEditReconciliation(reconciliation) && (
                       <Button
                         variant="ghost"
                         size="sm"

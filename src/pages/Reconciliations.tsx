@@ -31,7 +31,7 @@ const Reconciliations = () => {
 
   const isAdmin = userRole === 'admin' || userRole === 'superadmin';
   const isPastor = userRole === 'pastor';
-  const canSubmit = hasPermission('conciliacoes', 'submit');
+  const canSubmit = hasPermission('conciliacoes', 'insert');
   
   // Verificar se o usuário pode visualizar o módulo
   const canView = canViewModule('conciliacoes');
