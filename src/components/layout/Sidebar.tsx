@@ -39,7 +39,7 @@ const Sidebar = () => {
   const location = useLocation();
   const { toast } = useToast();
   const [uploading, setUploading] = React.useState(false);
-  const [profileData, setProfileData] = React.useState<{ name: string; photo_url: string | null } | null>(null);
+  const [profileData, setProfileData] = React.useState<{ name: string; photo_url: string | null; access_profile_name: string | null } | null>(null);
   const [reportsOpen, setReportsOpen] = React.useState(false);
   const [notificationsOpen, setNotificationsOpen] = React.useState(false);
   const [financialOpen, setFinancialOpen] = React.useState(false);
@@ -56,12 +56,19 @@ const Sidebar = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('name, photo_url')
+        .select('name, photo_url, access_profiles(name)')
         .eq('id', user.id)
         .single();
 
       if (error) throw error;
-      setProfileData(data);
+      
+      const profileData = {
+        name: data.name,
+        photo_url: data.photo_url,
+        access_profile_name: data.access_profiles?.name || null
+      };
+      
+      setProfileData(profileData);
     } catch (error) {
       console.error('Erro ao buscar perfil:', error);
     }
@@ -351,7 +358,7 @@ const Sidebar = () => {
             </div>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-xs text-gray-500 capitalize">
-                {getRoleDisplayName(userRole || '')}
+                {profileData.access_profile_name || getRoleDisplayName(userRole || '')}
               </span>
               <div className="w-2 h-2 bg-green-500 rounded-full" title="Online"></div>
             </div>
