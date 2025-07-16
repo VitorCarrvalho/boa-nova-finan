@@ -115,11 +115,18 @@ export const useReconciliationForm = ({ reconciliation, onClose }: UseReconcilia
         throw new Error('Data da conciliação é obrigatória');
       }
 
+      // Calculate month from reconciliation_date
+      const calculateMonth = (dateString: string): string => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
+      };
+
       // For pastors, always force status to pending and ensure congregation_id is valid
       const submissionData = {
         congregation_id: data.congregation_id,
         reconciliation_date: formatDateForDatabase(data.reconciliation_date),
-        month: '', // Will be auto-populated by database trigger
+        month: calculateMonth(data.reconciliation_date),
         total_income: totalIncome,
         pix: Number(data.pix) || 0,
         online_pix: Number(data.online_pix) || 0,
