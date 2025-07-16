@@ -7,13 +7,11 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRoles?: string[];
   requiresCongregationAccess?: boolean;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
-  requiredRoles,
   requiresCongregationAccess = false 
 }) => {
   const { user, userRole, loading } = useAuth();
@@ -35,9 +33,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/auth" replace />;
   }
 
-  // Check if user is approved (has access beyond pending status)
-  if (user && userRole === 'worker' && requiredRoles) {
-    // This could be a pending user - we need to check their actual approval status
+  // Check if user is approved - se não tem userRole válido, pode estar pendente
+  if (!userRole) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md">
@@ -56,10 +53,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  if (requiredRoles && userRole && !requiredRoles.includes(userRole)) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
   // Verificar acesso específico para congregações e conciliações
   if (requiresCongregationAccess) {
     const congregationRoutes = ['/congregacoes', '/conciliacoes'];
@@ -68,8 +61,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
 
     if (isRestrictedRoute) {
-      // Finance e worker não têm acesso
-      if (userRole === 'finance' || userRole === 'worker') {
+      // Finance não tem acesso
+      if (userRole === 'finance') {
         return <Navigate to="/dashboard" replace />;
       }
 

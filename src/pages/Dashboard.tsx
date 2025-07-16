@@ -11,10 +11,12 @@ import { useEvents } from '@/hooks/useEventData';
 import FinancialChart from '@/components/dashboard/FinancialChart';
 import MemberChart from '@/components/dashboard/MemberChart';
 import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const Dashboard = () => {
   const { userRole } = useAuth();
   const navigate = useNavigate();
+  const { canViewModule } = usePermissions();
   const { data: financialStats, isLoading: financialLoading } = useFinancialStats();
   const { data: memberStats, isLoading: memberLoading } = useMemberStats();
   const { data: reconciliationStats, isLoading: reconciliationLoading } = useReconciliationStats();
@@ -128,7 +130,7 @@ const Dashboard = () => {
         </div>
 
         {/* Financial Section */}
-        {['superadmin', 'admin', 'finance'].includes(userRole || '') && (
+        {canViewModule('financeiro') && (
           <section className="bg-white rounded-lg p-6 shadow-sm border">
             <SectionTitle icon="📊" title="Financeiro" />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -172,41 +174,43 @@ const Dashboard = () => {
         )}
 
         {/* Members Section */}
-        <section className="bg-white rounded-lg p-6 shadow-sm border">
-          <SectionTitle icon="👥" title="Membros" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <DashboardCard
-              title="Membros Ativos"
-              value={memberStats?.activeMembers?.toString() || '0'}
-              icon={Users}
-              color="text-blue-600"
-              description="Total ativo"
-              route="/membros"
-              trend="+4%"
-            />
-            <DashboardCard
-              title="Total de Membros"
-              value={memberStats?.totalMembers?.toString() || '0'}
-              icon={Users}
-              color="text-gray-600"
-              description="Cadastrados no sistema"
-              route="/membros"
-              trend="+2%"
-            />
-            <DashboardCard
-              title="Novos Membros (30 dias)"
-              value="8"
-              icon={Users}
-              color="text-green-600"
-              description="Últimos 30 dias"
-              route="/membros"
-              trend="+15%"
-            />
-          </div>
-        </section>
+        {canViewModule('membros') && (
+          <section className="bg-white rounded-lg p-6 shadow-sm border">
+            <SectionTitle icon="👥" title="Membros" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <DashboardCard
+                title="Membros Ativos"
+                value={memberStats?.activeMembers?.toString() || '0'}
+                icon={Users}
+                color="text-blue-600"
+                description="Total ativo"
+                route="/membros"
+                trend="+4%"
+              />
+              <DashboardCard
+                title="Total de Membros"
+                value={memberStats?.totalMembers?.toString() || '0'}
+                icon={Users}
+                color="text-gray-600"
+                description="Cadastrados no sistema"
+                route="/membros"
+                trend="+2%"
+              />
+              <DashboardCard
+                title="Novos Membros (30 dias)"
+                value="8"
+                icon={Users}
+                color="text-green-600"
+                description="Últimos 30 dias"
+                route="/membros"
+                trend="+15%"
+              />
+            </div>
+          </section>
+        )}
 
         {/* Notifications Section */}
-        {['superadmin', 'admin'].includes(userRole || '') && (
+        {canViewModule('notificacoes') && (
           <section className="bg-white rounded-lg p-6 shadow-sm border">
             <SectionTitle icon="🔔" title="Notificações" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -232,36 +236,38 @@ const Dashboard = () => {
         )}
 
         {/* Events Section */}
-        <section className="bg-white rounded-lg p-6 shadow-sm border">
-          <SectionTitle icon="📅" title="Eventos" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <DashboardCard
-              title="Próximo Evento"
-              value={upcomingEvent?.title || 'Nenhum'}
-              icon={Calendar}
-              color="text-indigo-600"
-              description={upcomingEvent ? new Date(upcomingEvent.date).toLocaleDateString('pt-BR') : 'Nenhum evento agendado'}
-              route="/eventos"
-            />
-            <DashboardCard
-              title="Eventos do Mês"
-              value={thisMonthEvents.toString()}
-              icon={Calendar}
-              color="text-blue-600"
-              description="Eventos programados"
-              route="/eventos"
-              trend="+3%"
-            />
-            <DashboardCard
-              title="Eventos Pendentes"
-              value="2"
-              icon={Clock}
-              color="text-orange-600"
-              description="Aguardando aprovação"
-              route="/eventos"
-            />
-          </div>
-        </section>
+        {canViewModule('eventos') && (
+          <section className="bg-white rounded-lg p-6 shadow-sm border">
+            <SectionTitle icon="📅" title="Eventos" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <DashboardCard
+                title="Próximo Evento"
+                value={upcomingEvent?.title || 'Nenhum'}
+                icon={Calendar}
+                color="text-indigo-600"
+                description={upcomingEvent ? new Date(upcomingEvent.date).toLocaleDateString('pt-BR') : 'Nenhum evento agendado'}
+                route="/eventos"
+              />
+              <DashboardCard
+                title="Eventos do Mês"
+                value={thisMonthEvents.toString()}
+                icon={Calendar}
+                color="text-blue-600"
+                description="Eventos programados"
+                route="/eventos"
+                trend="+3%"
+              />
+              <DashboardCard
+                title="Eventos Pendentes"
+                value="2"
+                icon={Clock}
+                color="text-orange-600"
+                description="Aguardando aprovação"
+                route="/eventos"
+              />
+            </div>
+          </section>
+        )}
 
         {/* Recent Activities Section */}
         <section className="bg-white rounded-lg p-6 shadow-sm border">
@@ -281,17 +287,19 @@ const Dashboard = () => {
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {(userRole === 'superadmin' || userRole === 'admin' || userRole === 'finance') && (
+          {canViewModule('financeiro') && (
             <div className="bg-white rounded-lg p-6 shadow-sm border">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">📈 Gráfico Financeiro</h3>
               <FinancialChart />
             </div>
           )}
           
-          <div className="bg-white rounded-lg p-6 shadow-sm border">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">👨‍👩‍👧‍👦 Gráfico de Membros</h3>
-            <MemberChart />
-          </div>
+          {canViewModule('membros') && (
+            <div className="bg-white rounded-lg p-6 shadow-sm border">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">👨‍👩‍👧‍👦 Gráfico de Membros</h3>
+              <MemberChart />
+            </div>
+          )}
         </div>
       </div>
     </Layout>

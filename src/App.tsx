@@ -68,26 +68,25 @@ const App = () => (
               } />
               
               <Route path="/financeiro" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin', 'finance']}>
+                <ProtectedRoute>
                   <Financial />
                 </ProtectedRoute>
               } />
               
               <Route path="/membros" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin', 'pastor', 'worker']}>
+                <ProtectedRoute>
                   <Members />
                 </ProtectedRoute>
               } />
               
               <Route path="/eventos" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin', 'pastor']}>
+                <ProtectedRoute>
                   <Events />
                 </ProtectedRoute>
               } />
               
               <Route path="/conciliacoes" element={
                 <ProtectedRoute 
-                  requiredRoles={['superadmin', 'admin', 'finance', 'pastor']}
                   requiresCongregationAccess={true}
                 >
                   <Reconciliations />
@@ -96,7 +95,6 @@ const App = () => (
               
               <Route path="/congregacoes" element={
                 <ProtectedRoute 
-                  requiredRoles={['superadmin', 'admin', 'pastor']}
                   requiresCongregationAccess={true}
                 >
                   <Congregations />
@@ -104,104 +102,104 @@ const App = () => (
               } />
               
               <Route path="/ministerios" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin', 'pastor']}>
+                <ProtectedRoute>
                   <Ministries />
                 </ProtectedRoute>
               } />
               
               <Route path="/departamentos" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin', 'pastor']}>
+                <ProtectedRoute>
                   <Departments />
                 </ProtectedRoute>
               } />
               
               <Route path="/fornecedores" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin', 'finance']}>
+                <ProtectedRoute>
                   <Suppliers />
                 </ProtectedRoute>
               } />
               
               <Route path="/relatorios" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin', 'finance', 'pastor']}>
+                <ProtectedRoute>
                   <Reports />
                 </ProtectedRoute>
               } />
               
               <Route path="/relatorios/eventos" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin', 'finance', 'pastor']}>
+                <ProtectedRoute>
                   <EventsReports />
                 </ProtectedRoute>
               } />
               
               <Route path="/relatorios/financeiro" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin', 'finance', 'pastor']}>
+                <ProtectedRoute>
                   <FinancialReports />
                 </ProtectedRoute>
               } />
               
               <Route path="/relatorios/membros" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin', 'finance', 'pastor']}>
+                <ProtectedRoute>
                   <MembersReports />
                 </ProtectedRoute>
               } />
               
               <Route path="/relatorios/conciliacoes" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin', 'finance', 'pastor']}>
+                <ProtectedRoute>
                   <ReconciliationsReports />
                 </ProtectedRoute>
               } />
               
               <Route path="/relatorios/fornecedores" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin', 'finance', 'pastor']}>
+                <ProtectedRoute>
                   <SuppliersReports />
                 </ProtectedRoute>
               } />
               
               <Route path="/notificacoes" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
+                <ProtectedRoute>
                   <Notifications />
                 </ProtectedRoute>
               } />
               
               <Route path="/notificacoes/nova" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
+                <ProtectedRoute>
                   <NewNotification />
                 </ProtectedRoute>
               } />
               
               <Route path="/notificacoes/agendadas" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
+                <ProtectedRoute>
                   <ScheduledMessages />
                 </ProtectedRoute>
               } />
               
               <Route path="/notificacoes/historico" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
+                <ProtectedRoute>
                   <SentHistory />
                 </ProtectedRoute>
               } />
               
               <Route path="/notificacoes/videos" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
+                <ProtectedRoute>
                   <VideoLibrary />
                 </ProtectedRoute>
               } />
               
               <Route path="/settings" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
+                <ProtectedRoute>
                   <Settings />
                 </ProtectedRoute>
               } />
               
               <Route path="/access-management" element={
-                <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
+                <ProtectedRoute>
                   <AccessManagement />
                 </ProtectedRoute>
               } />
               
               {/* Accounts Payable Routes */}
               <Route path="/accounts-payable/new" element={
-                <ProtectedRoute requiredRoles={['assistente', 'analista', 'gerente', 'pastor']}>
+                <ProtectedRoute>
                   <NewAccount />
                 </ProtectedRoute>
               } />
@@ -213,7 +211,7 @@ const App = () => (
               } />
               
               <Route path="/accounts-payable/authorize" element={
-                <ProtectedRoute requiredRoles={['gerente', 'diretor', 'presidente', 'admin', 'superadmin']}>
+                <ProtectedRoute>
                   <AuthorizeAccounts />
                 </ProtectedRoute>
               } />
