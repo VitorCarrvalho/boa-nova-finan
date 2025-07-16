@@ -2,43 +2,35 @@ import React from 'react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useSuppliers } from '@/hooks/useSupplierData';
-import { useMembers } from '@/hooks/useMemberData';
-import { useSystemPastors } from '@/hooks/useSystemUsers';
+import { useTestSuppliers } from '@/hooks/useTestSuppliers';
+import { useTestPastors } from '@/hooks/useTestPastors';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 const TestDropdowns = () => {
-  // Test all dropdown data sources
-  const { data: suppliers, isLoading: suppliersLoading, error: suppliersError } = useSuppliers();
-  const { data: members, isLoading: membersLoading, error: membersError } = useMembers();
-  const { data: pastors, isLoading: pastorsLoading, error: pastorsError } = useSystemPastors();
+  // Test pastors with simplified hook
+  const { data: pastors, isLoading: pastorsLoading, error: pastorsError } = useTestPastors();
+  
+  // Test suppliers
+  const { data: suppliers, isLoading: suppliersLoading, error: suppliersError } = useTestSuppliers();
   
   // Test congregations
   const { data: congregations, isLoading: congregationsLoading, error: congregationsError } = useQuery({
-    queryKey: ['congregations'],
+    queryKey: ['test-congregations'],
     queryFn: async () => {
+      console.log('🔍 Testing congregations query...');
       const { data, error } = await supabase
         .from('congregations')
-        .select('id, name')
+        .select('id, name, is_active')
         .eq('is_active', true)
         .order('name');
 
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Test ministries
-  const { data: ministries, isLoading: ministriesLoading, error: ministriesError } = useQuery({
-    queryKey: ['ministries'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('ministries')
-        .select('id, name')
-        .order('name');
-
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching congregations:', error);
+        throw error;
+      }
+      
+      console.log('✅ Congregations fetched successfully:', data);
       return data;
     },
   });
@@ -115,28 +107,10 @@ const TestDropdowns = () => {
           )}
           
           {renderDropdownTest(
-            "Membros",
-            members,
-            membersLoading,
-            membersError,
-            'id',
-            'name'
-          )}
-          
-          {renderDropdownTest(
             "Congregações",
             congregations,
             congregationsLoading,
             congregationsError,
-            'id',
-            'name'
-          )}
-          
-          {renderDropdownTest(
-            "Ministérios",
-            ministries,
-            ministriesLoading,
-            ministriesError,
             'id',
             'name'
           )}

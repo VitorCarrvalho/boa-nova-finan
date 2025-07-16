@@ -44,6 +44,7 @@ import PendingApproval from "@/pages/accounts-payable/PendingApproval";
 import AuthorizeAccounts from "@/pages/accounts-payable/AuthorizeAccounts";
 import ApprovedAccounts from "@/pages/accounts-payable/ApprovedAccounts";
 import PaidAccounts from "@/pages/accounts-payable/PaidAccounts";
+import TestDropdowns from "@/pages/TestDropdowns";
 
 import NotFound from "@/pages/NotFound";
 
@@ -226,9 +227,15 @@ const App = () => (
                 <ProtectedRoute>
                   <PaidAccounts />
                 </ProtectedRoute>
-              } />
-              
-              <Route path="*" element={<NotFound />} />
+               } />
+               
+               <Route path="/test-dropdowns" element={
+                 <ProtectedRoute>
+                   <TestDropdowns />
+                 </ProtectedRoute>
+               } />
+               
+               <Route path="*" element={<NotFound />} />
             </Routes>
           </ReportsProvider>
         </AuthProvider>
