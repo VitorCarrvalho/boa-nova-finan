@@ -38,7 +38,8 @@ const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliatio
   };
 
   const formatMonth = (month: string) => {
-    const date = new Date(month + '-01');
+    if (!month) return 'Data inválida';
+    const date = new Date(month);
     return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   };
 
