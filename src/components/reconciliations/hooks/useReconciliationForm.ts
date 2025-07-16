@@ -5,6 +5,7 @@ import { useCreateReconciliation, useUpdateReconciliation } from '@/hooks/useRec
 import { useCongregations } from '@/hooks/useCongregationData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
+import { usePermissions } from '@/hooks/usePermissions';
 
 type ReconciliationFormData = {
   congregation_id: string;
@@ -29,6 +30,7 @@ export const useReconciliationForm = ({ reconciliation, onClose }: UseReconcilia
   const { data: congregations } = useCongregations();
   const { userRole, user } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
+  const { canInsertModule, canEditModule, canApproveModule } = usePermissions();
   const isEditing = !!reconciliation;
 
   // For pastors, filter to only their assigned congregations
@@ -94,6 +96,15 @@ export const useReconciliationForm = ({ reconciliation, onClose }: UseReconcilia
     try {
       console.log('Submitting reconciliation data:', data);
       
+      // Verificar permissões antes de prosseguir
+      if (isEditing && !canEdit) {
+        throw new Error('Você não tem permissão para editar conciliações');
+      }
+      
+      if (!isEditing && !canInsert) {
+        throw new Error('Você não tem permissão para criar conciliações');
+      }
+      
       // Ensure required fields are present
       if (!data.congregation_id) {
         throw new Error('Congregação é obrigatória');
@@ -136,6 +147,9 @@ export const useReconciliationForm = ({ reconciliation, onClose }: UseReconcilia
   const isLoading = createMutation.isPending || updateMutation.isPending;
   const isPastor = userRole === 'pastor';
   const isAdmin = userRole === 'admin' || userRole === 'superadmin';
+  const canInsert = canInsertModule('conciliacoes');
+  const canEdit = canEditModule('conciliacoes');
+  const canApprove = canApproveModule('conciliacoes');
 
   return {
     register,
@@ -151,6 +165,9 @@ export const useReconciliationForm = ({ reconciliation, onClose }: UseReconcilia
     isPastor,
     isAdmin,
     isEditing,
-    congregationAccess
+    congregationAccess,
+    canInsert,
+    canEdit,
+    canApprove
   };
 };

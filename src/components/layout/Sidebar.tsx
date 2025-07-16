@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { 
@@ -34,6 +35,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 const Sidebar = () => {
   const { signOut, userRole, user } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
+  const { canViewModule } = usePermissions();
   const location = useLocation();
   const { toast } = useToast();
   const [uploading, setUploading] = React.useState(false);
@@ -157,57 +159,57 @@ const Sidebar = () => {
       title: 'Dashboard',
       icon: LayoutDashboard,
       href: '/dashboard',
-      roles: ['superadmin', 'admin', 'finance', 'pastor', 'worker', 'assistente', 'analista', 'coordenador', 'gerente', 'diretor', 'presidente']
+      module: 'dashboard'
     },
     {
       title: 'Financeiro',
       icon: DollarSign,
       href: '/financeiro',
-      roles: ['superadmin', 'admin', 'finance', 'assistente', 'analista', 'gerente', 'pastor', 'diretor', 'presidente']
+      module: 'financeiro'
     },
     {
       title: 'Membros',
       icon: Users,
       href: '/membros',
-      roles: ['superadmin', 'admin', 'pastor', 'worker']
+      module: 'membros'
     },
     {
       title: 'Eventos',
       icon: Calendar,
       href: '/eventos',
-      roles: ['superadmin', 'admin', 'pastor']
+      module: 'eventos'
     },
     {
       title: 'Conciliações',
       icon: Calculator,
       href: '/conciliacoes',
-      roles: ['superadmin', 'admin', 'finance', 'pastor'],
+      module: 'conciliacoes',
       requiresCongregationAccess: true
     },
     {
       title: 'Congregações',
       icon: Church,
       href: '/congregacoes',
-      roles: ['superadmin', 'admin', 'pastor'],
+      module: 'congregacoes',
       requiresCongregationAccess: true
     },
     {
       title: 'Ministérios',
       icon: Heart,
       href: '/ministerios',
-      roles: ['superadmin', 'admin', 'pastor']
+      module: 'ministerios'
     },
     {
       title: 'Departamentos',
       icon: Building2,
       href: '/departamentos',
-      roles: ['superadmin', 'admin', 'pastor']
+      module: 'departamentos'
     },
     {
       title: 'Fornecedores',
       icon: Truck,
       href: '/fornecedores',
-      roles: ['superadmin', 'admin', 'finance']
+      module: 'fornecedores'
     }
   ];
 
@@ -258,8 +260,8 @@ const Sidebar = () => {
   ];
 
   const visibleItems = menuItems.filter(item => {
-    // Verificar se o usuário tem o role necessário
-    if (!userRole || !item.roles.includes(userRole)) {
+    // Verificar se o usuário tem permissão para visualizar o módulo
+    if (!canViewModule(item.module)) {
       return false;
     }
 
@@ -285,16 +287,16 @@ const Sidebar = () => {
   });
 
   // Check if user can access reports
-  const canAccessReports = userRole && ['superadmin', 'admin', 'finance', 'pastor'].includes(userRole);
+  const canAccessReports = canViewModule('relatorios');
 
   // Check if user can access notifications (only admins)
-  const canAccessNotifications = userRole && ['superadmin', 'admin'].includes(userRole);
+  const canAccessNotifications = canViewModule('notificacoes');
 
   // Check if user can access financial submenus
-  const canAccessFinancial = userRole && ['superadmin', 'admin', 'finance', 'assistente', 'analista', 'gerente', 'pastor', 'diretor', 'presidente'].includes(userRole);
+  const canAccessFinancial = canViewModule('financeiro');
 
   // Check if user can access settings (only admins)
-  const canAccessSettings = userRole && ['superadmin', 'admin'].includes(userRole);
+  const canAccessSettings = canViewModule('configuracoes');
 
   if (!user || !profileData) {
     return (

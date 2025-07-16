@@ -9,6 +9,7 @@ import ReconciliationTable from '@/components/reconciliations/ReconciliationTabl
 import { useReconciliations } from '@/hooks/useReconciliationData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const Reconciliations = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -16,6 +17,7 @@ const Reconciliations = () => {
   const { data: reconciliations, isLoading } = useReconciliations();
   const { userRole } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
+  const { canViewModule, canInsertModule } = usePermissions();
 
   const handleEdit = (reconciliation: any) => {
     setEditingReconciliation(reconciliation);
@@ -29,9 +31,27 @@ const Reconciliations = () => {
 
   const isAdmin = userRole === 'admin' || userRole === 'superadmin';
   const isPastor = userRole === 'pastor';
-  const canSubmit = isPastor && congregationAccess?.hasAccess;
+  const canSubmit = canInsertModule('conciliacoes') && (isPastor ? congregationAccess?.hasAccess : true);
+  
+  // Verificar se o usuário pode visualizar o módulo
+  const canView = canViewModule('conciliacoes');
 
   // Reconciliations are already filtered in the hook based on user role and congregation access
+
+  // Se o usuário não pode visualizar o módulo, negar acesso
+  if (!canView) {
+    return (
+      <Layout>
+        <div className="space-y-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-800">
+              Você não tem permissão para acessar este módulo. Entre em contato com o administrador.
+            </p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>

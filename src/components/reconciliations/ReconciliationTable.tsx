@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Edit, Check, X } from 'lucide-react';
 import { useUpdateReconciliation } from '@/hooks/useReconciliationData';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface ReconciliationTableProps {
   reconciliations: any[];
@@ -14,6 +15,7 @@ interface ReconciliationTableProps {
 const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliations, onEdit }) => {
   const updateMutation = useUpdateReconciliation();
   const { userRole } = useAuth();
+  const { canEditModule, canApproveModule } = usePermissions();
 
   const handleApprove = async (reconciliation: any) => {
     await updateMutation.mutateAsync({
@@ -53,6 +55,8 @@ const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliatio
 
   const isAdmin = userRole === 'admin' || userRole === 'superadmin';
   const isPastor = userRole === 'pastor';
+  const canEdit = canEditModule('conciliacoes');
+  const canApprove = canApproveModule('conciliacoes');
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -102,8 +106,8 @@ const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliatio
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex space-x-2">
-                    {/* Edit button - only for pastors on their own reconciliations or admins */}
-                    {(isPastor || isAdmin) && (
+                    {/* Edit button - only if user has edit permission */}
+                    {canEdit && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -114,8 +118,8 @@ const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliatio
                       </Button>
                     )}
                     
-                    {/* Approval buttons - only for admins on pending reconciliations */}
-                    {isAdmin && reconciliation.status === 'pending' && (
+                    {/* Approval buttons - only if user has approve permission and reconciliation is pending */}
+                    {canApprove && reconciliation.status === 'pending' && (
                       <>
                         <Button
                           variant="ghost"

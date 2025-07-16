@@ -10,6 +10,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   userRole: UserRole | null;
+  userPermissions: Record<string, Record<string, boolean>> | null;
+  hasPermission: (module: string, action: string) => boolean;
   signUp: (email: string, password: string, name: string, congregationId?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -51,6 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [userPermissions, setUserPermissions] = useState<Record<string, Record<string, boolean>> | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -65,8 +68,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          console.log('AuthProvider - User authenticated, fetching role...');
-          // Buscar role do usuário - usar setTimeout para evitar deadlock
+          console.log('AuthProvider - User authenticated, fetching role and permissions...');
+          // Buscar role e permissões do usuário - usar setTimeout para evitar deadlock
           setTimeout(async () => {
             try {
               const { data: profile, error } = await supabase
@@ -80,24 +83,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (error) {
                 console.log('AuthProvider - Erro ao buscar perfil:', error);
                 setUserRole('worker'); // Role padrão
+                setUserPermissions(null);
               } else {
                 // Only set role if user is approved
                 if (profile?.approval_status === 'ativo') {
                   console.log('AuthProvider - Setting user role:', profile.role);
                   setUserRole(profile?.role ?? 'worker');
+                  
+                  // Buscar permissões do usuário
+                  try {
+                    const { data: permissions } = await supabase.rpc('get_current_user_permissions');
+                    console.log('AuthProvider - User permissions:', permissions);
+                    setUserPermissions(permissions as Record<string, Record<string, boolean>> || {});
+                  } catch (permError) {
+                    console.log('AuthProvider - Erro ao buscar permissões:', permError);
+                    setUserPermissions({});
+                  }
                 } else {
                   console.log('AuthProvider - User not approved, setting worker role');
                   setUserRole('worker'); // Pending/rejected users get worker role (no access)
+                  setUserPermissions(null);
                 }
               }
             } catch (err) {
               console.log('AuthProvider - Erro na busca do perfil:', err);
               setUserRole('worker');
+              setUserPermissions(null);
             }
           }, 100);
         } else {
-          console.log('AuthProvider - No user, clearing role');
+          console.log('AuthProvider - No user, clearing role and permissions');
           setUserRole(null);
+          setUserPermissions(null);
         }
         
         setLoading(false);
@@ -122,7 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          console.log('AuthProvider - Existing user found, fetching role...');
+          console.log('AuthProvider - Existing user found, fetching role and permissions...');
           setTimeout(async () => {
             try {
               const { data: profile } = await supabase
@@ -137,13 +154,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (profile?.approval_status === 'ativo') {
                 console.log('AuthProvider - Setting initial user role:', profile.role);
                 setUserRole(profile?.role ?? 'worker');
+                
+                // Buscar permissões do usuário
+                try {
+                  const { data: permissions } = await supabase.rpc('get_current_user_permissions');
+                  console.log('AuthProvider - Initial user permissions:', permissions);
+                  setUserPermissions(permissions as Record<string, Record<string, boolean>> || {});
+                } catch (permError) {
+                  console.log('AuthProvider - Erro ao buscar permissões iniciais:', permError);
+                  setUserPermissions({});
+                }
               } else {
                 console.log('AuthProvider - Initial user not approved, setting worker role');
                 setUserRole('worker'); // Pending/rejected users get worker role (no access)
+                setUserPermissions(null);
               }
             } catch (err) {
               console.log('AuthProvider - Erro ao buscar perfil inicial:', err);
               setUserRole('worker');
+              setUserPermissions(null);
             }
           }, 100);
         }
@@ -268,10 +297,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const hasPermission = (module: string, action: string): boolean => {
+    if (!userPermissions) return false;
+    return userPermissions[module]?.[action] === true;
+  };
+
   const value = {
     user,
     session,
     userRole,
+    userPermissions,
+    hasPermission,
     signUp,
     signIn,
     signOut,
