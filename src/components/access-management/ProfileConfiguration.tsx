@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +34,7 @@ const systemModules = [
   { name: 'relatorios', label: 'Relatórios' },
   { name: 'notificacoes', label: 'Notificações' },
   { name: 'conciliacoes', label: 'Conciliações' },
+  { name: 'contas-pagar', label: 'Contas a Pagar' },
 ];
 
 const ProfileConfiguration = () => {
@@ -53,6 +54,32 @@ const ProfileConfiguration = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingProfile, setEditingProfile] = useState<any>(null);
+  
+  // Refs for indeterminate state
+  const globalCheckboxRef = useRef<HTMLButtonElement>(null);
+  const moduleCheckboxRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+
+  // Set indeterminate state for checkboxes
+  useEffect(() => {
+    // Global checkbox
+    if (globalCheckboxRef.current) {
+      const inputElement = globalCheckboxRef.current.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      if (inputElement) {
+        inputElement.indeterminate = calculateGlobalState() === 'indeterminate';
+      }
+    }
+
+    // Module checkboxes
+    systemModules.forEach(module => {
+      const moduleRef = moduleCheckboxRefs.current[module.name];
+      if (moduleRef) {
+        const inputElement = moduleRef.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        if (inputElement) {
+          inputElement.indeterminate = calculateModuleState(module.name) === 'indeterminate';
+        }
+      }
+    });
+  }, [formData.permissions]);
 
   const resetForm = () => {
     setFormData({
@@ -138,6 +165,77 @@ const ProfileConfiguration = () => {
     }));
   };
 
+  // Calculate global state (all permissions across all modules)
+  const calculateGlobalState = () => {
+    const allPermissions = systemModules.flatMap(module => 
+      ['view', 'insert', 'edit', 'delete'].map(action => 
+        formData.permissions[module.name]?.[action] || false
+      )
+    );
+    
+    const checkedCount = allPermissions.filter(Boolean).length;
+    const totalCount = allPermissions.length;
+    
+    if (checkedCount === 0) return 'unchecked';
+    if (checkedCount === totalCount) return 'checked';
+    return 'indeterminate';
+  };
+
+  // Calculate module state (all actions within a module)
+  const calculateModuleState = (moduleName: string) => {
+    const actions = ['view', 'insert', 'edit', 'delete'];
+    const modulePermissions = actions.map(action => 
+      formData.permissions[moduleName]?.[action] || false
+    );
+    
+    const checkedCount = modulePermissions.filter(Boolean).length;
+    const totalCount = modulePermissions.length;
+    
+    if (checkedCount === 0) return 'unchecked';
+    if (checkedCount === totalCount) return 'checked';
+    return 'indeterminate';
+  };
+
+  // Handle global select all
+  const handleSelectAllGlobal = () => {
+    const globalState = calculateGlobalState();
+    const shouldCheck = globalState !== 'checked';
+    
+    const newPermissions = { ...formData.permissions };
+    systemModules.forEach(module => {
+      newPermissions[module.name] = {
+        view: shouldCheck,
+        insert: shouldCheck,
+        edit: shouldCheck,
+        delete: shouldCheck
+      };
+    });
+    
+    setFormData(prev => ({
+      ...prev,
+      permissions: newPermissions
+    }));
+  };
+
+  // Handle module select all
+  const handleSelectAllModule = (moduleName: string) => {
+    const moduleState = calculateModuleState(moduleName);
+    const shouldCheck = moduleState !== 'checked';
+    
+    setFormData(prev => ({
+      ...prev,
+      permissions: {
+        ...prev.permissions,
+        [moduleName]: {
+          view: shouldCheck,
+          insert: shouldCheck,
+          edit: shouldCheck,
+          delete: shouldCheck
+        }
+      }
+    }));
+  };
+
   const handleDeleteProfile = async (profileId: string) => {
     try {
       await deleteProfile.mutateAsync(profileId);
@@ -205,11 +303,39 @@ const ProfileConfiguration = () => {
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-medium mb-4">Permissões por Módulo</h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-medium">Permissões por Módulo</h3>
+                      <div className="flex items-center space-x-2 bg-primary/5 p-2 rounded-lg">
+                        <Checkbox
+                          id="select-all-global"
+                          checked={calculateGlobalState() === 'checked'}
+                          ref={globalCheckboxRef}
+                          onCheckedChange={handleSelectAllGlobal}
+                        />
+                        <Label htmlFor="select-all-global" className="text-sm font-medium text-primary">
+                          ✨ Selecionar Todos
+                        </Label>
+                      </div>
+                    </div>
                     <div className="space-y-4">
                       {systemModules.map((module) => (
                         <Card key={module.name} className="p-4">
-                          <h4 className="font-medium mb-3">{module.label}</h4>
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-medium">{module.label}</h4>
+                            <div className="flex items-center space-x-2 bg-secondary/50 p-1 rounded">
+                              <Checkbox
+                                id={`select-all-${module.name}`}
+                                checked={calculateModuleState(module.name) === 'checked'}
+                                ref={(ref) => {
+                                  moduleCheckboxRefs.current[module.name] = ref;
+                                }}
+                                onCheckedChange={() => handleSelectAllModule(module.name)}
+                              />
+                              <Label htmlFor={`select-all-${module.name}`} className="text-xs font-medium">
+                                Todos
+                              </Label>
+                            </div>
+                          </div>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {['view', 'insert', 'edit', 'delete'].map((permission) => (
                               <div key={permission} className="flex items-center space-x-2">
