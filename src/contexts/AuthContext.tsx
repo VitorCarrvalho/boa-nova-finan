@@ -298,6 +298,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const hasPermission = (module: string, action: string): boolean => {
+    // Fallback para administradores sempre terem acesso aos módulos críticos
+    if (userRole === 'admin' || userRole === 'superadmin') {
+      if (module === 'gestao-acessos' || module === 'configuracoes') {
+        return true;
+      }
+    }
+    
     if (!userPermissions) return false;
     return userPermissions[module]?.[action] === true;
   };

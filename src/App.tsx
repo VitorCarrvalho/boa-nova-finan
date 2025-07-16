@@ -187,13 +187,13 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              <Route path="/configuracoes" element={
+              <Route path="/settings" element={
                 <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
                   <Settings />
                 </ProtectedRoute>
               } />
               
-              <Route path="/gestao-acessos" element={
+              <Route path="/access-management" element={
                 <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
                   <AccessManagement />
                 </ProtectedRoute>
