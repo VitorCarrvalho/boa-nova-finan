@@ -97,6 +97,11 @@ export const useReconciliationForm = ({ reconciliation, onClose }: UseReconcilia
     try {
       console.log('Submitting reconciliation data:', data);
       
+      // Check if user is authenticated
+      if (!user?.id) {
+        throw new Error('Usuário não autenticado. Faça login novamente.');
+      }
+      
       // Verificar permissões antes de prosseguir
       if (isEditing && !canEdit) {
         throw new Error('Você não tem permissão para editar conciliações');
@@ -133,7 +138,9 @@ export const useReconciliationForm = ({ reconciliation, onClose }: UseReconcilia
         debit: Number(data.debit) || 0,
         credit: Number(data.credit) || 0,
         cash: Number(data.cash) || 0,
-        status: userRole === 'pastor' ? 'pending' as const : (data.status || 'pending' as const)
+        status: userRole === 'pastor' ? 'pending' as const : (data.status || 'pending' as const),
+        // Include sent_by for new reconciliations to satisfy RLS policy
+        ...(isEditing ? {} : { sent_by: user.id })
       };
 
       console.log('Final submission data:', submissionData);
