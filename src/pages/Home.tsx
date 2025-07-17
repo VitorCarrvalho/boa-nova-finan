@@ -10,8 +10,8 @@ const Home = () => {
   const navigate = useNavigate();
   const { data: events, isLoading } = useHomeEvents();
 
-  // URL da imagem padrão - você deverá substituir por uma imagem real
-  const defaultBannerUrl = '/placeholder.svg';
+  // URL da imagem padrão da igreja
+  const defaultBannerUrl = '/church-banner.jpg';
 
   const handleAccessSystem = () => {
     navigate('/auth');
