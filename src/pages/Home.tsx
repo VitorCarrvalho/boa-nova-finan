@@ -10,8 +10,8 @@ const Home = () => {
   const navigate = useNavigate();
   const { data: events, isLoading } = useHomeEvents();
 
-  // URL da imagem padrão da igreja
-  const defaultBannerUrl = '/church-banner.jpg';
+  // URL da imagem padrão da igreja no Supabase Storage
+  const defaultBannerUrl = 'https://jryifbcsifodvocshvuo.supabase.co/storage/v1/object/public/event-banners/church-banner.jpg';
 
   const handleAccessSystem = () => {
     navigate('/auth');
