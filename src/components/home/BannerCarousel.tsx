@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { Database } from '@/integrations/supabase/types';
 
 type ChurchEvent = Database['public']['Tables']['church_events']['Row'] & {
@@ -19,15 +20,25 @@ type BannerItem = ChurchEvent | {
 interface BannerCarouselProps {
   events: ChurchEvent[];
   defaultBannerUrl?: string;
+  defaultBannerMobileUrl?: string;
 }
 
-const BannerCarousel = ({ events, defaultBannerUrl }: BannerCarouselProps) => {
+const BannerCarousel = ({ events, defaultBannerUrl, defaultBannerMobileUrl }: BannerCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState<ChurchEvent | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const isMobile = useIsMobile();
+
+  // Escolher banner baseado no tamanho da tela
+  const getBannerUrl = () => {
+    if (isMobile && defaultBannerMobileUrl) {
+      return defaultBannerMobileUrl;
+    }
+    return defaultBannerUrl;
+  };
 
   // Usar banner padrão se não houver eventos
-  const bannerItems: BannerItem[] = events.length > 0 ? events : [{ id: 'default', banner_image_url: defaultBannerUrl }];
+  const bannerItems: BannerItem[] = events.length > 0 ? events : [{ id: 'default', banner_image_url: getBannerUrl() }];
   
   useEffect(() => {
     if (isPaused || bannerItems.length <= 1) return;
@@ -104,12 +115,12 @@ const BannerCarousel = ({ events, defaultBannerUrl }: BannerCarouselProps) => {
   const currentItem = bannerItems[currentIndex];
 
   return (
-    <div className="relative w-full h-96 md:h-[600px] overflow-hidden rounded-lg">
+    <div className={`relative w-full overflow-hidden rounded-lg ${isMobile ? 'h-80' : 'h-96 md:h-[600px]'}`}>
       {/* Banner Principal */}
       <div 
         className="w-full h-full bg-cover bg-center transition-all duration-500 cursor-pointer relative"
         style={{ 
-          backgroundImage: `url(${currentItem.banner_image_url || defaultBannerUrl})` 
+          backgroundImage: `url(${currentItem.banner_image_url || getBannerUrl()})` 
         }}
         onClick={() => handleBannerClick(currentItem)}
         onMouseEnter={() => setIsPaused(true)}
