@@ -10,6 +10,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Import all pages
 import Index from "@/pages/Index";
+import Home from "@/pages/Home";
 import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
 import Financial from "@/pages/Financial";
@@ -58,9 +59,9 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <ReportsProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/auth" element={<Auth />} />
               
               <Route path="/dashboard" element={
                 <ProtectedRoute>

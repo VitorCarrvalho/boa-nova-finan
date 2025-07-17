@@ -20,6 +20,7 @@ export const eventSchema = z.object({
   notes: z.string().optional(),
   support_teams: z.array(z.string()).optional(),
   pastor_responsible: z.string().optional(),
+  banner_image: z.instanceof(File).optional(),
 });
 
 export type EventFormData = z.infer<typeof eventSchema>;

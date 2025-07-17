@@ -324,6 +324,7 @@ export type Database = {
       }
       church_events: {
         Row: {
+          banner_image_url: string | null
           created_at: string
           current_attendees: number | null
           date: string
@@ -340,6 +341,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          banner_image_url?: string | null
           created_at?: string
           current_attendees?: number | null
           date: string
@@ -356,6 +358,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          banner_image_url?: string | null
           created_at?: string
           current_attendees?: number | null
           date?: string

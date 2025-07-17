@@ -3,6 +3,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCreateEvent, useUpdateEvent } from '@/hooks/useEventData';
+import { useImageUpload } from '@/hooks/useImageUpload';
 import { eventSchema, EventFormData } from '../schemas/eventSchema';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -16,6 +17,7 @@ interface UseEventFormProps {
 export const useEventForm = ({ event, onClose }: UseEventFormProps) => {
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent();
+  const { uploadEventBanner, deleteEventBanner, isUploading } = useImageUpload();
 
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
@@ -29,6 +31,7 @@ export const useEventForm = ({ event, onClose }: UseEventFormProps) => {
       organizer_id: '',
       max_attendees: undefined,
       notes: '',
+      banner_image: undefined,
     }
   });
 
@@ -66,6 +69,13 @@ export const useEventForm = ({ event, onClose }: UseEventFormProps) => {
     try {
       console.log('Submitting event data:', data);
       
+      let bannerImageUrl = event?.banner_image_url || null;
+      
+      // Upload da imagem se foi selecionada
+      if (data.banner_image) {
+        bannerImageUrl = await uploadEventBanner(data.banner_image, event?.id);
+      }
+      
       const eventData = {
         title: data.title,
         description: data.description || null,
@@ -76,9 +86,14 @@ export const useEventForm = ({ event, onClose }: UseEventFormProps) => {
         organizer_id: data.organizer_id || null,
         max_attendees: data.max_attendees || null,
         notes: data.notes || null,
+        banner_image_url: bannerImageUrl,
       };
 
       if (event) {
+        // Se estava atualizando uma imagem existente, deletar a anterior
+        if (data.banner_image && event.banner_image_url) {
+          await deleteEventBanner(event.banner_image_url);
+        }
         await updateEvent.mutateAsync({ id: event.id, ...eventData });
       } else {
         await createEvent.mutateAsync(eventData);
@@ -93,6 +108,6 @@ export const useEventForm = ({ event, onClose }: UseEventFormProps) => {
   return {
     form,
     onSubmit,
-    isSubmitting: form.formState.isSubmitting,
+    isSubmitting: form.formState.isSubmitting || isUploading,
   };
 };

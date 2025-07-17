@@ -8,16 +8,15 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading) {
-      if (user) {
-        navigate('/dashboard');
-      } else {
-        navigate('/auth');
-      }
+    if (!loading && user) {
+      // Se o usuário está logado, redireciona para o dashboard
+      navigate('/dashboard');
     }
+    // Se não está logado, permanece na home pública
   }, [user, loading, navigate]);
 
-  if (loading) {
+  // Se está carregando e tem usuário, mostra loading
+  if (loading && user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

@@ -162,6 +162,52 @@ const BasicEventFields = ({ control }: BasicEventFieldsProps) => {
 
       <FormField
         control={control}
+        name="banner_image"
+        render={({ field: { onChange, value, ...field } }) => (
+          <FormItem>
+            <FormLabel>Imagem do Banner (1920x1080)</FormLabel>
+            <FormControl>
+              <Input
+                type="file"
+                accept="image/png,image/jpeg,image/jpg"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    // Validar tamanho do arquivo (máximo 5MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                      alert('Arquivo muito grande. Máximo permitido: 5MB');
+                      return;
+                    }
+                    
+                    // Validar formato
+                    const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+                    if (!validTypes.includes(file.type)) {
+                      alert('Formato inválido. Use PNG, JPG ou JPEG');
+                      return;
+                    }
+                    
+                    onChange(file);
+                  }
+                }}
+                {...field}
+                value=""
+              />
+            </FormControl>
+            <FormMessage />
+            <div className="text-xs text-muted-foreground">
+              Formatos aceitos: PNG, JPG, JPEG | Tamanho máximo: 5MB | Resolução recomendada: 1920x1080
+            </div>
+            {value && (
+              <div className="text-sm text-green-600">
+                Arquivo selecionado: {value.name}
+              </div>
+            )}
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
         name="notes"
         render={({ field }) => (
           <FormItem>
