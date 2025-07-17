@@ -1,12 +1,15 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useAccountPayable, useAccountPayableApprovals } from '@/hooks/useAccountsPayable';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, FileText, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { AlertTriangle, FileText, CheckCircle, XCircle, Clock, Download } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface AccountPayableDetailsProps {
   accountId: string;
@@ -15,6 +18,53 @@ interface AccountPayableDetailsProps {
 const AccountPayableDetails: React.FC<AccountPayableDetailsProps> = ({ accountId }) => {
   const { data: account, isLoading: accountLoading } = useAccountPayable(accountId);
   const { data: approvals, isLoading: approvalsLoading } = useAccountPayableApprovals(accountId);
+  const { toast } = useToast();
+
+  const handleDownloadAttachment = async () => {
+    if (!account?.attachment_url) return;
+
+    try {
+      // Log the download attempt
+      const { data: user } = await supabase.auth.getUser();
+      if (user.user) {
+        await supabase.from('attachment_downloads').insert({
+          account_payable_id: accountId,
+          downloaded_by: user.user.id,
+          ip_address: null, // Browser can't access IP directly
+          user_agent: navigator.userAgent
+        });
+      }
+
+      // Download the file from Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('accounts-payable-attachments')
+        .download(account.attachment_url);
+
+      if (error) throw error;
+
+      // Create download link
+      const url = window.URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = account.attachment_filename || 'comprovante.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Sucesso',
+        description: 'Comprovante baixado com sucesso!',
+      });
+    } catch (error) {
+      console.error('Erro ao baixar comprovante:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao baixar o comprovante. Tente novamente.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   if (accountLoading) {
     return (
@@ -74,6 +124,17 @@ const AccountPayableDetails: React.FC<AccountPayableDetailsProps> = ({ accountId
         <div className="text-right">
           {getStatusBadge(account.status)}
           <p className="text-2xl font-bold mt-2">R$ {account.amount.toFixed(2)}</p>
+          {account.status === 'paid' && account.attachment_url && (
+            <Button 
+              onClick={handleDownloadAttachment}
+              variant="outline" 
+              size="sm" 
+              className="mt-2"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download Comprovante
+            </Button>
+          )}
         </div>
       </div>
 
@@ -179,7 +240,7 @@ const AccountPayableDetails: React.FC<AccountPayableDetailsProps> = ({ accountId
       <Card>
         <CardHeader>
           <CardTitle>Histórico de Aprovações</CardTitle>
-          <CardDescription>Acompanhe o fluxo de aprovação desta conta</CardDescription>
+          <CardDescription>Acompanhe o fluxo de aprovação desta conta por nível</CardDescription>
         </CardHeader>
         <CardContent>
           {approvalsLoading ? (
@@ -188,36 +249,120 @@ const AccountPayableDetails: React.FC<AccountPayableDetailsProps> = ({ accountId
               <Skeleton className="h-4 w-3/4" />
             </div>
           ) : approvals && approvals.length > 0 ? (
-            <div className="space-y-4">
-              {approvals.map((approval, index) => (
-                <div key={approval.id} className="flex items-start gap-3">
-                  <div className="flex-shrink-0 mt-1">
-                    {approval.action === 'approved' ? (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-red-500" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium">
-                        {approval.action === 'approved' ? 'Aprovado' : 'Rejeitado'}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        por {approval.approver?.name || 'Sistema'}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {format(new Date(approval.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                    </p>
-                    {approval.notes && (
-                      <p className="text-sm mt-1 p-2 bg-muted rounded">
-                        {approval.notes}
-                      </p>
-                    )}
-                  </div>
+            <div className="space-y-6">
+              {/* Nível 1 - Gerência */}
+              <div className="border-l-4 border-blue-500 pl-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
+                  <h4 className="font-semibold">Nível 1 - Gerência</h4>
                 </div>
-              ))}
+                {(() => {
+                  const managementApproval = approvals.find(a => a.approval_level === 'management');
+                  return managementApproval ? (
+                    <div className="ml-8">
+                      <div className="flex items-center gap-2">
+                        {managementApproval.action === 'approved' ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-500" />
+                        )}
+                        <span className="font-medium">
+                          {managementApproval.action === 'approved' ? 'Aprovado' : 'Rejeitado'}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          por {managementApproval.approver?.name || 'Sistema'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground ml-6">
+                        {format(new Date(managementApproval.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                      </p>
+                      {managementApproval.notes && (
+                        <p className="text-sm mt-1 ml-6 p-2 bg-muted rounded">
+                          {managementApproval.notes}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground ml-8">Aguardando aprovação da gerência</p>
+                  );
+                })()}
+              </div>
+
+              {/* Nível 2 - Diretoria */}
+              <div className="border-l-4 border-orange-500 pl-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
+                  <h4 className="font-semibold">Nível 2 - Diretoria</h4>
+                </div>
+                {(() => {
+                  const directorApproval = approvals.find(a => a.approval_level === 'director');
+                  return directorApproval ? (
+                    <div className="ml-8">
+                      <div className="flex items-center gap-2">
+                        {directorApproval.action === 'approved' ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-500" />
+                        )}
+                        <span className="font-medium">
+                          {directorApproval.action === 'approved' ? 'Aprovado' : 'Rejeitado'}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          por {directorApproval.approver?.name || 'Sistema'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground ml-6">
+                        {format(new Date(directorApproval.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                      </p>
+                      {directorApproval.notes && (
+                        <p className="text-sm mt-1 ml-6 p-2 bg-muted rounded">
+                          {directorApproval.notes}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground ml-8">Aguardando aprovação da diretoria</p>
+                  );
+                })()}
+              </div>
+
+              {/* Nível 3 - Presidência */}
+              <div className="border-l-4 border-purple-500 pl-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold">3</div>
+                  <h4 className="font-semibold">Nível 3 - Presidência</h4>
+                </div>
+                {(() => {
+                  const presidentApproval = approvals.find(a => a.approval_level === 'president');
+                  return presidentApproval ? (
+                    <div className="ml-8">
+                      <div className="flex items-center gap-2">
+                        {presidentApproval.action === 'approved' ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-500" />
+                        )}
+                        <span className="font-medium">
+                          {presidentApproval.action === 'approved' ? 'Aprovado' : 'Rejeitado'}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          por {presidentApproval.approver?.name || 'Sistema'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground ml-6">
+                        {format(new Date(presidentApproval.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                      </p>
+                      {presidentApproval.notes && (
+                        <p className="text-sm mt-1 ml-6 p-2 bg-muted rounded">
+                          {presidentApproval.notes}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground ml-8">Aguardando aprovação da presidência</p>
+                  );
+                })()}
+              </div>
             </div>
           ) : (
             <p className="text-muted-foreground">Nenhuma aprovação registrada ainda</p>

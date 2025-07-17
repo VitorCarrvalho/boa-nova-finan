@@ -58,15 +58,15 @@ export const useFinancialForm = () => {
     },
   });
 
-  // Fetch pastors for selection from profiles table
+  // Fetch pastors for selection from members table
   const { data: pastors } = useQuery({
     queryKey: ['pastors'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('members')
         .select('id, name, email')
         .eq('role', 'pastor')
-        .eq('approval_status', 'ativo')
+        .eq('is_active', true)
         .order('name');
 
       if (error) throw error;
@@ -80,16 +80,17 @@ export const useFinancialForm = () => {
     queryFn: async () => {
       if (!user?.id || userRole !== 'pastor') return null;
 
-      const { data: pastor, error } = await supabase
-        .from('profiles')
+      // First check if user exists in members table
+      const { data: memberPastor, error: memberError } = await supabase
+        .from('members')
         .select('id, name, email')
-        .eq('id', user.id)
+        .eq('email', user.email)
         .eq('role', 'pastor')
-        .eq('approval_status', 'ativo')
+        .eq('is_active', true)
         .maybeSingle();
 
-      if (error) throw error;
-      return pastor;
+      if (memberError) throw memberError;
+      return memberPastor;
     },
     enabled: !!user?.id && userRole === 'pastor',
   });
