@@ -4,8 +4,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PendingApprovals from '@/components/access-management/PendingApprovals';
 import ProfileConfiguration from '@/components/access-management/ProfileConfiguration';
 import UserManagement from '@/components/settings/UserManagement';
+import MobileAccessTabs from '@/components/access-management/MobileAccessTabs';
+import MobilePendingApprovals from '@/components/access-management/MobilePendingApprovals';
+import MobileProfileConfiguration from '@/components/access-management/MobileProfileConfiguration';
+import MobileUserManagement from '@/components/access-management/MobileUserManagement';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const AccessManagement = () => {
+  const isMobile = useIsMobile();
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -17,22 +24,26 @@ const AccessManagement = () => {
         </div>
 
         <Tabs defaultValue="pending" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="pending">Contas a Aprovar</TabsTrigger>
-            <TabsTrigger value="profiles">Configuração de Perfis</TabsTrigger>
-            <TabsTrigger value="users">Usuários</TabsTrigger>
-          </TabsList>
+          {isMobile ? (
+            <MobileAccessTabs value="pending" onValueChange={() => {}} />
+          ) : (
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="pending">Contas a Aprovar</TabsTrigger>
+              <TabsTrigger value="profiles">Configuração de Perfis</TabsTrigger>
+              <TabsTrigger value="users">Usuários</TabsTrigger>
+            </TabsList>
+          )}
           
           <TabsContent value="pending">
-            <PendingApprovals />
+            {isMobile ? <MobilePendingApprovals /> : <PendingApprovals />}
           </TabsContent>
           
           <TabsContent value="profiles">
-            <ProfileConfiguration />
+            {isMobile ? <MobileProfileConfiguration /> : <ProfileConfiguration />}
           </TabsContent>
           
           <TabsContent value="users">
-            <UserManagement />
+            {isMobile ? <MobileUserManagement /> : <UserManagement />}
           </TabsContent>
         </Tabs>
       </div>
