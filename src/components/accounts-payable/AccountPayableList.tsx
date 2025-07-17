@@ -12,6 +12,8 @@ import { AccountPayable, useApproveAccount, useRejectAccount, useMarkAsPaid } fr
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { MobileTableCard } from '@/components/ui/mobile-table-card';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Eye, Check, X, Upload, AlertTriangle, FileText } from 'lucide-react';
@@ -44,6 +46,7 @@ const AccountPayableList: React.FC<AccountPayableListProps> = ({
 
   const { userRole } = useAuth();
   const { hasPermission } = usePermissions();
+  const isMobile = useIsMobile();
   const approveMutation = useApproveAccount();
   const rejectMutation = useRejectAccount();
   const markAsPaidMutation = useMarkAsPaid();
@@ -60,6 +63,30 @@ const AccountPayableList: React.FC<AccountPayableListProps> = ({
 
     const statusInfo = statusMap[status as keyof typeof statusMap] || { label: status, variant: 'secondary' as const };
     return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
+  };
+
+  const getStatusLabel = (status: string) => {
+    const statusMap = {
+      pending_management: 'Pend. Gerência',
+      pending_director: 'Pend. Diretoria',
+      pending_president: 'Pend. Presidência',
+      approved: 'Aprovado',
+      paid: 'Pago',
+      rejected: 'Rejeitado',
+    };
+    return statusMap[status as keyof typeof statusMap] || status;
+  };
+
+  const getStatusVariant = (status: string): 'secondary' | 'default' | 'destructive' | 'outline' => {
+    const statusMap = {
+      pending_management: 'secondary' as const,
+      pending_director: 'secondary' as const,
+      pending_president: 'secondary' as const,
+      approved: 'default' as const,
+      paid: 'default' as const,
+      rejected: 'destructive' as const,
+    };
+    return statusMap[status as keyof typeof statusMap] || 'secondary';
   };
 
   const getApprovalLevel = (status: string) => {
@@ -200,94 +227,194 @@ const AccountPayableList: React.FC<AccountPayableListProps> = ({
 
   return (
     <>
-      <div className="space-y-4">
-        {accounts.map((account) => (
-          <Card key={account.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-semibold">{account.description}</h3>
-                    {account.urgency_level === 'urgent' && (
-                      <AlertTriangle className="h-4 w-4 text-orange-500" />
+      {isMobile ? (
+        // Mobile Cards Layout
+        <div className="space-y-3">
+          {accounts.map((account) => (
+            <MobileTableCard
+              key={account.id}
+              title={account.description}
+              subtitle={`Favorecido: ${account.payee_name}`}
+              status={{
+                label: getStatusLabel(account.status),
+                variant: getStatusVariant(account.status)
+              }}
+              fields={[
+                {
+                  label: 'Valor',
+                  value: `R$ ${account.amount.toFixed(2)}`,
+                  className: 'font-semibold'
+                },
+                {
+                  label: 'Vencimento',
+                  value: format(new Date(account.due_date), 'dd/MM/yyyy', { locale: ptBR })
+                },
+                {
+                  label: 'Congregação',
+                  value: account.congregation?.name || 'N/A'
+                },
+                {
+                  label: 'Urgência',
+                  value: account.urgency_level === 'urgent' ? (
+                    <div className="flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3 text-orange-500" />
+                      <span className="text-orange-600">Urgente</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">Normal</span>
+                  )
+                },
+                {
+                  label: 'Solicitado em',
+                  value: format(new Date(account.created_at), 'dd/MM/yyyy', { locale: ptBR })
+                }
+              ]}
+              actions={[
+                {
+                  label: 'Detalhes',
+                  icon: <Eye className="h-3 w-3" />,
+                  onClick: () => setSelectedAccount(account),
+                  variant: 'outline'
+                },
+                ...(showApprovalActions && canApprove(account) ? [
+                  {
+                    label: 'Aprovar',
+                    icon: <Check className="h-3 w-3" />,
+                    onClick: () => handleApprove(account),
+                    variant: 'default' as const,
+                    disabled: approveMutation.isPending
+                  },
+                  {
+                    label: 'Rejeitar',
+                    icon: <X className="h-3 w-3" />,
+                    onClick: () => handleReject(account),
+                    variant: 'destructive' as const,
+                    disabled: rejectMutation.isPending
+                  }
+                ] : []),
+                ...(showPaymentActions && account.status === 'approved' ? [
+                  {
+                    label: 'Marcar Pago',
+                    icon: <Upload className="h-3 w-3" />,
+                    onClick: () => handleMarkAsPaid(account),
+                    variant: 'default' as const,
+                    disabled: markAsPaidMutation.isPending
+                  }
+                ] : [])
+              ]}
+            />
+          ))}
+          {accounts.length === 0 && (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                Nenhuma conta encontrada
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      ) : (
+        // Desktop Cards Layout (original)
+        <div className="space-y-4">
+          {accounts.map((account) => (
+            <Card key={account.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="font-semibold">{account.description}</h3>
+                      {account.urgency_level === 'urgent' && (
+                        <AlertTriangle className="h-4 w-4 text-orange-500" />
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Favorecido: {account.payee_name}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                      <span>Valor: R$ {account.amount.toFixed(2)}</span>
+                      <span>
+                        Vencimento: {format(new Date(account.due_date), 'dd/MM/yyyy', { locale: ptBR })}
+                      </span>
+                      <span>Congregação: {account.congregation?.name}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(account.status)}
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <div className="text-xs text-muted-foreground">
+                    Solicitado em: {format(new Date(account.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                  </div>
+                  <div className="flex gap-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4 mr-2" />
+                          Ver Detalhes
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Detalhes da Conta a Pagar</DialogTitle>
+                        </DialogHeader>
+                        <AccountPayableDetails accountId={account.id} />
+                      </DialogContent>
+                    </Dialog>
+
+                    {showApprovalActions && canApprove(account) && (
+                      <>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleApprove(account)}
+                          disabled={approveMutation.isPending}
+                        >
+                          <Check className="h-4 w-4 mr-2" />
+                          Aprovar
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleReject(account)}
+                          disabled={rejectMutation.isPending}
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          Rejeitar
+                        </Button>
+                      </>
                     )}
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Favorecido: {account.payee_name}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                    <span>Valor: R$ {account.amount.toFixed(2)}</span>
-                    <span>
-                      Vencimento: {format(new Date(account.due_date), 'dd/MM/yyyy', { locale: ptBR })}
-                    </span>
-                    <span>Congregação: {account.congregation?.name}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusBadge(account.status)}
-                </div>
-              </div>
 
-              <div className="flex justify-between items-center">
-                <div className="text-xs text-muted-foreground">
-                  Solicitado em: {format(new Date(account.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                </div>
-                <div className="flex gap-2">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        Ver Detalhes
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>Detalhes da Conta a Pagar</DialogTitle>
-                      </DialogHeader>
-                      <AccountPayableDetails accountId={account.id} />
-                    </DialogContent>
-                  </Dialog>
-
-                  {showApprovalActions && canApprove(account) && (
-                    <>
+                    {showPaymentActions && account.status === 'approved' && (
                       <Button
                         variant="default"
                         size="sm"
-                        onClick={() => handleApprove(account)}
-                        disabled={approveMutation.isPending}
+                        onClick={() => handleMarkAsPaid(account)}
+                        disabled={markAsPaidMutation.isPending}
                       >
-                        <Check className="h-4 w-4 mr-2" />
-                        Aprovar
+                        <Upload className="h-4 w-4 mr-2" />
+                        Marcar como Pago
                       </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleReject(account)}
-                        disabled={rejectMutation.isPending}
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        Rejeitar
-                      </Button>
-                    </>
-                  )}
-
-                  {showPaymentActions && account.status === 'approved' && (
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() => handleMarkAsPaid(account)}
-                      disabled={markAsPaidMutation.isPending}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Marcar como Pago
-                    </Button>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Dialog para detalhes em mobile */}
+      {selectedAccount && (
+        <Dialog open={!!selectedAccount} onOpenChange={() => setSelectedAccount(null)}>
+          <DialogContent className="max-w-[95vw] max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Detalhes da Conta a Pagar</DialogTitle>
+            </DialogHeader>
+            <AccountPayableDetails accountId={selectedAccount.id} />
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Dialog de Rejeição */}
       <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>

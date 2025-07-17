@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Download, Edit, Search, Filter } from 'lucide-react';
 import { useMembers } from '@/hooks/useMemberData';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { MobileTableCard } from '@/components/ui/mobile-table-card';
 import { Database } from '@/integrations/supabase/types';
 
 type Member = Database['public']['Tables']['members']['Row'];
@@ -27,6 +29,7 @@ interface MemberTableProps {
 const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
   const { data: members, isLoading } = useMembers();
   const { canEditModule, canExportModule } = usePermissions();
+  const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -165,81 +168,145 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
       </CardHeader>
       
       <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Contato</TableHead>
-                <TableHead>Função</TableHead>
-                <TableHead>Ministérios</TableHead>
-                <TableHead>Data Ingresso</TableHead>
-                <TableHead>Status</TableHead>
-                {canEdit && <TableHead>Ações</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredMembers.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell className="font-medium">{member.name}</TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      {member.email && (
-                        <div className="text-sm text-gray-600">{member.email}</div>
-                      )}
-                      {member.phone && (
-                        <div className="text-sm text-gray-600">{member.phone}</div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={member.role === 'pastor' ? 'default' : 'secondary'}>
-                      {getRoleLabel(member.role)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {member.ministries?.slice(0, 2).map((ministry) => (
-                        <Badge key={ministry} variant="outline" className="text-xs">
-                          {ministry}
-                        </Badge>
-                      ))}
-                      {member.ministries && member.ministries.length > 2 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{member.ministries.length - 2}
-                        </Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>{formatDate(member.date_of_joining)}</TableCell>
-                  <TableCell>
-                    <Badge variant={member.is_active ? 'default' : 'destructive'}>
-                      {member.is_active ? 'Ativo' : 'Inativo'}
-                    </Badge>
-                  </TableCell>
-                  {canEdit && (
-                    <TableCell>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => onEditMember(member)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-              {filteredMembers.length === 0 && (
+        {isMobile ? (
+          // Mobile Cards Layout
+          <div className="space-y-3">
+            {filteredMembers.map((member) => (
+              <MobileTableCard
+                key={member.id}
+                title={member.name}
+                subtitle={member.email || member.phone || 'Sem contato'}
+                status={{
+                  label: member.is_active ? 'Ativo' : 'Inativo',
+                  variant: member.is_active ? 'default' : 'destructive'
+                }}
+                fields={[
+                  {
+                    label: 'Função',
+                    value: (
+                      <Badge variant={member.role === 'pastor' ? 'default' : 'secondary'}>
+                        {getRoleLabel(member.role)}
+                      </Badge>
+                    )
+                  },
+                  {
+                    label: 'Ministérios',
+                    value: member.ministries?.length ? (
+                      <div className="flex flex-wrap gap-1 justify-end">
+                        {member.ministries.slice(0, 2).map((ministry) => (
+                          <Badge key={ministry} variant="outline" className="text-xs">
+                            {ministry}
+                          </Badge>
+                        ))}
+                        {member.ministries.length > 2 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{member.ministries.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    ) : 'Nenhum'
+                  },
+                  {
+                    label: 'Data Ingresso',
+                    value: formatDate(member.date_of_joining)
+                  }
+                ]}
+                actions={canEdit ? [
+                  {
+                    label: 'Editar',
+                    icon: <Edit className="h-3 w-3" />,
+                    onClick: () => onEditMember(member),
+                    variant: 'outline'
+                  }
+                ] : []}
+              />
+            ))}
+            {filteredMembers.length === 0 && (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  Nenhum membro encontrado
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        ) : (
+          // Desktop Table Layout
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 7 : 6} className="text-center py-8 text-gray-500">
-                    Nenhum membro encontrado
-                  </TableCell>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Contato</TableHead>
+                  <TableHead>Função</TableHead>
+                  <TableHead>Ministérios</TableHead>
+                  <TableHead>Data Ingresso</TableHead>
+                  <TableHead>Status</TableHead>
+                  {canEdit && <TableHead>Ações</TableHead>}
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {filteredMembers.map((member) => (
+                  <TableRow key={member.id}>
+                    <TableCell className="font-medium">{member.name}</TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        {member.email && (
+                          <div className="text-sm text-gray-600">{member.email}</div>
+                        )}
+                        {member.phone && (
+                          <div className="text-sm text-gray-600">{member.phone}</div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={member.role === 'pastor' ? 'default' : 'secondary'}>
+                        {getRoleLabel(member.role)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {member.ministries?.slice(0, 2).map((ministry) => (
+                          <Badge key={ministry} variant="outline" className="text-xs">
+                            {ministry}
+                          </Badge>
+                        ))}
+                        {member.ministries && member.ministries.length > 2 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{member.ministries.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>{formatDate(member.date_of_joining)}</TableCell>
+                    <TableCell>
+                      <Badge variant={member.is_active ? 'default' : 'destructive'}>
+                        {member.is_active ? 'Ativo' : 'Inativo'}
+                      </Badge>
+                    </TableCell>
+                    {canEdit && (
+                      <TableCell>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => onEditMember(member)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+                {filteredMembers.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={canEdit ? 7 : 6} className="text-center py-8 text-gray-500">
+                      Nenhum membro encontrado
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

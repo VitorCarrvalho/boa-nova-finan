@@ -2,10 +2,13 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Edit, Trash2 } from 'lucide-react';
 import { useDeleteCongregation } from '@/hooks/useCongregationData';
 import { useMembers } from '@/hooks/useMemberData';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { MobileTableCard } from '@/components/ui/mobile-table-card';
 import type { Database } from '@/integrations/supabase/types';
 
 type Congregation = Database['public']['Tables']['congregations']['Row'];
@@ -19,6 +22,7 @@ const CongregationTable: React.FC<CongregationTableProps> = ({ congregations, on
   const deleteMutation = useDeleteCongregation();
   const { data: members = [] } = useMembers();
   const { canEditModule, canDeleteModule } = usePermissions();
+  const isMobile = useIsMobile();
   
   const canEdit = canEditModule('congregacoes');
   const canDelete = canDeleteModule('congregacoes');
@@ -48,115 +52,183 @@ const CongregationTable: React.FC<CongregationTableProps> = ({ congregations, on
 
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Nome
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                CNPJ
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Pastores Responsáveis
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Endereço
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Membros
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              {(canEdit || canDelete) && (
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ações
-                </th>
-              )}
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {congregations.map((congregation) => {
-              const responsiblePastors = getResponsiblePastors(congregation.responsible_pastor_ids);
-              
-              return (
-                <tr key={congregation.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {congregation.name}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {congregation.cnpj || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {responsiblePastors.length > 0 ? (
-                      <div className="space-y-1">
-                        {responsiblePastors.map((pastor) => (
+    <>
+      {isMobile ? (
+        // Mobile Cards Layout
+        <div className="space-y-3">
+          {congregations.map((congregation) => {
+            const responsiblePastors = getResponsiblePastors(congregation.responsible_pastor_ids);
+            
+            return (
+              <MobileTableCard
+                key={congregation.id}
+                title={congregation.name}
+                subtitle={congregation.cnpj || 'CNPJ não informado'}
+                status={{
+                  label: congregation.is_active ? 'Ativa' : 'Inativa',
+                  variant: congregation.is_active ? 'default' : 'secondary'
+                }}
+                fields={[
+                  {
+                    label: 'Pastores',
+                    value: responsiblePastors.length > 0 ? (
+                      <div className="text-right">
+                        {responsiblePastors.map((pastor, index) => (
                           <div key={pastor.id} className="text-xs">
-                            <div className="font-medium">{pastor.name}</div>
-                            {pastor.email && (
-                              <div className="text-gray-400">{pastor.email}</div>
-                            )}
+                            {pastor.name}
+                            {index < responsiblePastors.length - 1 && ', '}
                           </div>
                         ))}
                       </div>
-                    ) : (
-                      <span className="text-gray-400">Nenhum pastor atribuído</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {formatAddress(congregation)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {congregation.avg_members || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge variant={congregation.is_active ? 'default' : 'secondary'}>
-                      {congregation.is_active ? 'Ativa' : 'Inativa'}
-                    </Badge>
-                  </td>
+                    ) : 'Nenhum pastor'
+                  },
+                  {
+                    label: 'Endereço',
+                    value: formatAddress(congregation)
+                  },
+                  {
+                    label: 'Membros',
+                    value: congregation.avg_members || '-'
+                  }
+                ]}
+                actions={[
+                  ...(onEdit && canEdit ? [{
+                    label: 'Editar',
+                    icon: <Edit className="h-3 w-3" />,
+                    onClick: () => onEdit(congregation),
+                    variant: 'outline' as const
+                  }] : []),
+                  ...(canDelete ? [{
+                    label: 'Excluir',
+                    icon: <Trash2 className="h-3 w-3" />,
+                    onClick: () => handleDelete(congregation.id),
+                    variant: 'destructive' as const
+                  }] : [])
+                ]}
+              />
+            );
+          })}
+          {congregations.length === 0 && (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                Nenhuma congregação encontrada
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      ) : (
+        // Desktop Table Layout
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Nome
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    CNPJ
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Pastores Responsáveis
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Endereço
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Membros
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
                   {(canEdit || canDelete) && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        {onEdit && canEdit && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onEdit(congregation)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {canDelete && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(congregation.id)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </td>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ações
+                    </th>
                   )}
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-      
-      {congregations.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          Nenhuma congregação encontrada
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {congregations.map((congregation) => {
+                  const responsiblePastors = getResponsiblePastors(congregation.responsible_pastor_ids);
+                  
+                  return (
+                    <tr key={congregation.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {congregation.name}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {congregation.cnpj || '-'}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {responsiblePastors.length > 0 ? (
+                          <div className="space-y-1">
+                            {responsiblePastors.map((pastor) => (
+                              <div key={pastor.id} className="text-xs">
+                                <div className="font-medium">{pastor.name}</div>
+                                {pastor.email && (
+                                  <div className="text-gray-400">{pastor.email}</div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">Nenhum pastor atribuído</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {formatAddress(congregation)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {congregation.avg_members || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge variant={congregation.is_active ? 'default' : 'secondary'}>
+                          {congregation.is_active ? 'Ativa' : 'Inativa'}
+                        </Badge>
+                      </td>
+                      {(canEdit || canDelete) && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex space-x-2">
+                            {onEdit && canEdit && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onEdit(congregation)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {canDelete && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(congregation.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          
+          {congregations.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              Nenhuma congregação encontrada
+            </div>
+          )}
         </div>
       )}
-    </div>
+    </>
   );
 };
 
