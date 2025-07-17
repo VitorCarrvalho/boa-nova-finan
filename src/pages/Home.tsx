@@ -12,7 +12,7 @@ const Home = () => {
 
   // URLs das imagens padrão da igreja no Supabase Storage
   const defaultBannerUrl = 'https://jryifbcsifodvocshvuo.supabase.co/storage/v1/object/public/event-banners/church-banner.jpg';
-  const defaultBannerMobileUrl = 'https://jryifbcsifodvocshvuo.supabase.co/storage/v1/object/public/event-banners/banner-default-mobile.png';
+  const defaultBannerMobileUrl = 'https://jryifbcsifodvocshvuo.supabase.co/storage/v1/object/public/event-banners//banner-default-mobile.png';
 
   const handleAccessSystem = () => {
     navigate('/auth');
