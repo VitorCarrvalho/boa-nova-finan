@@ -52,12 +52,12 @@ const BannerCarousel = ({ events, defaultBannerUrl }: BannerCarouselProps) => {
       // Mostrar detalhes da igreja no banner padrão
       setSelectedEvent({
         id: 'church-info',
-        title: 'Primeira Igreja Batista',
-        description: 'Bem-vindos à nossa comunidade de fé!',
+        title: 'Bem vindos à nossa Comunidade!',
+        description: 'Rua João Vicente, 741 - Osvaldo Cruz - RJ.',
         date: '',
         time: '',
-        location: 'Rua da Igreja, 123 - Centro',
-        notes: 'Cultos: Domingo 09:00 e 19:00\nQuarta-feira 19:30\nPastor Responsável: Pastor João Silva',
+        location: 'Rua João Vicente, 741 - Osvaldo Cruz - RJ',
+        notes: 'Terça-feira 19:30 - Culto dos milagres\nQuinta-feira 19h30 - Culto de libertação\nSábado 09h30 - Consagração\nDomingo às 09h30 e as 19h - Culto da família',
         type: 'culto' as any,
         created_at: '',
         updated_at: '',
@@ -81,6 +81,20 @@ const BannerCarousel = ({ events, defaultBannerUrl }: BannerCarouselProps) => {
                    `⏰ Horário: ${eventTime}\n` +
                    `📍 Local: ${event.location || 'A definir'}\n\n` +
                    `${event.description || ''}\n\n` +
+                   `Venha participar conosco! 🙌`;
+    
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const shareChurchInfo = () => {
+    const message = `🙏 *Bem vindos à nossa Comunidade!* 🙏\n\n` +
+                   `📍 Rua João Vicente, 741 - Osvaldo Cruz - RJ.\n\n` +
+                   `*Informações adicionais:*\n` +
+                   `📅 Terça-feira 19:30 - Culto dos milagres\n` +
+                   `📅 Quinta-feira 19h30 - Culto de libertação\n` +
+                   `📅 Sábado 09h30 - Consagração\n` +
+                   `📅 Domingo às 09h30 e as 19h - Culto da família\n\n` +
                    `Venha participar conosco! 🙌`;
     
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
@@ -214,17 +228,15 @@ const BannerCarousel = ({ events, defaultBannerUrl }: BannerCarouselProps) => {
               </Card>
             )}
 
-            {selectedEvent?.id !== 'church-info' && (
-              <div className="flex justify-end">
-                <Button
-                  onClick={() => shareEvent(selectedEvent!)}
-                  className="flex items-center gap-2"
-                >
-                  <Share2 className="w-4 h-4" />
-                  Compartilhar no WhatsApp
-                </Button>
-              </div>
-            )}
+            <div className="flex justify-end">
+              <Button
+                onClick={() => selectedEvent?.id === 'church-info' ? shareChurchInfo() : shareEvent(selectedEvent!)}
+                className="flex items-center gap-2"
+              >
+                <Share2 className="w-4 h-4" />
+                Compartilhar no WhatsApp
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
