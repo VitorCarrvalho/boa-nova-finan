@@ -1,7 +1,9 @@
 
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import Sidebar from './Sidebar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileSidebar from './MobileSidebar';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,6 +11,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, loading } = useAuth();
+  const isMobile = useIsMobile();
 
   if (loading) {
     return (
@@ -26,22 +29,26 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
-        {/* Simplified header without user info */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center">
-            <h1 className="text-xl font-bold text-gray-900">Painel Administrativo</h1>
-          </div>
-        </header>
+    <SidebarProvider defaultOpen={!isMobile}>
+      <div className="flex min-h-screen w-full bg-gray-50">
+        <MobileSidebar />
         
-        {/* Main content */}
-        <main className="flex-1 p-6">
-          {children}
-        </main>
+        <div className="flex-1 flex flex-col">
+          {/* Header with mobile menu trigger */}
+          <header className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-40">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger className="md:hidden" />
+              <h1 className="text-xl font-bold text-gray-900">Painel Administrativo</h1>
+            </div>
+          </header>
+          
+          {/* Main content */}
+          <main className="flex-1 p-4 md:p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
