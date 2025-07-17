@@ -24,6 +24,8 @@ const AccountPayableDetails: React.FC<AccountPayableDetailsProps> = ({ accountId
     if (!account?.attachment_url) return;
 
     try {
+      console.log('Iniciando download do anexo:', account.attachment_url);
+      
       // Log the download attempt
       const { data: user } = await supabase.auth.getUser();
       if (user.user) {
@@ -35,15 +37,21 @@ const AccountPayableDetails: React.FC<AccountPayableDetailsProps> = ({ accountId
         });
       }
 
-      // Download the file from Supabase Storage
-      const { data, error } = await supabase.storage
+      // Agora que o bucket é público, usar URL pública
+      const { data: publicUrlData } = supabase.storage
         .from('accounts-payable-attachments')
-        .download(account.attachment_url);
+        .getPublicUrl(account.attachment_url);
 
-      if (error) throw error;
+      console.log('URL pública gerada:', publicUrlData.publicUrl);
 
+      // Fazer download direto via fetch
+      const response = await fetch(publicUrlData.publicUrl);
+      if (!response.ok) throw new Error('Falha ao baixar arquivo');
+      
+      const blob = await response.blob();
+      
       // Create download link
-      const url = window.URL.createObjectURL(data);
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = account.attachment_filename || 'comprovante.pdf';

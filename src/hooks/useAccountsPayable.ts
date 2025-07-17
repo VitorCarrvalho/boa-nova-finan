@@ -154,6 +154,8 @@ export const useAccountPayableApprovals = (accountId: string) => {
   return useQuery({
     queryKey: ['account-payable-approvals', accountId],
     queryFn: async () => {
+      console.log('useAccountPayableApprovals - Buscando aprovações para:', accountId);
+      
       const { data, error } = await supabase
         .from('accounts_payable_approvals')
         .select(`
@@ -163,7 +165,14 @@ export const useAccountPayableApprovals = (accountId: string) => {
         .eq('account_payable_id', accountId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      console.log('useAccountPayableApprovals - Resultado:', { data, error });
+      console.log('useAccountPayableApprovals - Número de aprovações:', data?.length);
+      
+      if (error) {
+        console.error('useAccountPayableApprovals - Erro:', error);
+        throw error;
+      }
+      
       return data as any[];
     },
     enabled: !!accountId,
