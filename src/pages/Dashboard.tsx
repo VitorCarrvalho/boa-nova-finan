@@ -3,11 +3,14 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Users, Calendar, TrendingUp, CheckCircle, Clock, Send, Bell, ArrowUpRight, Activity } from 'lucide-react';
+import { DollarSign, Users, Calendar, TrendingUp, CheckCircle, Clock, Send, Bell, ArrowUpRight, Activity, Plus, FileText, BarChart3 } from 'lucide-react';
 import { useFinancialStats } from '@/hooks/useFinancialData';
 import { useMemberStats } from '@/hooks/useMemberData';
 import { useReconciliationStats } from '@/hooks/useReconciliationStats';
 import { useEvents } from '@/hooks/useEventData';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { MobileDashboardCard, MobileDashboardGrid, MobileQuickAction } from '@/components/ui/mobile-dashboard';
+import { MobileChartCard } from '@/components/ui/mobile-chart';
 import FinancialChart from '@/components/dashboard/FinancialChart';
 import MemberChart from '@/components/dashboard/MemberChart';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +19,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 const Dashboard = () => {
   const { userRole } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { canViewModule } = usePermissions();
   const { data: financialStats, isLoading: financialLoading } = useFinancialStats();
   const { data: memberStats, isLoading: memberLoading } = useMemberStats();
@@ -121,186 +125,238 @@ const Dashboard = () => {
 
   return (
     <Layout>
-      <div className="space-y-8">
+      <div className="space-y-6">
+        {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className={`font-bold text-gray-900 ${isMobile ? 'text-2xl' : 'text-3xl'}`}>
+            Dashboard
+          </h1>
+          <p className={`text-gray-600 mt-2 ${isMobile ? 'text-sm' : ''}`}>
             Bem-vindo ao sistema de gestão da igreja
           </p>
         </div>
 
+        {/* Quick Actions Mobile */}
+        {isMobile && (
+          <section>
+            <h2 className="text-lg font-semibold mb-3">Ações Rápidas</h2>
+            <div className="space-y-2">
+              {canViewModule('membros') && (
+                <MobileQuickAction
+                  title="Novo Membro"
+                  description="Cadastrar novo membro"
+                  icon={Plus}
+                  onClick={() => navigate('/membros')}
+                />
+              )}
+              {canViewModule('financeiro') && (
+                <MobileQuickAction
+                  title="Lançamento Financeiro"
+                  description="Registrar receita ou despesa"
+                  icon={DollarSign}
+                  onClick={() => navigate('/financeiro')}
+                />
+              )}
+              {canViewModule('eventos') && (
+                <MobileQuickAction
+                  title="Novo Evento"
+                  description="Criar evento da igreja"
+                  icon={Calendar}
+                  onClick={() => navigate('/eventos')}
+                />
+              )}
+            </div>
+          </section>
+        )}
+
         {/* Financial Section */}
         {canViewModule('financeiro') && (
-          <section className="bg-white rounded-lg p-6 shadow-sm border">
-            <SectionTitle icon="📊" title="Financeiro" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <DashboardCard
-                title="Receita do Mês (Sede)"
+          <section>
+            <h2 className={`font-semibold text-gray-800 mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
+              💰 Financeiro
+            </h2>
+            <MobileDashboardGrid>
+              <MobileDashboardCard
+                title="Receita do Mês"
                 value={formatCurrency(financialStats?.totalIncome || 0)}
-                icon={DollarSign}
-                color="text-green-600"
                 description={`${financialStats?.thisMonthRecords || 0} registros`}
-                route="/financeiro"
-                trend="+12%"
+                icon={DollarSign}
+                trend={{ value: 12, isPositive: true }}
+                onClick={() => navigate('/financeiro')}
               />
-              <DashboardCard
-                title="Saldo Atual (Sede)"
+              <MobileDashboardCard
+                title="Saldo Atual"
                 value={formatCurrency(financialStats?.balance || 0)}
-                icon={TrendingUp}
-                color={financialStats && financialStats.balance >= 0 ? 'text-green-600' : 'text-red-600'}
                 description="Receitas - Despesas"
-                route="/financeiro"
-                trend={financialStats && financialStats.balance >= 0 ? '+5%' : '-3%'}
+                icon={TrendingUp}
+                trend={{ 
+                  value: 5, 
+                  isPositive: (financialStats?.balance || 0) >= 0 
+                }}
+                onClick={() => navigate('/financeiro')}
               />
-              <DashboardCard
+              <MobileDashboardCard
                 title="Conciliações Aprovadas"
                 value={reconciliationStats?.approvedThisMonth?.toString() || '0'}
-                icon={CheckCircle}
-                color="text-green-600"
                 description={formatCurrency(reconciliationStats?.totalApprovedAmount || 0)}
-                route="/conciliacoes"
-                trend="+8%"
+                icon={CheckCircle}
+                trend={{ value: 8, isPositive: true }}
+                onClick={() => navigate('/conciliacoes')}
               />
-              <DashboardCard
-                title="Conciliações Pendentes"
+              <MobileDashboardCard
+                title="Pendentes"
                 value={reconciliationStats?.pendingThisMonth?.toString() || '0'}
-                icon={Clock}
-                color="text-yellow-600"
                 description={formatCurrency(reconciliationStats?.totalPendingAmount || 0)}
-                route="/conciliacoes"
+                icon={Clock}
+                badge={{ text: 'Atenção', variant: 'secondary' }}
+                onClick={() => navigate('/conciliacoes')}
               />
-            </div>
+            </MobileDashboardGrid>
           </section>
         )}
 
         {/* Members Section */}
         {canViewModule('membros') && (
-          <section className="bg-white rounded-lg p-6 shadow-sm border">
-            <SectionTitle icon="👥" title="Membros" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <DashboardCard
+          <section>
+            <h2 className={`font-semibold text-gray-800 mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
+              👥 Membros
+            </h2>
+            <MobileDashboardGrid>
+              <MobileDashboardCard
                 title="Membros Ativos"
                 value={memberStats?.activeMembers?.toString() || '0'}
-                icon={Users}
-                color="text-blue-600"
                 description="Total ativo"
-                route="/membros"
-                trend="+4%"
+                icon={Users}
+                trend={{ value: 4, isPositive: true }}
+                onClick={() => navigate('/membros')}
               />
-              <DashboardCard
+              <MobileDashboardCard
                 title="Total de Membros"
                 value={memberStats?.totalMembers?.toString() || '0'}
-                icon={Users}
-                color="text-gray-600"
                 description="Cadastrados no sistema"
-                route="/membros"
-                trend="+2%"
-              />
-              <DashboardCard
-                title="Novos Membros (30 dias)"
-                value="8"
                 icon={Users}
-                color="text-green-600"
+                trend={{ value: 2, isPositive: true }}
+                onClick={() => navigate('/membros')}
+              />
+              <MobileDashboardCard
+                title="Novos Membros"
+                value="8"
                 description="Últimos 30 dias"
-                route="/membros"
-                trend="+15%"
+                icon={Users}
+                trend={{ value: 15, isPositive: true }}
+                badge={{ text: 'Novo', variant: 'default' }}
+                onClick={() => navigate('/membros')}
               />
-            </div>
-          </section>
-        )}
-
-        {/* Notifications Section */}
-        {canViewModule('notificacoes') && (
-          <section className="bg-white rounded-lg p-6 shadow-sm border">
-            <SectionTitle icon="🔔" title="Notificações" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <DashboardCard
-                title="Mensagens Enviadas"
-                value={notificationStats.sentThisMonth.toString()}
-                icon={Send}
-                color="text-blue-600"
-                description="Este mês"
-                route="/notificacoes"
-                trend="+20%"
-              />
-              <DashboardCard
-                title="Mensagens Agendadas"
-                value={notificationStats.scheduled.toString()}
-                icon={Bell}
-                color="text-purple-600"
-                description="Aguardando envio"
-                route="/notificacoes/agendadas"
-              />
-            </div>
+            </MobileDashboardGrid>
           </section>
         )}
 
         {/* Events Section */}
         {canViewModule('eventos') && (
-          <section className="bg-white rounded-lg p-6 shadow-sm border">
-            <SectionTitle icon="📅" title="Eventos" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <DashboardCard
+          <section>
+            <h2 className={`font-semibold text-gray-800 mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
+              📅 Eventos
+            </h2>
+            <MobileDashboardGrid>
+              <MobileDashboardCard
                 title="Próximo Evento"
                 value={upcomingEvent?.title || 'Nenhum'}
+                description={upcomingEvent ? new Date(upcomingEvent.date).toLocaleDateString('pt-BR') : 'Nenhum agendado'}
                 icon={Calendar}
-                color="text-indigo-600"
-                description={upcomingEvent ? new Date(upcomingEvent.date).toLocaleDateString('pt-BR') : 'Nenhum evento agendado'}
-                route="/eventos"
+                onClick={() => navigate('/eventos')}
+                size="lg"
               />
-              <DashboardCard
+              <MobileDashboardCard
                 title="Eventos do Mês"
                 value={thisMonthEvents.toString()}
+                description="Programados"
                 icon={Calendar}
-                color="text-blue-600"
-                description="Eventos programados"
-                route="/eventos"
-                trend="+3%"
+                trend={{ value: 3, isPositive: true }}
+                onClick={() => navigate('/eventos')}
               />
-              <DashboardCard
-                title="Eventos Pendentes"
-                value="2"
-                icon={Clock}
-                color="text-orange-600"
-                description="Aguardando aprovação"
-                route="/eventos"
-              />
-            </div>
+            </MobileDashboardGrid>
           </section>
         )}
 
-        {/* Recent Activities Section */}
-        <section className="bg-white rounded-lg p-6 shadow-sm border">
-          <SectionTitle icon="🕓" title="Atividades Recentes" />
-          <div className="space-y-3">
-            {recentActivities.slice(0, 5).map((activity, index) => (
-              <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <Activity className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-700">{activity}</span>
-                <span className="text-xs text-gray-400 ml-auto">
-                  há {Math.floor(Math.random() * 24) + 1} horas
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* Notifications Section */}
+        {canViewModule('notificacoes') && (
+          <section>
+            <h2 className={`font-semibold text-gray-800 mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
+              🔔 Notificações
+            </h2>
+            <MobileDashboardGrid>
+              <MobileDashboardCard
+                title="Mensagens Enviadas"
+                value={notificationStats.sentThisMonth.toString()}
+                description="Este mês"
+                icon={Send}
+                trend={{ value: 20, isPositive: true }}
+                onClick={() => navigate('/notificacoes')}
+              />
+              <MobileDashboardCard
+                title="Agendadas"
+                value={notificationStats.scheduled.toString()}
+                description="Aguardando envio"
+                icon={Bell}
+                badge={{ text: 'Pendente', variant: 'outline' }}
+                onClick={() => navigate('/notificacoes/agendadas')}
+              />
+            </MobileDashboardGrid>
+          </section>
+        )}
 
         {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {canViewModule('financeiro') && (
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">📈 Gráfico Financeiro</h3>
-              <FinancialChart />
-            </div>
+        <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
+          {canViewModule('financeiro') && financialStats && (
+            <MobileChartCard
+              title="Resumo Financeiro"
+              description="Distribuição por categoria"
+              data={Object.entries(financialStats.categoryData || {}).map(([category, amount]) => ({
+                name: category,
+                value: Number(amount)
+              }))}
+              type="pie"
+              height={isMobile ? 180 : 250}
+            />
           )}
           
-          {canViewModule('membros') && (
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">👨‍👩‍👧‍👦 Gráfico de Membros</h3>
-              <MemberChart />
-            </div>
+          {canViewModule('membros') && memberStats && (
+            <MobileChartCard
+              title="Membros por Função"
+              data={[
+                { name: 'Membros', value: memberStats.regularMembers },
+                { name: 'Obreiros', value: memberStats.workers },
+                { name: 'Pastores', value: memberStats.pastors }
+              ].filter(item => item.value > 0)}
+              type="bar"
+              height={isMobile ? 180 : 250}
+            />
           )}
         </div>
+
+        {/* Recent Activities */}
+        <section>
+          <h2 className={`font-semibold text-gray-800 mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
+            🕓 Atividades Recentes
+          </h2>
+          <Card>
+            <CardContent className={isMobile ? 'p-4' : 'p-6'}>
+              <div className="space-y-3">
+                {recentActivities.slice(0, isMobile ? 3 : 5).map((activity, index) => (
+                  <div key={index} className={`flex items-center gap-3 p-3 bg-muted/50 rounded-lg`}>
+                    <Activity className={`text-muted-foreground ${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                    <span className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                      {activity}
+                    </span>
+                    <span className={`text-muted-foreground/70 ml-auto ${isMobile ? 'text-xs' : 'text-xs'}`}>
+                      há {Math.floor(Math.random() * 24) + 1}h
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </section>
       </div>
     </Layout>
   );
