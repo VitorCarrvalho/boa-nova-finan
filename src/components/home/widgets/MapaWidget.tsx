@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { MapPin, Navigation } from 'lucide-react';
 import WidgetContainer from './WidgetContainer';
@@ -10,12 +11,23 @@ const MapaWidget = () => {
   const abrirMapa = () => {
     const query = encodeURIComponent(`${endereco}, ${cep}`);
     
-    // Detectar se é dispositivo móvel para escolher o app
+    // Detectar se é dispositivo móvel
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     if (isMobile) {
-      // Tentar abrir o app de GPS padrão
-      window.open(`geo:0,0?q=${query}`, '_blank');
+      // No mobile, tentar Waze primeiro, depois fallback para GPS nativo
+      const wazeUrl = `https://waze.com/ul?q=${query}`;
+      const geoUrl = `geo:0,0?q=${query}`;
+      
+      // Tentar abrir o Waze
+      const wazeWindow = window.open(wazeUrl, '_blank');
+      
+      // Se não conseguir abrir o Waze, usar GPS nativo após um delay
+      setTimeout(() => {
+        if (!wazeWindow || wazeWindow.closed) {
+          window.open(geoUrl, '_blank');
+        }
+      }, 1000);
     } else {
       // No desktop, abrir Google Maps
       window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');

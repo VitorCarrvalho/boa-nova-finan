@@ -1,11 +1,12 @@
+
 import React from 'react';
 import { Instagram, ExternalLink } from 'lucide-react';
 import WidgetContainer from './WidgetContainer';
 import { Button } from '@/components/ui/button';
 
 const InstagramWidget = () => {
-  const instagramHandle = '@categraliptmoficial';
-  const instagramUrl = 'https://www.instagram.com/categraliptmoficial/';
+  const instagramHandle = '@iptmglobal';
+  const instagramUrl = 'https://www.instagram.com/iptmglobal/';
 
   const abrirInstagram = () => {
     window.open(instagramUrl, '_blank');
@@ -20,7 +21,7 @@ const InstagramWidget = () => {
       
       <div className="flex-1 flex flex-col justify-between">
         <div>
-          <p className="text-sm font-medium text-foreground mb-1">{instagramHandle}</p>
+          <p className="text-sm font-medium text-foreground">{instagramHandle}</p>
           <p className="text-xs text-muted-foreground">Acompanhe nossas atividades e momentos especiais</p>
         </div>
         

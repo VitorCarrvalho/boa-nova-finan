@@ -132,7 +132,6 @@ const versiculosNVI: Versiculo[] = [
 
 // Função para verificar se o texto está em português
 const isPortuguese = (text: string): boolean => {
-  // Palavras comuns em português que indicam que o texto está no idioma correto
   const portugueseWords = ['que', 'para', 'com', 'não', 'seu', 'sua', 'ele', 'ela', 'deus', 'senhor', 'você', 'vocês', 'mim', 'nos'];
   const textLower = text.toLowerCase();
   return portugueseWords.some(word => textLower.includes(word));
@@ -168,11 +167,10 @@ const getVersiculoFromAPI = async (): Promise<Versiculo> => {
     console.log('❌ Erro na API brasileira:', error);
   }
 
-  // Fallback para versículo local em português
-  console.log('🏠 Usando versículo do cache local em português...');
-  const hoje = new Date().getDate();
-  const index = hoje % versiculosNVI.length;
-  const versiculoLocal = versiculosNVI[index];
+  // Fallback para versículo local aleatório
+  console.log('🏠 Usando versículo aleatório do cache local...');
+  const randomIndex = Math.floor(Math.random() * versiculosNVI.length);
+  const versiculoLocal = versiculosNVI[randomIndex];
   console.log('📖 Versículo local selecionado:', versiculoLocal.reference);
   return versiculoLocal;
 };
@@ -196,7 +194,6 @@ const getVersiculoFromCache = (): Versiculo | null => {
     }
   } catch (error) {
     console.error('❌ Erro ao ler cache do versículo:', error);
-    // Limpar cache corrompido
     localStorage.removeItem('versiculo_dia');
   }
   return null;
@@ -220,15 +217,20 @@ const saveVersiculoToCache = (versiculo: Versiculo): void => {
   }
 };
 
-// Limpar cache antigo na primeira execução (apenas uma vez por sessão)
-const clearOldCache = (): void => {
-  const hasCleared = sessionStorage.getItem('versiculo_cache_cleared');
+// Função para forçar um novo versículo (usado pelo botão refresh)
+const forceNewVerse = async (): Promise<Versiculo> => {
+  console.log('🔄 Forçando busca de novo versículo...');
   
-  if (!hasCleared) {
-    console.log('🧹 Limpando cache antigo de versículos...');
-    localStorage.removeItem('versiculo_dia');
-    sessionStorage.setItem('versiculo_cache_cleared', 'true');
-  }
+  // Limpar cache existente
+  localStorage.removeItem('versiculo_dia');
+  
+  // Buscar novo versículo
+  const versiculo = await getVersiculoFromAPI();
+  
+  // Salvar no cache
+  saveVersiculoToCache(versiculo);
+  
+  return versiculo;
 };
 
 export const useVersiculoDia = () => {
@@ -236,9 +238,6 @@ export const useVersiculoDia = () => {
     queryKey: ['versiculo-dia'],
     queryFn: async (): Promise<Versiculo> => {
       console.log('🚀 Iniciando busca por versículo do dia...');
-      
-      // Limpar cache antigo na primeira execução
-      clearOldCache();
       
       // Primeiro, tentar buscar do cache
       const cached = getVersiculoFromCache();
@@ -257,4 +256,11 @@ export const useVersiculoDia = () => {
     staleTime: 24 * 60 * 60 * 1000, // 24 horas
     gcTime: 24 * 60 * 60 * 1000, // 24 horas
   });
+};
+
+// Hook personalizado para forçar refresh
+export const useRefreshVerse = () => {
+  return {
+    forceRefresh: forceNewVerse
+  };
 };

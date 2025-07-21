@@ -1,12 +1,34 @@
+
 import React from 'react';
 import { BookOpen, RefreshCw } from 'lucide-react';
 import WidgetContainer from './WidgetContainer';
-import { useVersiculoDia } from '@/hooks/useVersiculoDia';
+import { useVersiculoDia, useRefreshVerse } from '@/hooks/useVersiculoDia';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useQueryClient } from '@tanstack/react-query';
 
 const VersiculoWidget = () => {
   const { data: versiculo, isLoading, refetch } = useVersiculoDia();
+  const { forceRefresh } = useRefreshVerse();
+  const queryClient = useQueryClient();
+
+  const handleRefresh = async () => {
+    try {
+      console.log('🔄 Botão de refresh clicado');
+      
+      // Buscar novo versículo forçadamente
+      const newVerse = await forceRefresh();
+      
+      // Atualizar o cache do react-query
+      queryClient.setQueryData(['versiculo-dia'], newVerse);
+      
+      console.log('✅ Versículo atualizado:', newVerse.reference);
+    } catch (error) {
+      console.error('❌ Erro ao atualizar versículo:', error);
+      // Fallback para refetch normal
+      refetch();
+    }
+  };
 
   if (isLoading) {
     return (
@@ -33,7 +55,7 @@ const VersiculoWidget = () => {
         <Button 
           size="sm" 
           variant="ghost" 
-          onClick={() => refetch()}
+          onClick={handleRefresh}
           className="text-muted-foreground hover:text-foreground"
         >
           <RefreshCw className="w-4 h-4" />
