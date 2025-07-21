@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 
 interface Versiculo {
@@ -5,7 +6,7 @@ interface Versiculo {
   reference: string;
 }
 
-// Lista de versículos em português (NVI) para uso
+// Lista expandida de versículos em português (NVI) para uso local
 const versiculosNVI: Versiculo[] = [
   {
     text: "Porque eu bem sei os pensamentos que tenho a vosso respeito, diz o Senhor; pensamentos de paz e não de mal, para vos dar o fim que esperais.",
@@ -44,7 +45,7 @@ const versiculosNVI: Versiculo[] = [
     reference: "Mateus 11:28"
   },
   {
-    text: "Em tudo sou grato; não andem ansiosos por coisa alguma, mas em tudo, pela oração e súplicas, e com ação de graças, apresentem seus pedidos a Deus.",
+    text: "Não andem ansiosos por coisa alguma, mas em tudo, pela oração e súplicas, e com ação de graças, apresentem seus pedidos a Deus.",
     reference: "Filipenses 4:6"
   },
   {
@@ -86,30 +87,94 @@ const versiculosNVI: Versiculo[] = [
   {
     text: "Mas os que esperam no Senhor renovam as suas forças. Voam alto como águias; correm e não ficam exaustos, andam e não se cansam.",
     reference: "Isaías 40:31"
+  },
+  {
+    text: "O coração do homem pode fazer planos, mas a resposta certa dos lábios vem do Senhor.",
+    reference: "Provérbios 16:1"
+  },
+  {
+    text: "Por isso não tema, pois estou com você; não tenha medo, pois sou o seu Deus. Eu o fortalecerei e o ajudarei; eu o segurarei com a minha mão direita vitoriosa.",
+    reference: "Isaías 41:10"
+  },
+  {
+    text: "Busquem, pois, em primeiro lugar o Reino de Deus e a sua justiça, e todas essas coisas lhes serão acrescentadas.",
+    reference: "Mateus 6:33"
+  },
+  {
+    text: "Tenham misericórdia de mim, ó Deus, segundo a tua benignidade; apaga as minhas transgressões, segundo a multidão das tuas misericórdias.",
+    reference: "Salmos 51:1"
+  },
+  {
+    text: "Porque pela graça sois salvos, por meio da fé; e isto não vem de vós, é dom de Deus.",
+    reference: "Efésios 2:8"
+  },
+  {
+    text: "O Senhor abençoe você e o guarde; o Senhor faça resplandecer o seu rosto sobre você e tenha misericórdia de você.",
+    reference: "Números 6:24-25"
+  },
+  {
+    text: "Clame a mim e eu lhe responderei e lhe direi coisas grandiosas e insondáveis que você não conhece.",
+    reference: "Jeremias 33:3"
+  },
+  {
+    text: "Humilhem-se, pois, debaixo da poderosa mão de Deus, para que ele os exalte no tempo devido.",
+    reference: "1 Pedro 5:6"
+  },
+  {
+    text: "Aquele que habita no abrigo do Altíssimo e descansa à sombra do Todo-poderoso.",
+    reference: "Salmos 91:1"
+  },
+  {
+    text: "Jesus respondeu: 'Eu sou o caminho, a verdade e a vida. Ninguém vem ao Pai, a não ser por mim.'",
+    reference: "João 14:6"
   }
 ];
 
+// Função para verificar se o texto está em português
+const isPortuguese = (text: string): boolean => {
+  // Palavras comuns em português que indicam que o texto está no idioma correto
+  const portugueseWords = ['que', 'para', 'com', 'não', 'seu', 'sua', 'ele', 'ela', 'deus', 'senhor', 'você', 'vocês', 'mim', 'nos'];
+  const textLower = text.toLowerCase();
+  return portugueseWords.some(word => textLower.includes(word));
+};
+
 const getVersiculoFromAPI = async (): Promise<Versiculo> => {
+  console.log('🔍 Tentando buscar versículo da API brasileira...');
+  
   try {
     // Tentar API brasileira (português)
     const response = await fetch('https://www.abibliadigital.com.br/api/verses/nvi/random');
+    
     if (response.ok) {
       const data = await response.json();
+      console.log('📡 Resposta da API:', data);
+      
       if (data && data.text && data.reference) {
-        return {
+        const versiculo = {
           text: data.text.trim(),
           reference: data.reference
         };
+        
+        // Verificar se o texto está em português
+        if (isPortuguese(versiculo.text)) {
+          console.log('✅ Versículo da API em português:', versiculo.reference);
+          return versiculo;
+        } else {
+          console.log('❌ Versículo da API não está em português, usando fallback local');
+        }
       }
     }
   } catch (error) {
-    console.log('API brasileira falhou, usando versículo do cache local...');
+    console.log('❌ Erro na API brasileira:', error);
   }
 
   // Fallback para versículo local em português
+  console.log('🏠 Usando versículo do cache local em português...');
   const hoje = new Date().getDate();
   const index = hoje % versiculosNVI.length;
-  return versiculosNVI[index];
+  const versiculoLocal = versiculosNVI[index];
+  console.log('📖 Versículo local selecionado:', versiculoLocal.reference);
+  return versiculoLocal;
 };
 
 const getVersiculoFromCache = (): Versiculo | null => {
@@ -119,25 +184,50 @@ const getVersiculoFromCache = (): Versiculo | null => {
     
     if (cached) {
       const { data, date } = JSON.parse(cached);
-      if (date === today) {
+      
+      // Verificar se é do dia atual E se está em português
+      if (date === today && data && isPortuguese(data.text)) {
+        console.log('💾 Versículo encontrado no cache (português):', data.reference);
         return data;
+      } else if (date === today && data && !isPortuguese(data.text)) {
+        console.log('🗑️ Removendo versículo em inglês do cache...');
+        localStorage.removeItem('versiculo_dia');
       }
     }
   } catch (error) {
-    console.error('Erro ao ler cache do versículo:', error);
+    console.error('❌ Erro ao ler cache do versículo:', error);
+    // Limpar cache corrompido
+    localStorage.removeItem('versiculo_dia');
   }
   return null;
 };
 
 const saveVersiculoToCache = (versiculo: Versiculo): void => {
   try {
-    const today = new Date().toDateString();
-    localStorage.setItem('versiculo_dia', JSON.stringify({
-      data: versiculo,
-      date: today
-    }));
+    // Só salvar no cache se estiver em português
+    if (isPortuguese(versiculo.text)) {
+      const today = new Date().toDateString();
+      localStorage.setItem('versiculo_dia', JSON.stringify({
+        data: versiculo,
+        date: today
+      }));
+      console.log('💾 Versículo salvo no cache:', versiculo.reference);
+    } else {
+      console.log('⚠️ Não salvando versículo em inglês no cache');
+    }
   } catch (error) {
-    console.error('Erro ao salvar versículo no cache:', error);
+    console.error('❌ Erro ao salvar versículo no cache:', error);
+  }
+};
+
+// Limpar cache antigo na primeira execução (apenas uma vez por sessão)
+const clearOldCache = (): void => {
+  const hasCleared = sessionStorage.getItem('versiculo_cache_cleared');
+  
+  if (!hasCleared) {
+    console.log('🧹 Limpando cache antigo de versículos...');
+    localStorage.removeItem('versiculo_dia');
+    sessionStorage.setItem('versiculo_cache_cleared', 'true');
   }
 };
 
@@ -145,6 +235,11 @@ export const useVersiculoDia = () => {
   return useQuery({
     queryKey: ['versiculo-dia'],
     queryFn: async (): Promise<Versiculo> => {
+      console.log('🚀 Iniciando busca por versículo do dia...');
+      
+      // Limpar cache antigo na primeira execução
+      clearOldCache();
+      
       // Primeiro, tentar buscar do cache
       const cached = getVersiculoFromCache();
       if (cached) {
@@ -154,7 +249,7 @@ export const useVersiculoDia = () => {
       // Se não tem no cache, buscar da API
       const versiculo = await getVersiculoFromAPI();
       
-      // Salvar no cache
+      // Salvar no cache apenas se estiver em português
       saveVersiculoToCache(versiculo);
       
       return versiculo;
