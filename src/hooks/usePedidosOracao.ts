@@ -11,11 +11,21 @@ interface PedidoOracao {
 export const usePedidosOracao = () => {
   const createPedido = useMutation({
     mutationFn: async (pedido: PedidoOracao) => {
-      console.log('📝 Tentando enviar pedido de oração:', { 
+      // Log inicial com informações detalhadas
+      console.log('📝 Iniciando envio de pedido de oração:', { 
         nome: pedido.nome || 'Anônimo', 
         textoLength: pedido.texto?.length,
         supabaseUrl: 'https://jryifbcsifodvocshvuo.supabase.co',
         timestamp: new Date().toISOString()
+      });
+
+      // Verificar status de autenticação
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      console.log('🔐 Status de autenticação:', {
+        hasSession: !!session,
+        userId: session?.user?.id || 'anônimo',
+        role: session?.user?.role || 'anon',
+        authError: authError?.message
       });
       
       // Validação local
@@ -33,21 +43,59 @@ export const usePedidosOracao = () => {
         texto: pedido.texto.trim()
       };
 
-      console.log('📤 Enviando para Supabase:', dados);
-      
-      const { data, error } = await supabase
-        .from('pedidos_oracao')
-        .insert([dados])
-        .select()
-        .single();
+      console.log('📤 Enviando dados para Supabase:', dados);
 
-      if (error) {
-        console.error('❌ Erro do Supabase:', error);
-        throw error;
+      // Implementar retry logic
+      let ultimoErro;
+      for (let tentativa = 1; tentativa <= 3; tentativa++) {
+        try {
+          console.log(`🔄 Tentativa ${tentativa}/3 de envio`);
+          
+          const { data, error } = await supabase
+            .from('pedidos_oracao')
+            .insert([dados])
+            .select()
+            .single();
+
+          if (error) {
+            console.error(`❌ Erro na tentativa ${tentativa}:`, {
+              message: error.message,
+              details: error.details,
+              hint: error.hint,
+              code: error.code
+            });
+            ultimoErro = error;
+            
+            // Se for erro de RLS, não tentar novamente
+            if (error.message.includes('row-level security') || error.message.includes('permission')) {
+              console.error('🔒 Erro de permissão detectado - não tentando novamente');
+              break;
+            }
+            
+            // Aguardar antes da próxima tentativa
+            if (tentativa < 3) {
+              console.log(`⏳ Aguardando ${tentativa}s antes da próxima tentativa...`);
+              await new Promise(resolve => setTimeout(resolve, tentativa * 1000));
+            }
+            continue;
+          }
+
+          console.log('✅ Pedido enviado com sucesso na tentativa', tentativa, ':', data);
+          return data;
+          
+        } catch (error: any) {
+          console.error(`💥 Erro inesperado na tentativa ${tentativa}:`, error);
+          ultimoErro = error;
+          
+          if (tentativa < 3) {
+            await new Promise(resolve => setTimeout(resolve, tentativa * 1000));
+          }
+        }
       }
 
-      console.log('✅ Pedido enviado com sucesso:', data);
-      return data;
+      // Se chegou aqui, todas as tentativas falharam
+      console.error('🚫 Todas as tentativas de envio falharam');
+      throw ultimoErro;
     },
     onSuccess: (data) => {
       console.log('🎉 Sucesso no envio do pedido:', data);
