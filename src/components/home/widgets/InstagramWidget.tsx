@@ -12,7 +12,7 @@ const InstagramWidget = () => {
   };
 
   return (
-    <WidgetContainer size="medium" className="flex flex-col" onClick={abrirInstagram}>
+    <WidgetContainer className="flex flex-col min-h-[140px]" onClick={abrirInstagram}>
       <div className="flex items-center gap-2 mb-3">
         <Instagram className="w-5 h-5 text-primary" />
         <h3 className="text-lg font-semibold text-foreground">Instagram</h3>

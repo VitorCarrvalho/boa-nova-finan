@@ -10,7 +10,7 @@ const VersiculoWidget = () => {
 
   if (isLoading) {
     return (
-      <WidgetContainer size="large" className="flex flex-col">
+      <WidgetContainer className="flex flex-col min-h-[140px]">
         <div className="flex items-center gap-2 mb-4">
           <BookOpen className="w-5 h-5 text-primary" />
           <h3 className="text-lg font-semibold text-foreground">Versículo do Dia</h3>
@@ -24,7 +24,7 @@ const VersiculoWidget = () => {
   }
 
   return (
-    <WidgetContainer size="large" className="flex flex-col">
+    <WidgetContainer className="flex flex-col min-h-[140px]">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-primary" />

@@ -18,7 +18,7 @@ const ProximosEventosWidget = () => {
 
   if (isLoading) {
     return (
-      <WidgetContainer size="large" className="flex flex-col">
+      <WidgetContainer className="flex flex-col min-h-[300px]">
         <div className="flex items-center gap-2 mb-4">
           <Calendar className="w-5 h-5 text-primary" />
           <h3 className="text-lg font-semibold text-foreground">Próximos Eventos</h3>
@@ -33,7 +33,7 @@ const ProximosEventosWidget = () => {
   }
 
   return (
-    <WidgetContainer size="large" className="flex flex-col">
+    <WidgetContainer className="flex flex-col min-h-[300px]">
       <div className="flex items-center gap-2 mb-4">
         <Calendar className="w-5 h-5 text-primary" />
         <h3 className="text-lg font-semibold text-foreground">Próximos Eventos</h3>

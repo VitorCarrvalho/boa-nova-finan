@@ -29,25 +29,35 @@ const Home = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Grid Container */}
       <div className="container mx-auto px-4 py-8">
-        {/* iPhone-style Grid Layout */}
-        <div className="grid grid-cols-3 gap-4 auto-rows-min max-w-4xl mx-auto">
-          {/* Calendário - pequeno */}
-          <CalendarioWidget />
+        {/* iPhone-style Widget Layout - Responsivo */}
+        <div className="max-w-md mx-auto md:max-w-4xl space-y-4">
           
-          {/* Instagram - pequeno */}
-          <InstagramWidget />
+          {/* Linha 1: Próximos Eventos - 1 widget grande */}
+          <div className="w-full">
+            <ProximosEventosWidget />
+          </div>
           
-          {/* Próximos Eventos - grande */}
-          <ProximosEventosWidget />
+          {/* Linha 2: Calendário e Versículo - 2 widgets */}
+          <div className="grid grid-cols-2 gap-4">
+            <CalendarioWidget />
+            <div className="md:col-span-1">
+              <VersiculoWidget />
+            </div>
+          </div>
           
-          {/* Mapa - médio */}
-          <MapaWidget />
+          {/* Linha 3: Mapa - 1 widget grande */}
+          <div className="w-full">
+            <MapaWidget />
+          </div>
           
-          {/* Versículo do Dia - grande */}
-          <VersiculoWidget />
+          {/* Linha 4: Instagram e Pedido - 2 widgets */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InstagramWidget />
+            <div className="md:col-span-1">
+              <PedidoOracaoWidget />
+            </div>
+          </div>
           
-          {/* Pedido de Oração - grande */}
-          <PedidoOracaoWidget />
         </div>
       </div>
 

@@ -48,7 +48,7 @@ const PedidoOracaoWidget = () => {
   };
 
   return (
-    <WidgetContainer size="large" className="flex flex-col">
+    <WidgetContainer className="flex flex-col min-h-[300px]">
       <div className="flex items-center gap-2 mb-4">
         <Heart className="w-5 h-5 text-primary" />
         <h3 className="text-lg font-semibold text-foreground">Pedido de Oração</h3>

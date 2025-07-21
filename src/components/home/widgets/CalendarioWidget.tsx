@@ -16,7 +16,7 @@ const CalendarioWidget = () => {
   }, []);
 
   return (
-    <WidgetContainer size="medium" className="flex flex-col items-center justify-center text-center">
+    <WidgetContainer className="flex flex-col items-center justify-center text-center min-h-[140px]">
       <Calendar className="w-8 h-8 text-primary mb-2" />
       <div className="space-y-1">
         <h3 className="text-lg font-bold text-foreground">
