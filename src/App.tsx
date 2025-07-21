@@ -25,6 +25,7 @@ import Reports from "@/pages/Reports";
 import Notifications from "@/pages/Notifications";
 import Settings from "@/pages/Settings";
 import AccessManagement from "@/pages/AccessManagement";
+import Documentation from "@/pages/Documentation";
 
 // Import notification pages
 import NewNotification from "@/pages/notifications/NewNotification";
@@ -194,6 +195,12 @@ const App = () => (
               <Route path="/access-management" element={
                 <ProtectedRoute>
                   <AccessManagement />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/documentation" element={
+                <ProtectedRoute>
+                  <Documentation />
                 </ProtectedRoute>
               } />
               

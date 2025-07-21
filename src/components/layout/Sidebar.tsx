@@ -26,7 +26,8 @@ import {
   Clock,
   Send,
   Video,
-  Shield
+  Shield,
+  Book
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -556,6 +557,20 @@ const Sidebar = () => {
 
       {/* Bottom Actions */}
       <div className="p-4 border-t border-gray-200 space-y-2">
+        <Link to="/documentation">
+          <Button
+            variant="ghost"
+            className={`w-full justify-start ${
+              location.pathname.startsWith('/documentation') 
+                ? 'bg-red-600 text-white hover:bg-red-700' 
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <Book className="mr-3 h-4 w-4" />
+            Documentação
+          </Button>
+        </Link>
+
         {canAccessAccessManagement && (
           <Link to="/access-management">
             <Button
