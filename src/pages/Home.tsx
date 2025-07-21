@@ -1,6 +1,8 @@
+
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import PastoresWidget from '@/components/home/widgets/PastoresWidget';
 import ProximosEventosWidget from '@/components/home/widgets/ProximosEventosWidget';
 import CalendarioWidget from '@/components/home/widgets/CalendarioWidget';
 import VersiculoWidget from '@/components/home/widgets/VersiculoWidget';
@@ -29,8 +31,23 @@ const Home = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Grid Container */}
       <div className="container mx-auto px-4 py-8">
+        {/* Título da Igreja */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+            IPTM Global
+          </h1>
+          <p className="text-lg md:text-xl text-muted-foreground italic">
+            "Deus não é religião, é relacionamento."
+          </p>
+        </div>
+
         {/* iPhone-style Widget Layout - Responsivo */}
         <div className="max-w-md mx-auto md:max-w-4xl space-y-4">
+          
+          {/* Linha 0: Pastores - 1 widget grande */}
+          <div className="w-full">
+            <PastoresWidget />
+          </div>
           
           {/* Linha 1: Próximos Eventos - 1 widget grande */}
           <div className="w-full">
