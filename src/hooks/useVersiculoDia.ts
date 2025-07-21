@@ -5,8 +5,8 @@ interface Versiculo {
   reference: string;
 }
 
-// Lista de versículos em português (NVI) para fallback
-const versiculosFallback: Versiculo[] = [
+// Lista de versículos em português (NVI) para uso
+const versiculosNVI: Versiculo[] = [
   {
     text: "Porque eu bem sei os pensamentos que tenho a vosso respeito, diz o Senhor; pensamentos de paz e não de mal, para vos dar o fim que esperais.",
     reference: "Jeremias 29:11"
@@ -24,7 +24,7 @@ const versiculosFallback: Versiculo[] = [
     reference: "Salmos 37:5"
   },
   {
-    text: "Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna.",
+    text: "Porque Deus tanto amou o mundo que deu o seu Filho unigênito, para que todo o que nele crer não pereça, mas tenha a vida eterna.",
     reference: "João 3:16"
   },
   {
@@ -32,50 +32,84 @@ const versiculosFallback: Versiculo[] = [
     reference: "João 14:1"
   },
   {
-    text: "E sabemos que todas as coisas contribuem juntamente para o bem daqueles que amam a Deus.",
+    text: "Sabemos que todas as coisas cooperam para o bem daqueles que amam a Deus, daqueles que são chamados segundo o seu propósito.",
     reference: "Romanos 8:28"
   },
   {
-    text: "O Senhor é a minha luz e a minha salvação; a quem temerei? O Senhor é a força da minha vida; de quem me recearei?",
+    text: "O Senhor é a minha luz e a minha salvação; de quem terei medo? O Senhor é o meu forte refúgio; de quem terei temor?",
     reference: "Salmos 27:1"
+  },
+  {
+    text: "Venham a mim, todos os que estão cansados e sobrecarregados, e eu lhes darei descanso.",
+    reference: "Mateus 11:28"
+  },
+  {
+    text: "Em tudo sou grato; não andem ansiosos por coisa alguma, mas em tudo, pela oração e súplicas, e com ação de graças, apresentem seus pedidos a Deus.",
+    reference: "Filipenses 4:6"
+  },
+  {
+    text: "A paz deixo com vocês; a minha paz lhes dou. Não a dou como o mundo a dá. Não se perturbe o coração de vocês, nem tenham medo.",
+    reference: "João 14:27"
+  },
+  {
+    text: "Se confessarmos os nossos pecados, ele é fiel e justo para perdoar os nossos pecados e nos purificar de toda injustiça.",
+    reference: "1 João 1:9"
+  },
+  {
+    text: "Sejam fortes e corajosos! Não tenham medo nem desanimem, pois o Senhor, o seu Deus, estará com vocês por onde forem.",
+    reference: "Josué 1:9"
+  },
+  {
+    text: "O amor é paciente, o amor é bondoso. Não inveja, não se vangloria, não se orgulha.",
+    reference: "1 Coríntios 13:4"
+  },
+  {
+    text: "Confie no Senhor de todo o coração e não se apoie em seu próprio entendimento.",
+    reference: "Provérbios 3:5"
+  },
+  {
+    text: "Pois eu sou o Senhor, o seu Deus, que segura a sua mão direita e lhe diz: Não tema; eu o ajudarei.",
+    reference: "Isaías 41:13"
+  },
+  {
+    text: "Alegrem-se sempre no Senhor. Novamente digo: alegrem-se!",
+    reference: "Filipenses 4:4"
+  },
+  {
+    text: "Lancem sobre ele toda a sua ansiedade, porque ele tem cuidado de vocês.",
+    reference: "1 Pedro 5:7"
+  },
+  {
+    text: "O Senhor lutará por vocês; vocês só precisam ficar quietos.",
+    reference: "Êxodo 14:14"
+  },
+  {
+    text: "Mas os que esperam no Senhor renovam as suas forças. Voam alto como águias; correm e não ficam exaustos, andam e não se cansam.",
+    reference: "Isaías 40:31"
   }
 ];
 
 const getVersiculoFromAPI = async (): Promise<Versiculo> => {
   try {
-    // Tentar primeira API - Bible API
-    const response = await fetch('https://bible-api.com/random?translation=nvi');
+    // Tentar API brasileira (português)
+    const response = await fetch('https://www.abibliadigital.com.br/api/verses/nvi/random');
     if (response.ok) {
       const data = await response.json();
-      return {
-        text: data.text.trim(),
-        reference: data.reference
-      };
-    }
-  } catch (error) {
-    console.log('Primeira API falhou, tentando segunda opção...');
-  }
-
-  try {
-    // Tentar segunda API - Labs Bible API
-    const response = await fetch('https://labs.bible.org/api/?passage=random&type=json');
-    if (response.ok) {
-      const data = await response.json();
-      if (data && data[0]) {
+      if (data && data.text && data.reference) {
         return {
-          text: data[0].text.trim(),
-          reference: `${data[0].bookname} ${data[0].chapter}:${data[0].verse}`
+          text: data.text.trim(),
+          reference: data.reference
         };
       }
     }
   } catch (error) {
-    console.log('Segunda API falhou, usando versículo do cache...');
+    console.log('API brasileira falhou, usando versículo do cache local...');
   }
 
-  // Fallback para versículo local
+  // Fallback para versículo local em português
   const hoje = new Date().getDate();
-  const index = hoje % versiculosFallback.length;
-  return versiculosFallback[index];
+  const index = hoje % versiculosNVI.length;
+  return versiculosNVI[index];
 };
 
 const getVersiculoFromCache = (): Versiculo | null => {
