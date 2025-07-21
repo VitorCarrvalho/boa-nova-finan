@@ -5,8 +5,8 @@ import WidgetContainer from './WidgetContainer';
 import { Button } from '@/components/ui/button';
 
 const InstagramWidget = () => {
-  const instagramHandle = '@categraliptmoficial';
-  const instagramUrl = 'https://www.instagram.com/categraliptmoficial/';
+  const instagramHandle = '@catedraliptmoficial';
+  const instagramUrl = 'https://www.instagram.com/catedraliptmoficial/';
 
   const abrirInstagram = () => {
     window.open(instagramUrl, '_blank');

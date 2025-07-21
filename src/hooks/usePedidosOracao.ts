@@ -13,7 +13,9 @@ export const usePedidosOracao = () => {
     mutationFn: async (pedido: PedidoOracao) => {
       console.log('📝 Tentando enviar pedido de oração:', { 
         nome: pedido.nome || 'Anônimo', 
-        textoLength: pedido.texto?.length 
+        textoLength: pedido.texto?.length,
+        supabaseUrl: 'https://jryifbcsifodvocshvuo.supabase.co',
+        timestamp: new Date().toISOString()
       });
       
       // Validação local
