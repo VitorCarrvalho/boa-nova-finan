@@ -776,6 +776,27 @@ export type Database = {
           },
         ]
       }
+      pedidos_oracao: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string | null
+          texto: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome?: string | null
+          texto: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string | null
+          texto?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           approval_status: string
