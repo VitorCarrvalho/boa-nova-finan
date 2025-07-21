@@ -3,7 +3,7 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Users, Calendar, TrendingUp, CheckCircle, Clock, Send, Bell, ArrowUpRight, Activity, Plus, FileText, BarChart3 } from 'lucide-react';
+import { DollarSign, Users, Calendar, TrendingUp, CheckCircle, Clock, Send, Bell, ArrowUpRight, Activity, Plus, FileText, BarChart3, Book } from 'lucide-react';
 import { useFinancialStats } from '@/hooks/useFinancialData';
 import { useMemberStats } from '@/hooks/useMemberData';
 import { useReconciliationStats } from '@/hooks/useReconciliationStats';
@@ -165,6 +165,12 @@ const Dashboard = () => {
                   onClick={() => navigate('/eventos')}
                 />
               )}
+              <MobileQuickAction
+                title="Documentação"
+                description="Acessar documentação do sistema"
+                icon={Book}
+                onClick={() => navigate('/documentation')}
+              />
             </div>
           </section>
         )}
@@ -304,6 +310,32 @@ const Dashboard = () => {
             </MobileDashboardGrid>
           </section>
         )}
+
+        {/* System Section */}
+        <section>
+          <h2 className={`font-semibold text-gray-800 mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
+            ⚙️ Sistema
+          </h2>
+          <MobileDashboardGrid>
+            <MobileDashboardCard
+              title="Documentação"
+              value="Completa"
+              description="Guia de uso do sistema"
+              icon={Book}
+              onClick={() => navigate('/documentation')}
+              size="lg"
+            />
+            {canViewModule('relatorios') && (
+              <MobileDashboardCard
+                title="Relatórios"
+                value="Disponível"
+                description="Relatórios do sistema"
+                icon={BarChart3}
+                onClick={() => navigate('/relatorios')}
+              />
+            )}
+          </MobileDashboardGrid>
+        </section>
 
         {/* Charts Section */}
         <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
