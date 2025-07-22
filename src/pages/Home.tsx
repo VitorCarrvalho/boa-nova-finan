@@ -33,7 +33,7 @@ const Home = () => {
       <div className="container mx-auto px-4 py-8 relative z-10">
         {/* Título da Igreja com mais estilo */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-gothic font-normal text-foreground mb-3 tracking-tight">
+          <h1 className="text-4xl md:text-5xl font-bodoni font-normal text-foreground mb-3 tracking-tight">
             <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
               IPTM Global
             </span>

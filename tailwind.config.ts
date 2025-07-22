@@ -21,7 +21,7 @@ export default {
 		extend: {
 			fontFamily: {
 				inter: ['Inter', 'sans-serif'],
-				gothic: ['Special Elite', 'serif'],
+				bodoni: ['Bodoni Moda', 'serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
