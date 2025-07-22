@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,9 +51,9 @@ const NewNotification = () => {
 
   const timeOptions = ['08:00', '12:00', '17:00', '20:00', '22:00'];
   const recipientOptions = [
-    { value: 'member' as RecipientProfile, label: 'Membros' },
-    { value: 'worker' as RecipientProfile, label: 'Obreiros' },
-    { value: 'pastor' as RecipientProfile, label: 'Pastores' },
+    { value: 'member' as RecipientProfile, label: 'Membro' },
+    { value: 'worker' as RecipientProfile, label: 'Obreiro' },
+    { value: 'pastor' as RecipientProfile, label: 'Pastor' },
     { value: 'todos' as RecipientProfile, label: 'Todos' }
   ];
 
