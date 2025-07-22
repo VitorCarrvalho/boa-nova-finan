@@ -1019,6 +1019,7 @@ export type Database = {
       }
       video_library: {
         Row: {
+          categoria: string | null
           created_at: string
           created_by: string
           id: string
@@ -1026,8 +1027,10 @@ export type Database = {
           minio_video_id: string
           title: string
           updated_at: string
+          url_minio: string | null
         }
         Insert: {
+          categoria?: string | null
           created_at?: string
           created_by: string
           id?: string
@@ -1035,8 +1038,10 @@ export type Database = {
           minio_video_id: string
           title: string
           updated_at?: string
+          url_minio?: string | null
         }
         Update: {
+          categoria?: string | null
           created_at?: string
           created_by?: string
           id?: string
@@ -1044,6 +1049,7 @@ export type Database = {
           minio_video_id?: string
           title?: string
           updated_at?: string
+          url_minio?: string | null
         }
         Relationships: []
       }

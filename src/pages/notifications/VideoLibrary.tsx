@@ -19,8 +19,8 @@ const VideoLibrary = () => {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
-    minioVideoId: '',
-    urlMinio: '',
+    minio_video_id: '',
+    url_minio: '',
     categoria: ''
   });
 
@@ -42,7 +42,7 @@ const VideoLibrary = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title.trim() || !formData.minioVideoId.trim() || !formData.urlMinio.trim()) {
+    if (!formData.title.trim() || !formData.minio_video_id.trim() || !formData.url_minio.trim()) {
       toast({
         title: "Erro",
         description: "Título, ID do MinIO e URL são obrigatórios.",
@@ -58,11 +58,11 @@ const VideoLibrary = () => {
         .from('video_library')
         .insert({
           title: formData.title.trim(),
-          minio_video_id: formData.minioVideoId.trim(),
-          url_minio: formData.urlMinio.trim(),
+          minio_video_id: formData.minio_video_id.trim(),
+          url_minio: formData.url_minio.trim(),
           categoria: formData.categoria.trim() || null,
           created_by: (await supabase.auth.getUser()).data.user?.id
-        } as any);
+        });
 
       if (error) throw error;
 
@@ -71,7 +71,7 @@ const VideoLibrary = () => {
         description: "Vídeo adicionado à biblioteca com sucesso!"
       });
 
-      setFormData({ title: '', minioVideoId: '', urlMinio: '', categoria: '' });
+      setFormData({ title: '', minio_video_id: '', url_minio: '', categoria: '' });
       setShowForm(false);
       queryClient.invalidateQueries({ queryKey: ['video-library'] });
     } catch (error: any) {
@@ -153,22 +153,22 @@ const VideoLibrary = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="minioVideoId">ID do Vídeo no MinIO</Label>
+                  <Label htmlFor="minio_video_id">ID do Vídeo no MinIO</Label>
                   <Input
-                    id="minioVideoId"
+                    id="minio_video_id"
                     placeholder="Digite o ID do vídeo no MinIO"
-                    value={formData.minioVideoId}
-                    onChange={(e) => setFormData(prev => ({ ...prev, minioVideoId: e.target.value }))}
+                    value={formData.minio_video_id}
+                    onChange={(e) => setFormData(prev => ({ ...prev, minio_video_id: e.target.value }))}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="urlMinio">URL do Vídeo no MinIO</Label>
+                  <Label htmlFor="url_minio">URL do Vídeo no MinIO</Label>
                   <Input
-                    id="urlMinio"
+                    id="url_minio"
                     placeholder="Digite a URL completa do vídeo"
-                    value={formData.urlMinio}
-                    onChange={(e) => setFormData(prev => ({ ...prev, urlMinio: e.target.value }))}
+                    value={formData.url_minio}
+                    onChange={(e) => setFormData(prev => ({ ...prev, url_minio: e.target.value }))}
                   />
                 </div>
 
@@ -221,11 +221,11 @@ const VideoLibrary = () => {
                         <h3 className="font-medium">{video.title}</h3>
                         <div className="space-y-1">
                           <p className="text-sm text-gray-600">ID: {video.minio_video_id}</p>
-                          {(video as any).url_minio && (
-                            <p className="text-sm text-gray-600">URL: {(video as any).url_minio.substring(0, 50)}...</p>
+                          {video.url_minio && (
+                            <p className="text-sm text-gray-600">URL: {video.url_minio.substring(0, 50)}...</p>
                           )}
-                          {(video as any).categoria && (
-                            <p className="text-sm text-blue-600">📂 {(video as any).categoria}</p>
+                          {video.categoria && (
+                            <p className="text-sm text-blue-600">📂 {video.categoria}</p>
                           )}
                           <p className="text-xs text-gray-400">
                             Criado em {new Date(video.created_at).toLocaleDateString('pt-BR')}
