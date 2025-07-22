@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -93,11 +94,6 @@ const Home = () => {
           </div>
           
         </div>
-
-        {/* Decorative elements */}
-        <div className="fixed top-20 left-10 w-4 h-4 bg-blue-400/20 rounded-full animate-pulse hidden md:block" />
-        <div className="fixed top-40 right-20 w-6 h-6 bg-purple-400/20 rounded-full animate-pulse hidden md:block" style={{animationDelay: '1s'}} />
-        <div className="fixed bottom-32 left-32 w-3 h-3 bg-green-400/20 rounded-full animate-pulse hidden md:block" style={{animationDelay: '2s'}} />
       </div>
 
       {/* Botão Flutuante de Login */}
