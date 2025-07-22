@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import WidgetContainer from './WidgetContainer';
@@ -18,10 +18,6 @@ const CalendarioWidget = () => {
 
   return (
     <WidgetContainer variant="calendario" className="flex flex-col items-center justify-center text-center min-h-[140px]">
-      <div className="absolute top-3 right-3">
-        <Clock className="w-4 h-4 text-green-200 animate-pulse" />
-      </div>
-      
       <CalendarIcon className="w-8 h-8 text-white mb-3 widget-icon" />
       <div className="space-y-1">
         <h3 className="widget-title text-white text-lg font-bold">
