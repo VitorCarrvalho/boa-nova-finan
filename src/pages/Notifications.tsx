@@ -3,7 +3,7 @@ import React from 'react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Clock, Send, Video, Bell } from 'lucide-react';
+import { MessageSquare, Clock, Send, Video, Bell, Repeat } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Notifications = () => {
@@ -21,6 +21,13 @@ const Notifications = () => {
       icon: Clock,
       href: '/notificacoes/agendadas',
       color: 'bg-orange-500'
+    },
+    {
+      title: 'Mensagens Recorrentes',
+      description: 'Gerenciar envios automáticos',
+      icon: Repeat,
+      href: '/notificacoes/recorrentes',
+      color: 'bg-indigo-500'
     },
     {
       title: 'Histórico Enviado',

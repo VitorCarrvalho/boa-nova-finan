@@ -19,7 +19,9 @@ const VideoLibrary = () => {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
-    minioVideoId: ''
+    minioVideoId: '',
+    urlMinio: '',
+    categoria: ''
   });
 
   // Fetch videos
@@ -40,10 +42,10 @@ const VideoLibrary = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title.trim() || !formData.minioVideoId.trim()) {
+    if (!formData.title.trim() || !formData.minioVideoId.trim() || !formData.urlMinio.trim()) {
       toast({
         title: "Erro",
-        description: "Todos os campos são obrigatórios.",
+        description: "Título, ID do MinIO e URL são obrigatórios.",
         variant: "destructive"
       });
       return;
@@ -57,8 +59,10 @@ const VideoLibrary = () => {
         .insert({
           title: formData.title.trim(),
           minio_video_id: formData.minioVideoId.trim(),
+          url_minio: formData.urlMinio.trim(),
+          categoria: formData.categoria.trim() || null,
           created_by: (await supabase.auth.getUser()).data.user?.id
-        });
+        } as any);
 
       if (error) throw error;
 
@@ -67,7 +71,7 @@ const VideoLibrary = () => {
         description: "Vídeo adicionado à biblioteca com sucesso!"
       });
 
-      setFormData({ title: '', minioVideoId: '' });
+      setFormData({ title: '', minioVideoId: '', urlMinio: '', categoria: '' });
       setShowForm(false);
       queryClient.invalidateQueries({ queryKey: ['video-library'] });
     } catch (error: any) {
@@ -158,6 +162,26 @@ const VideoLibrary = () => {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="urlMinio">URL do Vídeo no MinIO</Label>
+                  <Input
+                    id="urlMinio"
+                    placeholder="Digite a URL completa do vídeo"
+                    value={formData.urlMinio}
+                    onChange={(e) => setFormData(prev => ({ ...prev, urlMinio: e.target.value }))}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="categoria">Categoria/Tag (opcional)</Label>
+                  <Input
+                    id="categoria"
+                    placeholder="Ex: Sermão, Testemunho, Evento"
+                    value={formData.categoria}
+                    onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value }))}
+                  />
+                </div>
+
                 <div className="flex gap-3">
                   <Button type="submit" disabled={loading}>
                     {loading ? 'Adicionando...' : 'Adicionar Vídeo'}
@@ -195,10 +219,18 @@ const VideoLibrary = () => {
                       <Video className="h-8 w-8 text-red-600" />
                       <div>
                         <h3 className="font-medium">{video.title}</h3>
-                        <p className="text-sm text-gray-600">ID: {video.minio_video_id}</p>
-                        <p className="text-xs text-gray-400">
-                          Criado em {new Date(video.created_at).toLocaleDateString('pt-BR')}
-                        </p>
+                        <div className="space-y-1">
+                          <p className="text-sm text-gray-600">ID: {video.minio_video_id}</p>
+                          {(video as any).url_minio && (
+                            <p className="text-sm text-gray-600">URL: {(video as any).url_minio.substring(0, 50)}...</p>
+                          )}
+                          {(video as any).categoria && (
+                            <p className="text-sm text-blue-600">📂 {(video as any).categoria}</p>
+                          )}
+                          <p className="text-xs text-gray-400">
+                            Criado em {new Date(video.created_at).toLocaleDateString('pt-BR')}
+                          </p>
+                        </div>
                       </div>
                     </div>
                     <AlertDialog>

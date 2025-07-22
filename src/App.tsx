@@ -32,6 +32,7 @@ import NewNotification from "@/pages/notifications/NewNotification";
 import ScheduledMessages from "@/pages/notifications/ScheduledMessages";
 import SentHistory from "@/pages/notifications/SentHistory";
 import VideoLibrary from "@/pages/notifications/VideoLibrary";
+import RecurringMessages from "@/pages/notifications/RecurringMessages";
 
 // Import report pages
 import EventsReports from "@/pages/reports/EventsReports";
@@ -177,6 +178,12 @@ const App = () => (
               <Route path="/notificacoes/historico" element={
                 <ProtectedRoute>
                   <SentHistory />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/notificacoes/recorrentes" element={
+                <ProtectedRoute>
+                  <RecurringMessages />
                 </ProtectedRoute>
               } />
               

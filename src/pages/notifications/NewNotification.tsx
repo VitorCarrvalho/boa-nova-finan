@@ -14,6 +14,7 @@ import { MessageSquare, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import type { Database } from '@/integrations/supabase/types';
+import { useN8nIntegration } from '@/hooks/useN8nIntegration';
 
 type NotificationType = Database['public']['Enums']['notification_type'];
 type DeliveryType = Database['public']['Enums']['delivery_type'];
@@ -23,13 +24,15 @@ const NewNotification = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const { sendToN8n } = useN8nIntegration();
   const [formData, setFormData] = useState({
     messageType: 'texto' as NotificationType,
     messageContent: '',
     videoId: '',
-    deliveryType: 'unico' as DeliveryType,
+    deliveryType: 'unico' as DeliveryType | 'recorrente',
     recipientProfiles: [] as RecipientProfile[],
-    scheduledTime: ''
+    scheduledTime: '',
+    recurrenceFrequency: ''
   });
 
   // Fetch video library
@@ -53,6 +56,12 @@ const NewNotification = () => {
     { value: 'financeiro' as RecipientProfile, label: 'Financeiro' },
     { value: 'membros' as RecipientProfile, label: 'Membros' },
     { value: 'todos' as RecipientProfile, label: 'Todos' }
+  ];
+
+  const recurrenceOptions = [
+    { value: 'diaria', label: 'Todo dia' },
+    { value: 'semanal', label: 'Toda semana' },
+    { value: 'mensal', label: 'Uma vez por mês' }
   ];
 
   const handleRecipientChange = (value: RecipientProfile, checked: boolean) => {
@@ -99,6 +108,15 @@ const NewNotification = () => {
       return;
     }
 
+    if (formData.deliveryType === 'recorrente' && !formData.recurrenceFrequency) {
+      toast({
+        title: "Erro",
+        description: "Selecione a frequência para mensagens recorrentes.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if ((formData.messageType === 'texto_com_video' || formData.messageType === 'video') && !formData.videoId) {
       toast({
         title: "Erro",
@@ -116,7 +134,7 @@ const NewNotification = () => {
       if (formData.videoId) {
         const { data: video } = await supabase
           .from('video_library')
-          .select('title, minio_video_id')
+          .select('title, minio_video_id, url_minio')
           .eq('id', formData.videoId)
           .single();
         videoInfo = video;
@@ -131,12 +149,12 @@ const NewNotification = () => {
         tipo_disparo: formData.deliveryType,
         tipo_mensagem: formData.messageType,
         mensagem: formData.messageContent,
-        id_video: videoInfo?.minio_video_id || null,
+        id_video: videoInfo?.url_minio || null,
         destinatarios: formData.recipientProfiles,
+        recorrencia: formData.deliveryType === 'recorrente' ? formData.recurrenceFrequency : null,
         horario_agendado: formData.deliveryType === 'agendado' ? formData.scheduledTime : null,
         criado_por: user.id,
-        criado_em: new Date().toISOString(),
-        nome_video: videoInfo?.title || null
+        criado_em: new Date().toISOString()
       };
 
       // Insert notification record
@@ -149,24 +167,39 @@ const NewNotification = () => {
           delivery_type: formData.deliveryType,
           recipient_profiles: formData.recipientProfiles,
           scheduled_time: formData.deliveryType === 'agendado' ? formData.scheduledTime : null,
+          recurrence_frequency: formData.deliveryType === 'recorrente' ? formData.recurrenceFrequency : null,
           created_by: user.id,
           n8n_payload: n8nPayload,
           status: formData.deliveryType === 'agendado' ? 'scheduled' : 'sent',
-          sent_at: formData.deliveryType === 'unico' ? new Date().toISOString() : null
-        })
+          sent_at: formData.deliveryType === 'unico' ? new Date().toISOString() : null,
+          is_active: true
+        } as any)
         .select()
         .single();
 
       if (error) throw error;
 
-      // TODO: Send to n8n endpoint here
-      // For now, we'll just log the payload
-      console.log('N8N Payload:', n8nPayload);
+      // Send to n8n if it's an immediate send (único)
+      if (formData.deliveryType === 'unico') {
+        const success = await sendToN8n(n8nPayload);
+        if (!success) {
+          // Update notification status to error if n8n fails
+          await supabase
+            .from('notifications')
+            .update({ 
+              status: 'error', 
+              error_message: 'Falha ao enviar para n8n' 
+            })
+            .eq('id', notification.id);
+        }
+      }
 
       toast({
         title: "Sucesso",
         description: formData.deliveryType === 'agendado' 
           ? "Notificação agendada com sucesso!"
+          : formData.deliveryType === 'recorrente'
+          ? "Notificação recorrente criada com sucesso!"
           : "Notificação enviada com sucesso!"
       });
 
@@ -284,7 +317,7 @@ const NewNotification = () => {
                 <Label htmlFor="deliveryType">Tipo de Entrega</Label>
                 <Select 
                   value={formData.deliveryType} 
-                  onValueChange={(value: DeliveryType) => 
+                  onValueChange={(value: DeliveryType | 'recorrente') => 
                     setFormData(prev => ({ ...prev, deliveryType: value }))
                   }
                 >
@@ -294,6 +327,7 @@ const NewNotification = () => {
                   <SelectContent>
                     <SelectItem value="unico">Envio Único</SelectItem>
                     <SelectItem value="agendado">Agendado</SelectItem>
+                    <SelectItem value="recorrente">Recorrente</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -320,10 +354,33 @@ const NewNotification = () => {
                 </div>
               )}
 
+              {/* Recurrence Frequency */}
+              {formData.deliveryType === 'recorrente' && (
+                <div className="space-y-2">
+                  <Label htmlFor="recurrenceFrequency">Frequência de Envio</Label>
+                  <Select 
+                    value={formData.recurrenceFrequency} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, recurrenceFrequency: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a frequência" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {recurrenceOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <Button type="submit" disabled={loading}>
                   {loading ? 'Processando...' : 
-                    formData.deliveryType === 'agendado' ? 'Agendar Notificação' : 'Enviar Notificação'
+                    formData.deliveryType === 'agendado' ? 'Agendar Notificação' : 
+                    formData.deliveryType === 'recorrente' ? 'Criar Recorrente' : 'Enviar Notificação'
                   }
                 </Button>
                 <Link to="/notificacoes">
