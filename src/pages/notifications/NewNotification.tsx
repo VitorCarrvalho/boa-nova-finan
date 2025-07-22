@@ -29,7 +29,7 @@ const NewNotification = () => {
     messageType: 'texto' as NotificationType,
     messageContent: '',
     videoId: '',
-    deliveryType: 'unico' as DeliveryType | 'recorrente',
+    deliveryType: 'unico' as DeliveryType,
     recipientProfiles: [] as RecipientProfile[],
     scheduledTime: '',
     recurrenceFrequency: ''
@@ -157,30 +157,44 @@ const NewNotification = () => {
         criado_em: new Date().toISOString()
       };
 
+      // Prepare notification data - ensuring compatibility with current schema
+      const notificationData: any = {
+        message_type: formData.messageType,
+        message_content: formData.messageContent,
+        video_id: formData.videoId || null,
+        delivery_type: formData.deliveryType,
+        recipient_profiles: formData.recipientProfiles,
+        scheduled_time: formData.deliveryType === 'agendado' ? formData.scheduledTime : null,
+        created_by: user.id,
+        n8n_payload: n8nPayload,
+        status: formData.deliveryType === 'agendado' ? 'scheduled' : 'sent',
+        sent_at: formData.deliveryType === 'unico' ? new Date().toISOString() : null
+      };
+
+      // Add new columns only if they exist in the schema
+      if (formData.deliveryType === 'recorrente') {
+        notificationData.recurrence_frequency = formData.recurrenceFrequency;
+      }
+
+      console.log('Inserting notification with data:', notificationData);
+
       // Insert notification record
       const { data: notification, error } = await supabase
         .from('notifications')
-        .insert({
-          message_type: formData.messageType,
-          message_content: formData.messageContent,
-          video_id: formData.videoId || null,
-          delivery_type: formData.deliveryType,
-          recipient_profiles: formData.recipientProfiles,
-          scheduled_time: formData.deliveryType === 'agendado' ? formData.scheduledTime : null,
-          recurrence_frequency: formData.deliveryType === 'recorrente' ? formData.recurrenceFrequency : null,
-          created_by: user.id,
-          n8n_payload: n8nPayload,
-          status: formData.deliveryType === 'agendado' ? 'scheduled' : 'sent',
-          sent_at: formData.deliveryType === 'unico' ? new Date().toISOString() : null,
-          is_active: true
-        } as any)
+        .insert(notificationData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+
+      console.log('Notification created successfully:', notification);
 
       // Send to n8n if it's an immediate send (único)
       if (formData.deliveryType === 'unico') {
+        console.log('Sending to n8n:', n8nPayload);
         const success = await sendToN8n(n8nPayload);
         if (!success) {
           // Update notification status to error if n8n fails
@@ -208,7 +222,7 @@ const NewNotification = () => {
       console.error('Erro ao processar notificação:', error);
       toast({
         title: "Erro",
-        description: "Erro ao processar a notificação. Tente novamente.",
+        description: `Erro ao processar a notificação: ${error.message}`,
         variant: "destructive"
       });
     } finally {
@@ -317,7 +331,7 @@ const NewNotification = () => {
                 <Label htmlFor="deliveryType">Tipo de Entrega</Label>
                 <Select 
                   value={formData.deliveryType} 
-                  onValueChange={(value: DeliveryType | 'recorrente') => 
+                  onValueChange={(value: DeliveryType) => 
                     setFormData(prev => ({ ...prev, deliveryType: value }))
                   }
                 >

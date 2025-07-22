@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 
 interface N8nPayload {
@@ -20,6 +21,8 @@ export const useN8nIntegration = () => {
     setLoading(true);
     setError(null);
 
+    console.log('Enviando payload para n8n:', payload);
+
     try {
       const response = await fetch('https://webhook.dev.vitorcarvalho.tech/webhook-test/notificacoes', {
         method: 'POST',
@@ -29,8 +32,12 @@ export const useN8nIntegration = () => {
         body: JSON.stringify(payload),
       });
 
+      console.log('Resposta do n8n status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`Erro na requisição: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Erro na resposta do n8n:', errorText);
+        throw new Error(`Erro na requisição: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
