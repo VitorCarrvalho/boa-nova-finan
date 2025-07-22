@@ -13,12 +13,6 @@ const PastoresWidget = () => {
         <Crown className="w-5 h-5 text-yellow-200 widget-icon" />
       </div>
       
-      {/* Título sobre a imagem */}
-      <div className="absolute top-3 left-3 z-20">
-        <h3 className="widget-title text-white text-lg font-bold drop-shadow-lg">
-          Nossos Pastores
-        </h3>
-      </div>
 
       {/* Imagem com overlay */}
       <div className="relative h-full rounded-xl overflow-hidden">

@@ -21,6 +21,7 @@ export default {
 		extend: {
 			fontFamily: {
 				inter: ['Inter', 'sans-serif'],
+				gothic: ['Special Elite', 'serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
