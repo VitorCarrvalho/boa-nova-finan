@@ -17,8 +17,8 @@ import type { Database } from '@/integrations/supabase/types';
 import { useN8nIntegration } from '@/hooks/useN8nIntegration';
 
 type NotificationType = Database['public']['Enums']['notification_type'];
-type DeliveryType = Database['public']['Enums']['delivery_type'];
-type RecipientProfile = Database['public']['Enums']['recipient_profile'];
+type DeliveryType = 'unico' | 'agendado' | 'recorrente'; // Extended to include recorrente
+type RecipientProfile = 'member' | 'worker' | 'pastor' | 'todos'; // Updated to match member roles
 
 const NewNotification = () => {
   const { toast } = useToast();
@@ -52,9 +52,9 @@ const NewNotification = () => {
 
   const timeOptions = ['08:00', '12:00', '17:00', '20:00', '22:00'];
   const recipientOptions = [
-    { value: 'pastores' as RecipientProfile, label: 'Pastores' },
-    { value: 'financeiro' as RecipientProfile, label: 'Financeiro' },
-    { value: 'membros' as RecipientProfile, label: 'Membros' },
+    { value: 'member' as RecipientProfile, label: 'Membros' },
+    { value: 'worker' as RecipientProfile, label: 'Obreiros' },
+    { value: 'pastor' as RecipientProfile, label: 'Pastores' },
     { value: 'todos' as RecipientProfile, label: 'Todos' }
   ];
 

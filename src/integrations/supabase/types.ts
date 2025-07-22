@@ -1104,7 +1104,7 @@ export type Database = {
         | "approved"
         | "paid"
         | "rejected"
-      delivery_type: "unico" | "agendado"
+      delivery_type: "unico" | "agendado" | "recorrente"
       event_type: "culto" | "conferencia" | "reuniao" | "evento_especial"
       financial_category:
         | "tithe"
@@ -1277,7 +1277,7 @@ export const Constants = {
         "paid",
         "rejected",
       ],
-      delivery_type: ["unico", "agendado"],
+      delivery_type: ["unico", "agendado", "recorrente"],
       event_type: ["culto", "conferencia", "reuniao", "evento_especial"],
       financial_category: [
         "tithe",
