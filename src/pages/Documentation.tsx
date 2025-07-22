@@ -1,9 +1,11 @@
+
 import { useState } from "react";
 import { useDocumentationData } from "@/hooks/useDocumentationData";
 import { useDocumentationSearch } from "@/hooks/useDocumentationSearch";
 import { DocumentationSidebar } from "@/components/documentation/DocumentationSidebar";
 import { DocumentationContent } from "@/components/documentation/DocumentationContent";
 import { DocumentationSearch } from "@/components/documentation/DocumentationSearch";
+import { DocumentationActions } from "@/components/documentation/DocumentationActions";
 import { useDocumentationSection } from "@/hooks/useDocumentationData";
 
 export default function Documentation() {
@@ -28,6 +30,8 @@ export default function Documentation() {
       />
       
       <div className="flex-1 flex flex-col">
+        <DocumentationActions />
+        
         <div className="p-4 border-b">
           <DocumentationSearch
             searchTerm={searchTerm}
