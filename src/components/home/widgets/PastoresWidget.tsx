@@ -16,7 +16,7 @@ const PastoresWidget = () => {
       {/* Título sobre a imagem */}
       <div className="absolute top-3 left-3 z-20">
         <h3 className="widget-title text-white text-lg font-bold drop-shadow-lg">
-          👨‍💼 Nossos Pastores
+          Nossos Pastores
         </h3>
       </div>
 

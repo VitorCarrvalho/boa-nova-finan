@@ -35,7 +35,7 @@ const VersiculoWidget = () => {
       <WidgetContainer variant="versiculo" className="flex flex-col min-h-[140px]">
         <div className="flex items-center gap-2 mb-4">
           <BookOpen className="w-6 h-6 text-white widget-icon" />
-          <h3 className="widget-title text-white text-lg">📖 Versículo do Dia</h3>
+          <h3 className="widget-title text-white text-lg">Versículo do Dia</h3>
         </div>
         <div className="space-y-3">
           <div className="bg-white/20 rounded p-3 h-20" />
@@ -50,7 +50,7 @@ const VersiculoWidget = () => {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <BookOpen className="w-6 h-6 text-white widget-icon" />
-          <h3 className="widget-title text-white text-lg">📖 Versículo</h3>
+          <h3 className="widget-title text-white text-lg">Versículo</h3>
         </div>
         <Button 
           size="sm" 
@@ -66,7 +66,7 @@ const VersiculoWidget = () => {
         <div className="flex-1 flex flex-col justify-center">
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 mb-3">
             <blockquote className="text-white leading-relaxed italic text-sm">
-              "✨ {versiculo.text}"
+              "{versiculo.text}"
             </blockquote>
           </div>
           <cite className="text-sm font-medium text-purple-200 text-right flex items-center justify-end gap-1">

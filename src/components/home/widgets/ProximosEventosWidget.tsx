@@ -12,7 +12,7 @@ const ProximosEventosWidget = () => {
   const { data: events, isLoading } = useHomeEvents();
 
   const shareEvent = (event: any) => {
-    const message = `🎉 *${event.title}*\n\n📅 ${format(new Date(event.date), 'dd/MM/yyyy', { locale: ptBR })}\n⏰ ${event.time || 'Horário a definir'}\n📍 ${event.location || 'Local a definir'}\n\n${event.description || ''}`;
+    const message = `*${event.title}*\n\n📅 ${format(new Date(event.date), 'dd/MM/yyyy', { locale: ptBR })}\n⏰ ${event.time || 'Horário a definir'}\n📍 ${event.location || 'Local a definir'}\n\n${event.description || ''}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -22,7 +22,7 @@ const ProximosEventosWidget = () => {
       <WidgetContainer variant="eventos" className="flex flex-col min-h-[300px]">
         <div className="flex items-center gap-2 mb-4">
           <Calendar className="w-6 h-6 text-white widget-icon" />
-          <h3 className="widget-title text-white text-lg">🎪 Próximos Eventos</h3>
+          <h3 className="widget-title text-white text-lg">Próximos Eventos</h3>
         </div>
         <div className="space-y-3 flex-1 overflow-y-auto">
           {[1, 2, 3].map((i) => (
@@ -41,7 +41,7 @@ const ProximosEventosWidget = () => {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Calendar className="w-6 h-6 text-white widget-icon" />
-          <h3 className="widget-title text-white text-lg">🎪 Próximos Eventos</h3>
+          <h3 className="widget-title text-white text-lg">Próximos Eventos</h3>
         </div>
         <Sparkles className="w-5 h-5 text-blue-200 animate-pulse" />
       </div>
