@@ -25,9 +25,10 @@ import {
   Bell,
   MessageSquare,
   Clock,
-  Send,
-  Video,
-  Shield
+   Send,
+   Video,
+   Shield,
+   Book
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -503,14 +504,23 @@ const MobileSidebar = () => {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              )}
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton onClick={signOut} className="text-destructive hover:text-destructive">
-                  <LogOut className="h-4 w-4" />
-                  <span>Sair</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+               )}
+               
+               <SidebarMenuItem>
+                 <SidebarMenuButton asChild isActive={location.pathname.startsWith('/documentation')}>
+                   <Link to="/documentation">
+                     <Book className="h-4 w-4" />
+                     <span>Documentação</span>
+                   </Link>
+                 </SidebarMenuButton>
+               </SidebarMenuItem>
+               
+               <SidebarMenuItem>
+                 <SidebarMenuButton onClick={signOut} className="text-destructive hover:text-destructive">
+                   <LogOut className="h-4 w-4" />
+                   <span>Sair</span>
+                 </SidebarMenuButton>
+               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
