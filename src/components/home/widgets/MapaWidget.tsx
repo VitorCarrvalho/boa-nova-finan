@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MapPin, Navigation } from 'lucide-react';
+import { MapPin, Navigation, Home } from 'lucide-react';
 import WidgetContainer from './WidgetContainer';
 import { Button } from '@/components/ui/button';
 
@@ -35,22 +35,27 @@ const MapaWidget = () => {
   };
 
   return (
-    <WidgetContainer className="flex flex-col min-h-[160px]" onClick={abrirMapa}>
-      <div className="flex items-center gap-2 mb-3">
-        <MapPin className="w-5 h-5 text-primary" />
-        <h3 className="text-lg font-semibold text-foreground">Nossa Igreja</h3>
+    <WidgetContainer variant="mapa" className="flex flex-col min-h-[160px]" onClick={abrirMapa}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <MapPin className="w-6 h-6 text-white widget-icon" />
+          <h3 className="widget-title text-white text-lg">🏛️ Nossa Igreja</h3>
+        </div>
+        <Home className="w-5 h-5 text-red-200 animate-pulse" />
       </div>
       
       <div className="flex-1 flex flex-col justify-between">
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-foreground">Rua João Vicente, 741</p>
-          <p className="text-xs text-muted-foreground">Osvaldo Cruz - RJ</p>
-          <p className="text-xs text-muted-foreground">CEP: {cep}</p>
+        <div className="space-y-2 bg-white/10 backdrop-blur-sm rounded-lg p-3">
+          <p className="text-white font-medium">📍 Rua João Vicente, 741</p>
+          <p className="text-red-100 text-sm">Osvaldo Cruz - Rio de Janeiro</p>
+          <p className="text-red-200 text-xs font-mono bg-white/20 px-2 py-1 rounded-full w-fit">
+            CEP: {cep}
+          </p>
         </div>
         
-        <Button variant="outline" size="sm" className="mt-3 w-fit">
-          <Navigation className="w-3 h-3 mr-1" />
-          Como chegar
+        <Button variant="ghost" size="sm" className="mt-3 w-fit text-white hover:bg-white/20 border border-white/30">
+          <Navigation className="w-3 h-3 mr-2" />
+          🗺️ Como chegar
         </Button>
       </div>
     </WidgetContainer>

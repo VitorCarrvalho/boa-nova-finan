@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BookOpen, RefreshCw } from 'lucide-react';
+import { BookOpen, RefreshCw, Heart } from 'lucide-react';
 import WidgetContainer from './WidgetContainer';
 import { useVersiculoDia, useRefreshVerse } from '@/hooks/useVersiculoDia';
 import { Button } from '@/components/ui/button';
@@ -32,31 +32,31 @@ const VersiculoWidget = () => {
 
   if (isLoading) {
     return (
-      <WidgetContainer className="flex flex-col min-h-[140px]">
+      <WidgetContainer variant="versiculo" className="flex flex-col min-h-[140px]">
         <div className="flex items-center gap-2 mb-4">
-          <BookOpen className="w-5 h-5 text-primary" />
-          <h3 className="text-lg font-semibold text-foreground">Versículo do Dia</h3>
+          <BookOpen className="w-6 h-6 text-white widget-icon" />
+          <h3 className="widget-title text-white text-lg">📖 Versículo do Dia</h3>
         </div>
         <div className="space-y-3">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-4 w-32" />
+          <div className="bg-white/20 rounded p-3 h-20" />
+          <div className="bg-white/10 rounded h-4 w-32" />
         </div>
       </WidgetContainer>
     );
   }
 
   return (
-    <WidgetContainer className="flex flex-col min-h-[140px]">
+    <WidgetContainer variant="versiculo" className="flex flex-col min-h-[140px]">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-primary" />
-          <h3 className="text-lg font-semibold text-foreground">Versículo do Dia</h3>
+          <BookOpen className="w-6 h-6 text-white widget-icon" />
+          <h3 className="widget-title text-white text-lg">📖 Versículo</h3>
         </div>
         <Button 
           size="sm" 
           variant="ghost" 
           onClick={handleRefresh}
-          className="text-muted-foreground hover:text-foreground"
+          className="text-purple-200 hover:text-white hover:bg-white/20"
         >
           <RefreshCw className="w-4 h-4" />
         </Button>
@@ -64,15 +64,18 @@ const VersiculoWidget = () => {
       
       {versiculo ? (
         <div className="flex-1 flex flex-col justify-center">
-          <blockquote className="text-foreground leading-relaxed mb-4 italic">
-            "{versiculo.text}"
-          </blockquote>
-          <cite className="text-sm font-medium text-primary text-right">
+          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 mb-3">
+            <blockquote className="text-white leading-relaxed italic text-sm">
+              "✨ {versiculo.text}"
+            </blockquote>
+          </div>
+          <cite className="text-sm font-medium text-purple-200 text-right flex items-center justify-end gap-1">
+            <Heart className="w-3 h-3" />
             {versiculo.reference}
           </cite>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center text-muted-foreground">
+        <div className="flex-1 flex items-center justify-center text-purple-200">
           <p className="text-sm">Não foi possível carregar o versículo</p>
         </div>
       )}

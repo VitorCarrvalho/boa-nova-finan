@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Calendar, Clock, MapPin, Share2 } from 'lucide-react';
+import { Calendar, Clock, MapPin, Share2, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import WidgetContainer from './WidgetContainer';
@@ -18,14 +19,17 @@ const ProximosEventosWidget = () => {
 
   if (isLoading) {
     return (
-      <WidgetContainer className="flex flex-col min-h-[300px]">
+      <WidgetContainer variant="eventos" className="flex flex-col min-h-[300px]">
         <div className="flex items-center gap-2 mb-4">
-          <Calendar className="w-5 h-5 text-primary" />
-          <h3 className="text-lg font-semibold text-foreground">Próximos Eventos</h3>
+          <Calendar className="w-6 h-6 text-white widget-icon" />
+          <h3 className="widget-title text-white text-lg">🎪 Próximos Eventos</h3>
         </div>
         <div className="space-y-3 flex-1 overflow-y-auto">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-lg" />
+            <div key={i} className="bg-white/20 rounded-lg p-3">
+              <Skeleton className="h-4 w-3/4 mb-2 bg-white/30" />
+              <Skeleton className="h-3 w-1/2 bg-white/20" />
+            </div>
           ))}
         </div>
       </WidgetContainer>
@@ -33,26 +37,29 @@ const ProximosEventosWidget = () => {
   }
 
   return (
-    <WidgetContainer className="flex flex-col min-h-[300px]">
-      <div className="flex items-center gap-2 mb-4">
-        <Calendar className="w-5 h-5 text-primary" />
-        <h3 className="text-lg font-semibold text-foreground">Próximos Eventos</h3>
+    <WidgetContainer variant="eventos" className="flex flex-col min-h-[300px]">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Calendar className="w-6 h-6 text-white widget-icon" />
+          <h3 className="widget-title text-white text-lg">🎪 Próximos Eventos</h3>
+        </div>
+        <Sparkles className="w-5 h-5 text-blue-200 animate-pulse" />
       </div>
       
       <div className="space-y-3 flex-1 overflow-y-auto">
         {events && events.length > 0 ? (
           events.slice(0, 5).map((event) => (
-            <div key={event.id} className="p-3 bg-muted/50 rounded-lg border border-border/10">
+            <div key={event.id} className="p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
               <div className="flex justify-between items-start gap-2">
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-foreground truncate">{event.title}</h4>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                  <h4 className="font-medium text-white truncate">{event.title}</h4>
+                  <div className="flex items-center gap-2 text-sm text-blue-100 mt-1">
                     <Clock className="w-3 h-3" />
                     <span>{format(new Date(event.date), 'dd/MM', { locale: ptBR })}</span>
                     {event.time && <span>• {event.time}</span>}
                   </div>
                   {event.location && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                    <div className="flex items-center gap-1 text-xs text-blue-100 mt-1">
                       <MapPin className="w-3 h-3" />
                       <span className="truncate">{event.location}</span>
                     </div>
@@ -62,7 +69,7 @@ const ProximosEventosWidget = () => {
                   size="sm"
                   variant="ghost"
                   onClick={() => shareEvent(event)}
-                  className="shrink-0"
+                  className="shrink-0 text-white hover:bg-white/20"
                 >
                   <Share2 className="w-3 h-3" />
                 </Button>
@@ -70,8 +77,8 @@ const ProximosEventosWidget = () => {
             </div>
           ))
         ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <div className="text-center py-8 text-blue-100">
+            <Calendar className="w-8 h-8 mx-auto mb-2 opacity-70" />
             <p className="text-sm">Nenhum evento programado</p>
           </div>
         )}

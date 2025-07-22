@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Heart, Send } from 'lucide-react';
+import { Heart, Send, Pray } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -48,10 +49,13 @@ const PedidoOracaoWidget = () => {
   };
 
   return (
-    <WidgetContainer className="flex flex-col min-h-[300px]">
-      <div className="flex items-center gap-2 mb-4">
-        <Heart className="w-5 h-5 text-primary" />
-        <h3 className="text-lg font-semibold text-foreground">Pedido de Oração</h3>
+    <WidgetContainer variant="oracao" className="flex flex-col min-h-[300px]">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Heart className="w-6 h-6 text-white widget-icon" />
+          <h3 className="widget-title text-white text-lg">🙏 Pedido de Oração</h3>
+        </div>
+        <Pray className="w-5 h-5 text-blue-200 animate-pulse" />
       </div>
       
       <Form {...form}>
@@ -61,15 +65,15 @@ const PedidoOracaoWidget = () => {
             name="nome"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm text-muted-foreground">Nome (opcional)</FormLabel>
+                <FormLabel className="text-sm text-blue-100">💝 Nome (opcional)</FormLabel>
                 <FormControl>
                   <Input 
                     placeholder="Seu nome" 
                     {...field} 
-                    className="h-9"
+                    className="h-9 bg-white/10 border-white/20 text-white placeholder:text-blue-200"
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-blue-200" />
               </FormItem>
             )}
           />
@@ -79,16 +83,16 @@ const PedidoOracaoWidget = () => {
             name="texto"
             render={({ field }) => (
               <FormItem className="flex-1 flex flex-col">
-                <FormLabel className="text-sm text-muted-foreground">Pedido de Oração</FormLabel>
+                <FormLabel className="text-sm text-blue-100">✨ Pedido de Oração</FormLabel>
                 <FormControl>
                   <Textarea 
-                    placeholder="Compartilhe seu pedido de oração. Estaremos orando por você!"
-                    className="flex-1 resize-none min-h-[100px]"
+                    placeholder="Compartilhe seu pedido. Estaremos orando por você! 🙏"
+                    className="flex-1 resize-none min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-blue-200"
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
-                <div className="text-xs text-muted-foreground text-right">
+                <FormMessage className="text-blue-200" />
+                <div className="text-xs text-blue-200 text-right bg-white/10 px-2 py-1 rounded-full w-fit ml-auto">
                   {field.value?.length || 0}/1000
                 </div>
               </FormItem>
@@ -98,14 +102,14 @@ const PedidoOracaoWidget = () => {
           <Button 
             type="submit" 
             disabled={createPedido.isPending}
-            className="w-full"
+            className="w-full bg-white/20 hover:bg-white/30 text-white border border-white/30"
           >
             {createPedido.isPending ? (
-              'Enviando...'
+              '⏳ Enviando...'
             ) : (
               <>
                 <Send className="w-4 h-4 mr-2" />
-                Enviar Pedido
+                💌 Enviar Pedido
               </>
             )}
           </Button>

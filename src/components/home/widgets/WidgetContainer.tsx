@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 
@@ -6,23 +7,53 @@ interface WidgetContainerProps {
   className?: string;
   size?: 'small' | 'medium' | 'large';
   onClick?: () => void;
+  variant?: 'pastores' | 'eventos' | 'calendario' | 'versiculo' | 'mapa' | 'instagram' | 'oracao' | 'default';
 }
 
-const WidgetContainer = ({ children, className, size = 'medium', onClick }: WidgetContainerProps) => {
-  // Remover as classes de grid específicas para permitir layout flexível
+const WidgetContainer = ({ 
+  children, 
+  className, 
+  size = 'medium', 
+  onClick, 
+  variant = 'default' 
+}: WidgetContainerProps) => {
+  
+  const variantClasses = {
+    pastores: 'widget-pastores text-white',
+    eventos: 'widget-eventos text-white',
+    calendario: 'widget-calendario text-white',
+    versiculo: 'widget-versiculo text-white',
+    mapa: 'widget-mapa text-white',
+    instagram: 'widget-instagram text-white',
+    oracao: 'widget-oracao text-white',
+    default: 'bg-background/80 backdrop-blur-sm'
+  };
+
   return (
     <div
       className={cn(
-        'bg-background/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-border/20',
-        'transition-all duration-300 hover:shadow-xl hover:scale-[1.02]',
-        'animate-in fade-in-50 duration-500',
-        'min-h-[120px] w-full', // Usar altura mínima e largura total
-        onClick && 'cursor-pointer',
+        'widget-container rounded-2xl p-4 shadow-lg border border-border/20',
+        'transition-all duration-300 hover:shadow-xl',
+        'min-h-[120px] w-full',
+        'relative overflow-hidden',
+        variantClasses[variant],
+        onClick && 'cursor-pointer mobile-tap',
         className
       )}
       onClick={onClick}
+      style={{
+        animationFillMode: 'both'
+      }}
     >
-      {children}
+      {/* Overlay para melhor contraste de texto quando necessário */}
+      {variant !== 'default' && (
+        <div className="absolute inset-0 bg-black/10 rounded-2xl pointer-events-none" />
+      )}
+      
+      {/* Conteúdo */}
+      <div className="relative z-10">
+        {children}
+      </div>
     </div>
   );
 };

@@ -28,21 +28,23 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen home-background relative">
       {/* Grid Container */}
-      <div className="container mx-auto px-4 py-8">
-        {/* Título da Igreja */}
+      <div className="container mx-auto px-4 py-8 relative z-10">
+        {/* Título da Igreja com mais estilo */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-            IPTM Global
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3 tracking-tight">
+            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+              IPTM Global
+            </span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground italic">
-            "Deus não é religião, é relacionamento."
+          <p className="text-lg md:text-xl text-muted-foreground italic font-medium">
+            ✨ "Deus não é religião, é relacionamento." ✨
           </p>
         </div>
 
         {/* iPhone-style Widget Layout - Responsivo */}
-        <div className="max-w-md mx-auto md:max-w-4xl space-y-4">
+        <div className="max-w-md mx-auto md:max-w-4xl space-y-6">
           
           {/* Linha 0: Pastores - 1 widget grande */}
           <div className="w-full">
@@ -55,7 +57,7 @@ const Home = () => {
           </div>
           
           {/* Linha 2: Calendário e Versículo - 2 widgets */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-6">
             <CalendarioWidget />
             <div className="md:col-span-1">
               <VersiculoWidget />
@@ -68,7 +70,7 @@ const Home = () => {
           </div>
           
           {/* Linha 4: Instagram e Pedido - 2 widgets */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <InstagramWidget />
             <div className="md:col-span-1">
               <PedidoOracaoWidget />
@@ -76,6 +78,11 @@ const Home = () => {
           </div>
           
         </div>
+
+        {/* Decorative elements */}
+        <div className="fixed top-20 left-10 w-4 h-4 bg-blue-400/20 rounded-full animate-pulse hidden md:block" />
+        <div className="fixed top-40 right-20 w-6 h-6 bg-purple-400/20 rounded-full animate-pulse hidden md:block" style={{animationDelay: '1s'}} />
+        <div className="fixed bottom-32 left-32 w-3 h-3 bg-green-400/20 rounded-full animate-pulse hidden md:block" style={{animationDelay: '2s'}} />
       </div>
 
       {/* Botão Flutuante de Login */}
