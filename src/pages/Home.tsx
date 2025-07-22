@@ -33,13 +33,13 @@ const Home = () => {
       <div className="container mx-auto px-4 py-8 relative z-10">
         {/* Título da Igreja com mais estilo */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3 tracking-tight">
+          <h1 className="text-4xl md:text-5xl font-inter font-light text-foreground mb-3 tracking-tight">
             <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
               IPTM Global
             </span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground italic font-medium">
-            ✨ "Deus não é religião, é relacionamento." ✨
+            "Deus não é religião, é relacionamento."
           </p>
         </div>
 
