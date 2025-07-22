@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,13 +30,25 @@ const Home = () => {
     <div className="min-h-screen home-background relative">
       {/* Grid Container */}
       <div className="container mx-auto px-4 py-8 relative z-10">
-        {/* Título da Igreja com mais estilo */}
+        {/* Título da Igreja com efeito Black Piano */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bodoni font-normal text-foreground mb-3 tracking-tight">
-            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(0,0,0,0.8)] filter"
+          <h1 className="text-4xl md:text-5xl font-bodoni font-normal mb-3 tracking-tight">
+            <span className="text-black font-bold relative inline-block"
                   style={{
-                    textShadow: '0 0 20px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 0, 0, 0.4)',
-                    filter: 'drop-shadow(0 0 15px rgba(0, 0, 0, 0.8))'
+                    background: 'linear-gradient(145deg, #1a1a1a 0%, #000000 50%, #1a1a1a 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    textShadow: `
+                      0 1px 0 #333,
+                      0 2px 0 #222,
+                      0 3px 0 #111,
+                      0 4px 8px rgba(0,0,0,0.8),
+                      0 8px 16px rgba(0,0,0,0.6),
+                      inset 0 1px 0 rgba(255,255,255,0.1)
+                    `,
+                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))',
+                    position: 'relative'
                   }}>
               IPTM Global
             </span>
