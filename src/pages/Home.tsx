@@ -34,7 +34,11 @@ const Home = () => {
         {/* Título da Igreja com mais estilo */}
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bodoni font-normal text-foreground mb-3 tracking-tight">
-            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(0,0,0,0.8)] filter"
+                  style={{
+                    textShadow: '0 0 20px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 0, 0, 0.4)',
+                    filter: 'drop-shadow(0 0 15px rgba(0, 0, 0, 0.8))'
+                  }}>
               IPTM Global
             </span>
           </h1>
