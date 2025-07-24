@@ -107,6 +107,7 @@ const DesktopSidebar = () => {
   ];
 
   const visibleItems = menuItems.filter(item => {
+    if (!item) return false; // Guard against undefined items
     const hasPermission = canViewModule(item.module);
     const hasCongregationAccess = item.requiresCongregationAccess ? hasAccessToAnyCongregation : true;
     return hasPermission && hasCongregationAccess;
@@ -130,6 +131,8 @@ const DesktopSidebar = () => {
   };
 
   const MenuItemComponent = ({ item }: { item: MenuItemType }) => {
+    if (!item) return null; // Guard clause
+    
     const isActive = isActiveRoute(item.route);
 
     if (state === "collapsed") {
