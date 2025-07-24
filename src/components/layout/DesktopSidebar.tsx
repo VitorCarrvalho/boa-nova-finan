@@ -14,6 +14,7 @@ import {
   SidebarProvider,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Collapsible,
   CollapsibleContent,
@@ -71,36 +72,36 @@ const DesktopSidebar = () => {
 
   const menuItems: MenuItemType[] = [
     { title: 'Dashboard', icon: Home, route: '/dashboard', module: 'dashboard' },
-    { title: 'Membros', icon: Users, route: '/members', module: 'members' },
-    { title: 'Congregações', icon: MapPin, route: '/congregations', module: 'congregations' },
-    { title: 'Departamentos', icon: Building2, route: '/departments', module: 'departments' },
-    { title: 'Ministérios', icon: HeartHandshake, route: '/ministries', module: 'ministries' },
-    { title: 'Eventos', icon: Calendar, route: '/events', module: 'events' },
-    { title: 'Financeiro', icon: DollarSign, route: '/financial', module: 'financial', requiresCongregationAccess: true },
-    { title: 'Reconciliações', icon: Calculator, route: '/reconciliations', module: 'reconciliations', requiresCongregationAccess: true },
-    { title: 'Fornecedores', icon: Truck, route: '/suppliers', module: 'suppliers' },
+    { title: 'Membros', icon: Users, route: '/membros', module: 'members' },
+    { title: 'Congregações', icon: MapPin, route: '/congregacoes', module: 'congregations' },
+    { title: 'Departamentos', icon: Building2, route: '/departamentos', module: 'departments' },
+    { title: 'Ministérios', icon: HeartHandshake, route: '/ministerios', module: 'ministries' },
+    { title: 'Eventos', icon: Calendar, route: '/eventos', module: 'events' },
+    { title: 'Financeiro', icon: DollarSign, route: '/financeiro', module: 'financial', requiresCongregationAccess: true },
+    { title: 'Reconciliações', icon: Calculator, route: '/conciliacoes', module: 'reconciliations', requiresCongregationAccess: true },
+    { title: 'Fornecedores', icon: Truck, route: '/fornecedores', module: 'suppliers' },
     { title: 'Documentação', icon: FileText, route: '/documentation', module: 'documentation' },
   ];
 
   const reportSubmenus: SubmenuItemType[] = [
-    { title: 'Relatórios Financeiros', route: '/reports/financial', module: 'reports' },
-    { title: 'Relatórios de Membros', route: '/reports/members', module: 'reports' },
-    { title: 'Relatórios de Eventos', route: '/reports/events', module: 'reports' },
-    { title: 'Relatórios de Reconciliações', route: '/reports/reconciliations', module: 'reports' },
-    { title: 'Relatórios de Fornecedores', route: '/reports/suppliers', module: 'reports' },
+    { title: 'Relatórios Financeiros', route: '/relatorios/financeiro', module: 'reports' },
+    { title: 'Relatórios de Membros', route: '/relatorios/membros', module: 'reports' },
+    { title: 'Relatórios de Eventos', route: '/relatorios/eventos', module: 'reports' },
+    { title: 'Relatórios de Reconciliações', route: '/relatorios/conciliacoes', module: 'reports' },
+    { title: 'Relatórios de Fornecedores', route: '/relatorios/fornecedores', module: 'reports' },
   ];
 
   const notificationSubmenus: SubmenuItemType[] = [
-    { title: 'Nova Notificação', route: '/notifications/new', module: 'notifications' },
-    { title: 'Mensagens Recorrentes', route: '/notifications/recurring', module: 'notifications' },
-    { title: 'Mensagens Agendadas', route: '/notifications/scheduled', module: 'notifications' },
-    { title: 'Histórico de Envios', route: '/notifications/history', module: 'notifications' },
-    { title: 'Biblioteca de Vídeos', route: '/notifications/videos', module: 'notifications' },
+    { title: 'Nova Notificação', route: '/notificacoes/nova', module: 'notifications' },
+    { title: 'Mensagens Recorrentes', route: '/notificacoes/recorrentes', module: 'notifications' },
+    { title: 'Mensagens Agendadas', route: '/notificacoes/agendadas', module: 'notifications' },
+    { title: 'Histórico de Envios', route: '/notificacoes/historico', module: 'notifications' },
+    { title: 'Biblioteca de Vídeos', route: '/notificacoes/videos', module: 'notifications' },
   ];
 
   const accountsPayableSubmenus: SubmenuItemType[] = [
     { title: 'Nova Conta', route: '/accounts-payable/new', module: 'accounts_payable' },
-    { title: 'Pendente Aprovação', route: '/accounts-payable/pending', module: 'accounts_payable' },
+    { title: 'Pendente Aprovação', route: '/accounts-payable/pending-approval', module: 'accounts_payable' },
     { title: 'Autorizar Contas', route: '/accounts-payable/authorize', module: 'accounts_payable' },
     { title: 'Contas Aprovadas', route: '/accounts-payable/approved', module: 'accounts_payable' },
     { title: 'Contas Pagas', route: '/accounts-payable/paid', module: 'accounts_payable' },
@@ -235,9 +236,10 @@ const DesktopSidebar = () => {
       className="border-r bg-card"
     >
       <SidebarContent className="py-4">
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
+        <ScrollArea className="h-[calc(100vh-2rem)]">
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-1">
               {visibleItems.map((item) => (
                 <SidebarMenuItem key={item.route}>
                   <MenuItemComponent item={item} />
@@ -380,6 +382,7 @@ const DesktopSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        </ScrollArea>
       </SidebarContent>
     </Sidebar>
   );
