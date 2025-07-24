@@ -298,15 +298,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const hasPermission = (module: string, action: string): boolean => {
-    // Fallback para administradores sempre terem acesso aos módulos críticos
-    if (userRole === 'admin' || userRole === 'superadmin') {
-      if (module === 'gestao-acessos' || module === 'configuracoes') {
-        return true;
-      }
+    // Superadmins e admins têm acesso completo a todos os módulos
+    if (userRole === 'superadmin' || userRole === 'admin') {
+      console.log(`[AuthContext] ${userRole} tem acesso completo ao módulo: ${module}, ação: ${action}`);
+      return true;
     }
     
-    if (!userPermissions) return false;
-    return userPermissions[module]?.[action] === true;
+    // Para outros usuários, verificar permissões
+    if (!userPermissions) {
+      console.log(`[AuthContext] Sem permissões para usuário, negando acesso a ${module}:${action}`);
+      return false;
+    }
+    
+    const hasAccess = userPermissions[module]?.[action] === true;
+    console.log(`[AuthContext] Verificação de permissão para ${module}:${action} = ${hasAccess}`);
+    return hasAccess;
   };
 
   const value = {
