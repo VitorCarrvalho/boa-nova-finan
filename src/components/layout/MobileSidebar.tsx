@@ -234,27 +234,27 @@ const MobileSidebar = () => {
   const accountsPayableSubmenus = [
     { 
       title: 'Incluir Nova Conta', 
-      href: '/accounts-payable/new',
+      href: '/contas-pagar/nova',
       checkPermission: () => canViewNewAccount()
     },
     { 
       title: 'Pendentes de Aprovação', 
-      href: '/accounts-payable/pending-approval',
+      href: '/contas-pagar/pendente-aprovacao',
       checkPermission: () => canViewPendingApproval()
     },
     { 
       title: 'Autorizar Contas', 
-      href: '/accounts-payable/authorize',
+      href: '/contas-pagar/autorizar',
       checkPermission: () => canViewAuthorizeAccounts()
     },
     { 
       title: 'Contas Aprovadas', 
-      href: '/accounts-payable/approved',
+      href: '/contas-pagar/aprovadas',
       checkPermission: () => canViewApprovedAccounts()
     },
     { 
       title: 'Contas Pagas', 
-      href: '/accounts-payable/paid',
+      href: '/contas-pagar/pagas',
       checkPermission: () => canViewPaidAccounts()
     }
   ];
@@ -379,7 +379,7 @@ const MobileSidebar = () => {
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton
-                        isActive={location.pathname.startsWith('/accounts-payable')}
+                        isActive={location.pathname.startsWith('/contas-pagar')}
                       >
                         <CreditCard className="h-4 w-4" />
                         <span>Contas a Pagar</span>
@@ -486,8 +486,8 @@ const MobileSidebar = () => {
             <SidebarMenu>
               {canAccessAccessManagement && (
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={location.pathname.startsWith('/access-management')}>
-                    <Link to="/access-management">
+                  <SidebarMenuButton asChild isActive={location.pathname.startsWith('/gestao-acessos')}>
+                    <Link to="/gestao-acessos">
                       <Shield className="h-4 w-4" />
                       <span>Gestão de Acessos</span>
                     </Link>
@@ -497,8 +497,8 @@ const MobileSidebar = () => {
               
               {canAccessSettings && (
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={location.pathname.startsWith('/settings')}>
-                    <Link to="/settings">
+                  <SidebarMenuButton asChild isActive={location.pathname.startsWith('/configuracoes')}>
+                    <Link to="/configuracoes">
                       <Settings className="h-4 w-4" />
                       <span>Configurações</span>
                     </Link>

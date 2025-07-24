@@ -572,11 +572,11 @@ const Sidebar = () => {
         </Link>
 
         {canAccessAccessManagement && (
-          <Link to="/access-management">
+          <Link to="/gestao-acessos">
             <Button
               variant="ghost"
               className={`w-full justify-start ${
-                location.pathname.startsWith('/access-management') 
+                location.pathname.startsWith('/gestao-acessos') 
                   ? 'bg-red-600 text-white hover:bg-red-700' 
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
@@ -588,11 +588,11 @@ const Sidebar = () => {
         )}
         
         {canAccessSettings && (
-          <Link to="/settings">
+          <Link to="/configuracoes">
             <Button
               variant="ghost"
               className={`w-full justify-start ${
-                location.pathname.startsWith('/settings') 
+                location.pathname.startsWith('/configuracoes') 
                   ? 'bg-red-600 text-white hover:bg-red-700' 
                   : 'text-gray-700 hover:bg-gray-100'
               }`}

@@ -1,9 +1,8 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ReportsProvider } from "@/contexts/ReportsContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -121,10 +120,9 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
+              {/* Reports Routes - Main route redirects to first submenu */}
               <Route path="/relatorios" element={
-                <ProtectedRoute>
-                  <Reports />
-                </ProtectedRoute>
+                <Navigate to="/relatorios/financeiro" replace />
               } />
               
               <Route path="/relatorios/eventos" element={
@@ -157,10 +155,9 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
+              {/* Notifications Routes - Main route redirects to first submenu */}
               <Route path="/notificacoes" element={
-                <ProtectedRoute>
-                  <Notifications />
-                </ProtectedRoute>
+                <Navigate to="/notificacoes/nova" replace />
               } />
               
               <Route path="/notificacoes/nova" element={
@@ -193,13 +190,14 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              <Route path="/settings" element={
+              {/* Access Management & Settings Routes */}
+              <Route path="/configuracoes" element={
                 <ProtectedRoute>
                   <Settings />
                 </ProtectedRoute>
               } />
               
-              <Route path="/access-management" element={
+              <Route path="/gestao-acessos" element={
                 <ProtectedRoute>
                   <AccessManagement />
                 </ProtectedRoute>
@@ -211,44 +209,57 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              {/* Accounts Payable Routes */}
-              <Route path="/accounts-payable/new" element={
+              {/* Accounts Payable Routes - Main route redirects to first submenu */}
+              <Route path="/contas-pagar" element={
+                <Navigate to="/contas-pagar/nova" replace />
+              } />
+              
+              <Route path="/contas-pagar/nova" element={
                 <ProtectedRoute>
                   <NewAccount />
                 </ProtectedRoute>
               } />
               
-              <Route path="/accounts-payable/pending-approval" element={
+              <Route path="/contas-pagar/pendente-aprovacao" element={
                 <ProtectedRoute>
                   <PendingApproval />
                 </ProtectedRoute>
               } />
               
-              <Route path="/accounts-payable/authorize" element={
+              <Route path="/contas-pagar/autorizar" element={
                 <ProtectedRoute>
                   <AuthorizeAccounts />
                 </ProtectedRoute>
               } />
               
-              <Route path="/accounts-payable/approved" element={
+              <Route path="/contas-pagar/aprovadas" element={
                 <ProtectedRoute>
                   <ApprovedAccounts />
                 </ProtectedRoute>
               } />
               
-              <Route path="/accounts-payable/paid" element={
+              <Route path="/contas-pagar/pagas" element={
                 <ProtectedRoute>
                   <PaidAccounts />
                 </ProtectedRoute>
-               } />
+              } />
+              
+              {/* Legacy routes for compatibility */}
+              <Route path="/settings" element={<Navigate to="/configuracoes" replace />} />
+              <Route path="/access-management" element={<Navigate to="/gestao-acessos" replace />} />
+              <Route path="/accounts-payable/new" element={<Navigate to="/contas-pagar/nova" replace />} />
+              <Route path="/accounts-payable/pending-approval" element={<Navigate to="/contas-pagar/pendente-aprovacao" replace />} />
+              <Route path="/accounts-payable/authorize" element={<Navigate to="/contas-pagar/autorizar" replace />} />
+              <Route path="/accounts-payable/approved" element={<Navigate to="/contas-pagar/aprovadas" replace />} />
+              <Route path="/accounts-payable/paid" element={<Navigate to="/contas-pagar/pagas" replace />} />
                
-               <Route path="/test-dropdowns" element={
-                 <ProtectedRoute>
-                   <TestDropdowns />
-                 </ProtectedRoute>
-               } />
-               
-               <Route path="*" element={<NotFound />} />
+                <Route path="/test-dropdowns" element={
+                  <ProtectedRoute>
+                    <TestDropdowns />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="*" element={<NotFound />} />
             </Routes>
           </ReportsProvider>
         </AuthProvider>
