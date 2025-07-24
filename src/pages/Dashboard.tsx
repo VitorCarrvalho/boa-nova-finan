@@ -169,7 +169,7 @@ const Dashboard = () => {
                 title="Documentação"
                 description="Acessar documentação do sistema"
                 icon={Book}
-                onClick={() => navigate('/documentation')}
+                onClick={() => navigate('/documentacao')}
               />
             </div>
           </section>
@@ -322,7 +322,7 @@ const Dashboard = () => {
               value="Completa"
               description="Guia de uso do sistema"
               icon={Book}
-              onClick={() => navigate('/documentation')}
+              onClick={() => navigate('/documentacao')}
               size="lg"
             />
             {canViewModule('relatorios') && (

@@ -507,8 +507,8 @@ const MobileSidebar = () => {
                )}
                
                <SidebarMenuItem>
-                 <SidebarMenuButton asChild isActive={location.pathname.startsWith('/documentation')}>
-                   <Link to="/documentation">
+                  <SidebarMenuButton asChild isActive={location.pathname.startsWith('/documentacao')}>
+                    <Link to="/documentacao">
                      <Book className="h-4 w-4" />
                      <span>Documentação</span>
                    </Link>

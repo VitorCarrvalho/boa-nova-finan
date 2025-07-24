@@ -80,7 +80,7 @@ const DesktopSidebar = () => {
     { title: 'Financeiro', icon: DollarSign, route: '/financeiro', module: 'financial', requiresCongregationAccess: true },
     { title: 'Reconciliações', icon: Calculator, route: '/conciliacoes', module: 'reconciliations', requiresCongregationAccess: true },
     { title: 'Fornecedores', icon: Truck, route: '/fornecedores', module: 'suppliers' },
-    { title: 'Documentação', icon: FileText, route: '/documentation', module: 'documentation' },
+    { title: 'Documentação', icon: FileText, route: '/documentacao', module: 'documentation' },
   ];
 
   const reportSubmenus: SubmenuItemType[] = [

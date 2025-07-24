@@ -557,11 +557,11 @@ const Sidebar = () => {
 
       {/* Bottom Actions */}
       <div className="p-4 border-t border-gray-200 space-y-2">
-        <Link to="/documentation">
+        <Link to="/documentacao">
           <Button
             variant="ghost"
             className={`w-full justify-start ${
-              location.pathname.startsWith('/documentation') 
+              location.pathname.startsWith('/documentacao')
                 ? 'bg-red-600 text-white hover:bg-red-700' 
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
