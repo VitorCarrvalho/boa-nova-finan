@@ -248,17 +248,14 @@ const DesktopSidebar = () => {
 
               {canViewModule('reports') && (
                 <SidebarMenuItem key="reports">
-                  <MenuItemComponent item={{
-                    title: 'Relatórios',
-                    icon: BarChart3,
-                    route: '/relatorios',
-                    module: 'reports'
-                  }} />
                   <CollapsibleMenuItem
                     icon={BarChart3}
                     title="Relatórios"
                     isOpen={reportsOpen}
-                    onToggle={() => setReportsOpen(!reportsOpen)}
+                    onToggle={() => {
+                      setReportsOpen(!reportsOpen);
+                      if (!reportsOpen) navigate('/relatorios');
+                    }}
                     isActiveSubmenu={isActiveSubmenu(reportSubmenus)}
                   >
                     <div className="space-y-1">
@@ -282,17 +279,14 @@ const DesktopSidebar = () => {
 
               {canViewModule('notifications') && (
                 <SidebarMenuItem key="notifications">
-                  <MenuItemComponent item={{
-                    title: 'Notificações',
-                    icon: MessageSquare,
-                    route: '/notificacoes',
-                    module: 'notifications'
-                  }} />
                   <CollapsibleMenuItem
                     icon={MessageSquare}
                     title="Notificações"
                     isOpen={notificationsOpen}
-                    onToggle={() => setNotificationsOpen(!notificationsOpen)}
+                    onToggle={() => {
+                      setNotificationsOpen(!notificationsOpen);
+                      if (!notificationsOpen) navigate('/notificacoes');
+                    }}
                     isActiveSubmenu={isActiveSubmenu(notificationSubmenus)}
                   >
                     <div className="space-y-1">
@@ -316,17 +310,14 @@ const DesktopSidebar = () => {
 
               {canViewModule('accounts_payable') && (
                 <SidebarMenuItem key="accounts_payable">
-                  <MenuItemComponent item={{
-                    title: 'Contas a Pagar',
-                    icon: Receipt,
-                    route: '/contas-pagar',
-                    module: 'accounts_payable'
-                  }} />
                   <CollapsibleMenuItem
                     icon={Receipt}
                     title="Contas a Pagar"
                     isOpen={accountsPayableOpen}
-                    onToggle={() => setAccountsPayableOpen(!accountsPayableOpen)}
+                    onToggle={() => {
+                      setAccountsPayableOpen(!accountsPayableOpen);
+                      if (!accountsPayableOpen) navigate('/contas-pagar');
+                    }}
                     isActiveSubmenu={isActiveSubmenu(accountsPayableSubmenus)}
                   >
                     <div className="space-y-1">
