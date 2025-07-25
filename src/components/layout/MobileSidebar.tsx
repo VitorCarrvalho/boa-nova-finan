@@ -166,28 +166,10 @@ const MobileSidebar = () => {
       module: 'dashboard'
     },
     {
-      title: 'Financeiro',
-      icon: DollarSign,
-      href: '/financeiro',
-      module: 'financeiro'
-    },
-    {
       title: 'Membros',
       icon: Users,
       href: '/membros',
       module: 'membros'
-    },
-    {
-      title: 'Eventos',
-      icon: Calendar,
-      href: '/eventos',
-      module: 'eventos'
-    },
-    {
-      title: 'Conciliações',
-      icon: Calculator,
-      href: '/conciliacoes',
-      module: 'conciliacoes'
     },
     {
       title: 'Congregações',
@@ -197,16 +179,34 @@ const MobileSidebar = () => {
       requiresCongregationAccess: true
     },
     {
+      title: 'Departamentos',
+      icon: Building2,
+      href: '/departamentos',
+      module: 'departamentos'
+    },
+    {
       title: 'Ministérios',
       icon: Heart,
       href: '/ministerios',
       module: 'ministerios'
     },
     {
-      title: 'Departamentos',
-      icon: Building2,
-      href: '/departamentos',
-      module: 'departamentos'
+      title: 'Eventos',
+      icon: Calendar,
+      href: '/eventos',
+      module: 'eventos'
+    },
+    {
+      title: 'Financeiro',
+      icon: DollarSign,
+      href: '/financeiro',
+      module: 'financeiro'
+    },
+    {
+      title: 'Conciliações',
+      icon: Calculator,
+      href: '/conciliacoes',
+      module: 'conciliacoes'
     },
     {
       title: 'Fornecedores',

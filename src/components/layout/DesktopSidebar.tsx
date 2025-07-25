@@ -80,7 +80,6 @@ const DesktopSidebar = () => {
     { title: 'Financeiro', icon: DollarSign, route: '/financeiro', module: 'financial', requiresCongregationAccess: true },
     { title: 'Reconciliações', icon: Calculator, route: '/conciliacoes', module: 'reconciliations', requiresCongregationAccess: true },
     { title: 'Fornecedores', icon: Truck, route: '/fornecedores', module: 'suppliers' },
-    { title: 'Documentação', icon: FileText, route: '/documentacao', module: 'documentation' },
   ];
 
   const reportSubmenus: SubmenuItemType[] = [
@@ -246,6 +245,37 @@ const DesktopSidebar = () => {
                 </SidebarMenuItem>
               ))}
 
+              {canViewModule('accounts_payable') && (
+                <SidebarMenuItem key="accounts_payable">
+                  <CollapsibleMenuItem
+                    icon={Receipt}
+                    title="Contas a Pagar"
+                    isOpen={accountsPayableOpen}
+                    onToggle={() => {
+                      setAccountsPayableOpen(!accountsPayableOpen);
+                      if (!accountsPayableOpen) navigate('/contas-pagar');
+                    }}
+                    isActiveSubmenu={isActiveSubmenu(accountsPayableSubmenus)}
+                  >
+                    <div className="space-y-1">
+                      {accountsPayableSubmenus.filter(submenu => canViewModule(submenu.module)).map((submenu) => (
+                        <Button
+                          key={submenu.route}
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(submenu.route)}
+                          className={`w-full justify-start text-sm ${
+                            isActiveRoute(submenu.route) ? 'bg-muted' : ''
+                          }`}
+                        >
+                          {submenu.title}
+                        </Button>
+                      ))}
+                    </div>
+                  </CollapsibleMenuItem>
+                </SidebarMenuItem>
+              )}
+
               {canViewModule('reports') && (
                 <SidebarMenuItem key="reports">
                   <CollapsibleMenuItem
@@ -308,37 +338,6 @@ const DesktopSidebar = () => {
                 </SidebarMenuItem>
               )}
 
-              {canViewModule('accounts_payable') && (
-                <SidebarMenuItem key="accounts_payable">
-                  <CollapsibleMenuItem
-                    icon={Receipt}
-                    title="Contas a Pagar"
-                    isOpen={accountsPayableOpen}
-                    onToggle={() => {
-                      setAccountsPayableOpen(!accountsPayableOpen);
-                      if (!accountsPayableOpen) navigate('/contas-pagar');
-                    }}
-                    isActiveSubmenu={isActiveSubmenu(accountsPayableSubmenus)}
-                  >
-                    <div className="space-y-1">
-                      {accountsPayableSubmenus.filter(submenu => canViewModule(submenu.module)).map((submenu) => (
-                        <Button
-                          key={submenu.route}
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(submenu.route)}
-                          className={`w-full justify-start text-sm ${
-                            isActiveRoute(submenu.route) ? 'bg-muted' : ''
-                          }`}
-                        >
-                          {submenu.title}
-                        </Button>
-                      ))}
-                    </div>
-                  </CollapsibleMenuItem>
-                </SidebarMenuItem>
-              )}
-
               {canViewModule('access_management') && (
                 <SidebarMenuItem key="access_management">
                   <MenuItemComponent item={{
@@ -346,6 +345,17 @@ const DesktopSidebar = () => {
                     icon: Shield,
                     route: '/gestao-acessos',
                     module: 'access_management'
+                  }} />
+                </SidebarMenuItem>
+              )}
+
+              {canViewModule('documentation') && (
+                <SidebarMenuItem key="documentation">
+                  <MenuItemComponent item={{
+                    title: 'Documentação',
+                    icon: FileText,
+                    route: '/documentacao',
+                    module: 'documentation'
                   }} />
                 </SidebarMenuItem>
               )}
