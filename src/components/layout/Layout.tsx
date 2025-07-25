@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileSidebar from './MobileSidebar';
 import DesktopSidebar from './DesktopSidebar';
+import HeaderProfile from './HeaderProfile';
 import fiveIcon from '@/assets/fiveicon.svg';
 
 interface LayoutProps {
@@ -39,14 +40,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex-1 flex flex-col">
             {/* Header with mobile menu trigger and logo */}
             <header className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-40">
-              <div className="flex items-center gap-3">
-                <img 
-                  src={fiveIcon} 
-                  alt="IPTM Logo" 
-                  className="w-10 h-10"
-                />
-                <SidebarTrigger className="md:hidden" />
-                <h1 className="text-xl font-bold text-gray-900">Painel Administrativo</h1>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <img 
+                    src={fiveIcon} 
+                    alt="IPTM Logo" 
+                    className="w-10 h-10"
+                  />
+                  <SidebarTrigger className="md:hidden" />
+                  <h1 className="text-xl font-bold text-gray-900">Painel Administrativo</h1>
+                </div>
+                <HeaderProfile />
               </div>
             </header>
             
@@ -68,13 +72,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="flex-1 flex flex-col">
           {/* Header with logo */}
           <header className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-40">
-            <div className="flex items-center gap-3">
-              <img 
-                src={fiveIcon} 
-                alt="IPTM Logo" 
-                className="w-10 h-10"
-              />
-              <h1 className="text-xl font-bold text-gray-900">Painel Administrativo</h1>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img 
+                  src={fiveIcon} 
+                  alt="IPTM Logo" 
+                  className="w-10 h-10"
+                />
+                <h1 className="text-xl font-bold text-gray-900">Painel Administrativo</h1>
+              </div>
+              <HeaderProfile />
             </div>
           </header>
           
