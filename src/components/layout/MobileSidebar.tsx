@@ -203,7 +203,7 @@ const MobileSidebar = () => {
       module: 'financeiro'
     },
     {
-      title: 'Conciliações',
+      title: 'Reconciliações',
       icon: Calculator,
       href: '/conciliacoes',
       module: 'conciliacoes'
@@ -225,20 +225,21 @@ const MobileSidebar = () => {
   ];
 
   const notificationSubmenus = [
-    { title: 'Biblioteca de Vídeos', href: '/notificacoes/videos', icon: Video },
-    { title: 'Histórico Enviado', href: '/notificacoes/historico', icon: Send },
+    { title: 'Nova Notificação', href: '/notificacoes/nova', icon: MessageSquare },
+    { title: 'Mensagens Recorrentes', href: '/notificacoes/recorrentes', icon: Clock },
     { title: 'Mensagens Agendadas', href: '/notificacoes/agendadas', icon: Clock },
-    { title: 'Nova Notificação', href: '/notificacoes/nova', icon: MessageSquare }
+    { title: 'Histórico de Envios', href: '/notificacoes/historico', icon: Send },
+    { title: 'Biblioteca de Vídeos', href: '/notificacoes/videos', icon: Video }
   ];
 
   const accountsPayableSubmenus = [
     { 
-      title: 'Incluir Nova Conta', 
+      title: 'Nova Conta', 
       href: '/contas-pagar/nova',
       checkPermission: () => canViewNewAccount()
     },
     { 
-      title: 'Pendentes de Aprovação', 
+      title: 'Pendente Aprovação', 
       href: '/contas-pagar/pendente-aprovacao',
       checkPermission: () => canViewPendingApproval()
     },
@@ -494,6 +495,15 @@ const MobileSidebar = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location.pathname.startsWith('/documentacao')}>
+                  <Link to="/documentacao">
+                    <Book className="h-4 w-4" />
+                    <span>Documentação</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               
               {canAccessSettings && (
                 <SidebarMenuItem>
@@ -504,23 +514,14 @@ const MobileSidebar = () => {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-               )}
-               
-               <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={location.pathname.startsWith('/documentacao')}>
-                    <Link to="/documentacao">
-                     <Book className="h-4 w-4" />
-                     <span>Documentação</span>
-                   </Link>
-                 </SidebarMenuButton>
-               </SidebarMenuItem>
-               
-               <SidebarMenuItem>
-                 <SidebarMenuButton onClick={signOut} className="text-destructive hover:text-destructive">
-                   <LogOut className="h-4 w-4" />
-                   <span>Sair</span>
-                 </SidebarMenuButton>
-               </SidebarMenuItem>
+              )}
+                
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={signOut} className="text-destructive hover:text-destructive">
+                  <LogOut className="h-4 w-4" />
+                  <span>Sair</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

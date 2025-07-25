@@ -72,38 +72,38 @@ const DesktopSidebar = () => {
 
   const menuItems: MenuItemType[] = [
     { title: 'Dashboard', icon: Home, route: '/dashboard', module: 'dashboard' },
-    { title: 'Membros', icon: Users, route: '/membros', module: 'members' },
-    { title: 'Congregações', icon: MapPin, route: '/congregacoes', module: 'congregations' },
-    { title: 'Departamentos', icon: Building2, route: '/departamentos', module: 'departments' },
-    { title: 'Ministérios', icon: HeartHandshake, route: '/ministerios', module: 'ministries' },
-    { title: 'Eventos', icon: Calendar, route: '/eventos', module: 'events' },
-    { title: 'Financeiro', icon: DollarSign, route: '/financeiro', module: 'financial', requiresCongregationAccess: true },
-    { title: 'Reconciliações', icon: Calculator, route: '/conciliacoes', module: 'reconciliations', requiresCongregationAccess: true },
-    { title: 'Fornecedores', icon: Truck, route: '/fornecedores', module: 'suppliers' },
+    { title: 'Membros', icon: Users, route: '/membros', module: 'membros' },
+    { title: 'Congregações', icon: MapPin, route: '/congregacoes', module: 'congregacoes' },
+    { title: 'Departamentos', icon: Building2, route: '/departamentos', module: 'departamentos' },
+    { title: 'Ministérios', icon: HeartHandshake, route: '/ministerios', module: 'ministerios' },
+    { title: 'Eventos', icon: Calendar, route: '/eventos', module: 'eventos' },
+    { title: 'Financeiro', icon: DollarSign, route: '/financeiro', module: 'financeiro', requiresCongregationAccess: true },
+    { title: 'Reconciliações', icon: Calculator, route: '/conciliacoes', module: 'conciliacoes', requiresCongregationAccess: true },
+    { title: 'Fornecedores', icon: Truck, route: '/fornecedores', module: 'fornecedores' },
   ];
 
   const reportSubmenus: SubmenuItemType[] = [
-    { title: 'Relatórios Financeiros', route: '/relatorios/financeiro', module: 'reports' },
-    { title: 'Relatórios de Membros', route: '/relatorios/membros', module: 'reports' },
-    { title: 'Relatórios de Eventos', route: '/relatorios/eventos', module: 'reports' },
-    { title: 'Relatórios de Reconciliações', route: '/relatorios/conciliacoes', module: 'reports' },
-    { title: 'Relatórios de Fornecedores', route: '/relatorios/fornecedores', module: 'reports' },
+    { title: 'Relatórios Financeiros', route: '/relatorios/financeiro', module: 'relatorios' },
+    { title: 'Relatórios de Membros', route: '/relatorios/membros', module: 'relatorios' },
+    { title: 'Relatórios de Eventos', route: '/relatorios/eventos', module: 'relatorios' },
+    { title: 'Relatórios de Reconciliações', route: '/relatorios/conciliacoes', module: 'relatorios' },
+    { title: 'Relatórios de Fornecedores', route: '/relatorios/fornecedores', module: 'relatorios' },
   ];
 
   const notificationSubmenus: SubmenuItemType[] = [
-    { title: 'Nova Notificação', route: '/notificacoes/nova', module: 'notifications' },
-    { title: 'Mensagens Recorrentes', route: '/notificacoes/recorrentes', module: 'notifications' },
-    { title: 'Mensagens Agendadas', route: '/notificacoes/agendadas', module: 'notifications' },
-    { title: 'Histórico de Envios', route: '/notificacoes/historico', module: 'notifications' },
-    { title: 'Biblioteca de Vídeos', route: '/notificacoes/videos', module: 'notifications' },
+    { title: 'Nova Notificação', route: '/notificacoes/nova', module: 'notificacoes' },
+    { title: 'Mensagens Recorrentes', route: '/notificacoes/recorrentes', module: 'notificacoes' },
+    { title: 'Mensagens Agendadas', route: '/notificacoes/agendadas', module: 'notificacoes' },
+    { title: 'Histórico de Envios', route: '/notificacoes/historico', module: 'notificacoes' },
+    { title: 'Biblioteca de Vídeos', route: '/notificacoes/videos', module: 'notificacoes' },
   ];
 
   const accountsPayableSubmenus: SubmenuItemType[] = [
-    { title: 'Nova Conta', route: '/contas-pagar/nova', module: 'accounts_payable' },
-    { title: 'Pendente Aprovação', route: '/contas-pagar/pendente-aprovacao', module: 'accounts_payable' },
-    { title: 'Autorizar Contas', route: '/contas-pagar/autorizar', module: 'accounts_payable' },
-    { title: 'Contas Aprovadas', route: '/contas-pagar/aprovadas', module: 'accounts_payable' },
-    { title: 'Contas Pagas', route: '/contas-pagar/pagas', module: 'accounts_payable' },
+    { title: 'Nova Conta', route: '/contas-pagar/nova', module: 'contas-pagar' },
+    { title: 'Pendente Aprovação', route: '/contas-pagar/pendente-aprovacao', module: 'contas-pagar' },
+    { title: 'Autorizar Contas', route: '/contas-pagar/autorizar', module: 'contas-pagar' },
+    { title: 'Contas Aprovadas', route: '/contas-pagar/aprovadas', module: 'contas-pagar' },
+    { title: 'Contas Pagas', route: '/contas-pagar/pagas', module: 'contas-pagar' },
   ];
 
   const visibleItems = menuItems.filter(item => {
@@ -245,8 +245,8 @@ const DesktopSidebar = () => {
                 </SidebarMenuItem>
               ))}
 
-              {canViewModule('accounts_payable') && (
-                <SidebarMenuItem key="accounts_payable">
+              {canViewModule('contas-pagar') && (
+                <SidebarMenuItem key="contas-pagar">
                   <CollapsibleMenuItem
                     icon={Receipt}
                     title="Contas a Pagar"
@@ -258,7 +258,7 @@ const DesktopSidebar = () => {
                     isActiveSubmenu={isActiveSubmenu(accountsPayableSubmenus)}
                   >
                     <div className="space-y-1">
-                      {accountsPayableSubmenus.filter(submenu => canViewModule(submenu.module)).map((submenu) => (
+                      {accountsPayableSubmenus.map((submenu) => (
                         <Button
                           key={submenu.route}
                           variant="ghost"
@@ -276,8 +276,8 @@ const DesktopSidebar = () => {
                 </SidebarMenuItem>
               )}
 
-              {canViewModule('reports') && (
-                <SidebarMenuItem key="reports">
+              {canViewModule('relatorios') && (
+                <SidebarMenuItem key="relatorios">
                   <CollapsibleMenuItem
                     icon={BarChart3}
                     title="Relatórios"
@@ -289,7 +289,7 @@ const DesktopSidebar = () => {
                     isActiveSubmenu={isActiveSubmenu(reportSubmenus)}
                   >
                     <div className="space-y-1">
-                      {reportSubmenus.filter(submenu => canViewModule(submenu.module)).map((submenu) => (
+                      {reportSubmenus.map((submenu) => (
                         <Button
                           key={submenu.route}
                           variant="ghost"
@@ -307,8 +307,8 @@ const DesktopSidebar = () => {
                 </SidebarMenuItem>
               )}
 
-              {canViewModule('notifications') && (
-                <SidebarMenuItem key="notifications">
+              {canViewModule('notificacoes') && (
+                <SidebarMenuItem key="notificacoes">
                   <CollapsibleMenuItem
                     icon={MessageSquare}
                     title="Notificações"
@@ -320,7 +320,7 @@ const DesktopSidebar = () => {
                     isActiveSubmenu={isActiveSubmenu(notificationSubmenus)}
                   >
                     <div className="space-y-1">
-                      {notificationSubmenus.filter(submenu => canViewModule(submenu.module)).map((submenu) => (
+                      {notificationSubmenus.map((submenu) => (
                         <Button
                           key={submenu.route}
                           variant="ghost"
@@ -338,35 +338,35 @@ const DesktopSidebar = () => {
                 </SidebarMenuItem>
               )}
 
-              {canViewModule('access_management') && (
-                <SidebarMenuItem key="access_management">
+              {canViewModule('gestao-acessos') && (
+                <SidebarMenuItem key="gestao-acessos">
                   <MenuItemComponent item={{
                     title: 'Gestão de Acessos',
                     icon: Shield,
                     route: '/gestao-acessos',
-                    module: 'access_management'
+                    module: 'gestao-acessos'
                   }} />
                 </SidebarMenuItem>
               )}
 
-              {canViewModule('documentation') && (
-                <SidebarMenuItem key="documentation">
+              {canViewModule('documentacao') && (
+                <SidebarMenuItem key="documentacao">
                   <MenuItemComponent item={{
                     title: 'Documentação',
                     icon: FileText,
                     route: '/documentacao',
-                    module: 'documentation'
+                    module: 'documentacao'
                   }} />
                 </SidebarMenuItem>
               )}
 
-              {canViewModule('settings') && (
-                <SidebarMenuItem key="settings">
+              {canViewModule('configuracoes') && (
+                <SidebarMenuItem key="configuracoes">
                   <MenuItemComponent item={{
                     title: 'Configurações',
                     icon: Settings,
                     route: '/configuracoes',
-                    module: 'settings'
+                    module: 'configuracoes'
                   }} />
                 </SidebarMenuItem>
               )}
