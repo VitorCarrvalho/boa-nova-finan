@@ -98,14 +98,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   console.log('AuthProvider - Access profile name:', accessProfileName);
                   setUserAccessProfile(accessProfileName);
                   
-                  // Buscar permissões do usuário
+                  // Buscar permissões do usuário com fallback
                   try {
-                    const { data: permissions } = await supabase.rpc('get_current_user_permissions');
-                    console.log('AuthProvider - User permissions:', permissions);
+                    console.log('AuthProvider - Tentando buscar permissões via RPC...');
+                    const { data: permissions, error: rpcError } = await supabase.rpc('get_current_user_permissions');
+                    
+                    if (rpcError) {
+                      console.warn('AuthProvider - RPC falhou, tentando fallback:', rpcError);
+                      throw rpcError;
+                    }
+                    
+                    console.log('AuthProvider - Permissões via RPC:', permissions);
                     setUserPermissions(permissions as Record<string, Record<string, boolean>> || {});
-                  } catch (permError) {
-                    console.log('AuthProvider - Erro ao buscar permissões:', permError);
-                    setUserPermissions({});
+                    
+                  } catch (rpcError) {
+                    console.warn('AuthProvider - RPC falhou, usando fallback direto...');
+                    
+                    // Fallback: buscar permissões diretamente das tabelas
+                    try {
+                      const { data: fallbackData, error: fallbackError } = await supabase
+                        .from('profiles')
+                        .select(`
+                          access_profiles!inner(
+                            permissions
+                          )
+                        `)
+                        .eq('id', session.user.id)
+                        .eq('approval_status', 'ativo')
+                        .single();
+
+                      if (fallbackError) {
+                        console.error('AuthProvider - Erro no fallback de permissões:', fallbackError);
+                        setUserPermissions({});
+                      } else {
+                        const fallbackPermissions = fallbackData?.access_profiles?.permissions || {};
+                        console.log('AuthProvider - Permissões via fallback:', fallbackPermissions);
+                        setUserPermissions(fallbackPermissions as Record<string, Record<string, boolean>>);
+                      }
+                    } catch (fallbackError) {
+                      console.error('AuthProvider - Erro fatal ao buscar permissões:', fallbackError);
+                      setUserPermissions({});
+                    }
                   }
                 } else {
                   console.log('AuthProvider - User not approved, setting worker role');
@@ -170,14 +203,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 console.log('AuthProvider - Initial access profile name:', accessProfileName);
                 setUserAccessProfile(accessProfileName);
                 
-                // Buscar permissões do usuário
+                // Buscar permissões do usuário com fallback
                 try {
-                  const { data: permissions } = await supabase.rpc('get_current_user_permissions');
-                  console.log('AuthProvider - Initial user permissions:', permissions);
+                  console.log('AuthProvider - Tentando buscar permissões iniciais via RPC...');
+                  const { data: permissions, error: rpcError } = await supabase.rpc('get_current_user_permissions');
+                  
+                  if (rpcError) {
+                    console.warn('AuthProvider - RPC inicial falhou, tentando fallback:', rpcError);
+                    throw rpcError;
+                  }
+                  
+                  console.log('AuthProvider - Permissões iniciais via RPC:', permissions);
                   setUserPermissions(permissions as Record<string, Record<string, boolean>> || {});
-                } catch (permError) {
-                  console.log('AuthProvider - Erro ao buscar permissões iniciais:', permError);
-                  setUserPermissions({});
+                  
+                } catch (rpcError) {
+                  console.warn('AuthProvider - RPC inicial falhou, usando fallback direto...');
+                  
+                  // Fallback: buscar permissões diretamente das tabelas
+                  try {
+                    const { data: fallbackData, error: fallbackError } = await supabase
+                      .from('profiles')
+                      .select(`
+                        access_profiles!inner(
+                          permissions
+                        )
+                      `)
+                      .eq('id', session.user.id)
+                      .eq('approval_status', 'ativo')
+                      .single();
+
+                    if (fallbackError) {
+                      console.error('AuthProvider - Erro no fallback inicial de permissões:', fallbackError);
+                      setUserPermissions({});
+                    } else {
+                      const fallbackPermissions = fallbackData?.access_profiles?.permissions || {};
+                      console.log('AuthProvider - Permissões iniciais via fallback:', fallbackPermissions);
+                      setUserPermissions(fallbackPermissions as Record<string, Record<string, boolean>>);
+                    }
+                  } catch (fallbackError) {
+                    console.error('AuthProvider - Erro fatal ao buscar permissões iniciais:', fallbackError);
+                    setUserPermissions({});
+                  }
                 }
               } else {
                 console.log('AuthProvider - Initial user not approved, setting worker role');
