@@ -315,6 +315,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const getUserAccessProfile = (): string | null => {
+    console.log('[AuthContext] getUserAccessProfile - Current userAccessProfile:', userAccessProfile);
+    console.log('[AuthContext] getUserAccessProfile - Current user:', user?.email);
+    console.log('[AuthContext] getUserAccessProfile - Current userRole:', userRole);
     return userAccessProfile;
   };
 

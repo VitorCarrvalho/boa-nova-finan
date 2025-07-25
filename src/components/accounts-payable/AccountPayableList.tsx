@@ -132,24 +132,31 @@ const AccountPayableList: React.FC<AccountPayableListProps> = ({
 
   // Função para verificar se o usuário pode aprovar determinado status
   const canApprove = (account: AccountPayable) => {
-    console.log(`[AccountPayableList] Checking approval permission for account ${account.id} with status ${account.status}`);
+    console.log(`[AccountPayableList] === DEBUGGING ACCOUNT APPROVAL ===`);
+    console.log(`[AccountPayableList] Account ID: ${account.id}`);
+    console.log(`[AccountPayableList] Account Status: ${account.status}`);
+    console.log(`[AccountPayableList] Current User Role: ${userRole}`);
     
     if (!userRole) {
-      console.log(`[AccountPayableList] No user role, denying approval`);
+      console.log(`[AccountPayableList] FAIL: No user role found`);
       return false;
     }
     
     // Verificar se tem permissão básica para aprovar contas-pagar
     const hasBasicPermission = hasPermission('contas-pagar', 'approve');
+    console.log(`[AccountPayableList] Basic permission check result: ${hasBasicPermission}`);
+    
     if (!hasBasicPermission) {
-      console.log(`[AccountPayableList] No basic permission for contas-pagar:approve`);
+      console.log(`[AccountPayableList] FAIL: No basic permission for contas-pagar:approve`);
       return false;
     }
     
     // Obter perfil de acesso do usuário
     const userAccessProfile = getUserAccessProfile();
+    console.log(`[AccountPayableList] User access profile returned: ${userAccessProfile}`);
+    
     if (!userAccessProfile) {
-      console.log(`[AccountPayableList] No access profile found for user`);
+      console.log(`[AccountPayableList] FAIL: No access profile found for user`);
       return false;
     }
     
@@ -160,12 +167,15 @@ const AccountPayableList: React.FC<AccountPayableListProps> = ({
       hasBasicPermission
     );
     
-    console.log(`[AccountPayableList] Approval validation result:`, validationResult);
+    console.log(`[AccountPayableList] Validation result:`, validationResult);
     
     if (!validationResult.canApprove && validationResult.reason) {
-      console.log(`[AccountPayableList] Approval denied: ${validationResult.reason}`);
+      console.log(`[AccountPayableList] FAIL: ${validationResult.reason}`);
+    } else if (validationResult.canApprove) {
+      console.log(`[AccountPayableList] SUCCESS: User can approve this account`);
     }
     
+    console.log(`[AccountPayableList] === END DEBUGGING ===`);
     return validationResult.canApprove;
   };
 
