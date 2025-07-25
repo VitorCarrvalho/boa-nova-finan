@@ -400,8 +400,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false;
     }
     
+    // Log do objeto de permissões para debug
+    console.log(`[AuthContext] userPermissions:`, userPermissions);
+    console.log(`[AuthContext] Verificando ${module}:${action}`);
+    
     const hasAccess = userPermissions[module]?.[action] === true;
-    console.log(`[AuthContext] Verificação de permissão para ${module}:${action} = ${hasAccess}`);
+    console.log(`[AuthContext] Resultado da verificação: ${hasAccess}`);
+    
     return hasAccess;
   };
 

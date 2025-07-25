@@ -36,32 +36,33 @@ export const usePermissions = () => {
   };
 
   // Funções específicas para submódulos de contas a pagar
+  // As permissões dos submódulos estão aninhadas dentro do módulo principal 'contas-pagar'
   const canViewPaidAccounts = (): boolean => {
-    return hasPermission('paid_accounts', 'view');
+    return hasPermission('contas-pagar', 'view') || hasPermission('paid_accounts', 'view');
   };
 
   const canViewPendingApproval = (): boolean => {
-    return hasPermission('pending_approval', 'view');
+    return hasPermission('contas-pagar', 'view') || hasPermission('pending_approval', 'view');
   };
 
   const canViewAuthorizeAccounts = (): boolean => {
-    return hasPermission('authorize_accounts', 'view');
+    return hasPermission('contas-pagar', 'approve') || hasPermission('authorize_accounts', 'view');
   };
 
   const canViewApprovedAccounts = (): boolean => {
-    return hasPermission('approved_accounts', 'view');
+    return hasPermission('contas-pagar', 'view') || hasPermission('approved_accounts', 'view');
   };
 
   const canViewNewAccount = (): boolean => {
-    return hasPermission('new_account', 'view');
+    return hasPermission('contas-pagar', 'insert') || hasPermission('new_account', 'view');
   };
 
   const canExportPaidAccounts = (): boolean => {
-    return hasPermission('paid_accounts', 'export');
+    return hasPermission('contas-pagar', 'export') || hasPermission('paid_accounts', 'export');
   };
 
   const canExportApprovedAccounts = (): boolean => {
-    return hasPermission('approved_accounts', 'export');
+    return hasPermission('contas-pagar', 'export') || hasPermission('approved_accounts', 'export');
   };
 
   return {
