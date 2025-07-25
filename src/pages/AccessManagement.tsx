@@ -8,6 +8,7 @@ import MobileAccessTabs from '@/components/access-management/MobileAccessTabs';
 import MobilePendingApprovals from '@/components/access-management/MobilePendingApprovals';
 import MobileProfileConfiguration from '@/components/access-management/MobileProfileConfiguration';
 import MobileUserManagement from '@/components/access-management/MobileUserManagement';
+import PermissionsDiagnostic from '@/components/access-management/PermissionsDiagnostic';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const AccessManagement = () => {
@@ -22,6 +23,8 @@ const AccessManagement = () => {
             Gerencie usuários, perfis e permissões do sistema
           </p>
         </div>
+
+        <PermissionsDiagnostic />
 
         <Tabs defaultValue="pending" className="w-full">
           {isMobile ? (

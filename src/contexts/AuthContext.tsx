@@ -98,47 +98,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   console.log('AuthProvider - Access profile name:', accessProfileName);
                   setUserAccessProfile(accessProfileName);
                   
-                  // Buscar permissões do usuário com fallback
+                  // Buscar permissões do usuário - usar diretamente o fallback que sabemos que funciona
+                  console.log('AuthProvider - Buscando permissões via fallback direto...');
                   try {
-                    console.log('AuthProvider - Tentando buscar permissões via RPC...');
-                    const { data: permissions, error: rpcError } = await supabase.rpc('get_current_user_permissions');
-                    
-                    if (rpcError) {
-                      console.warn('AuthProvider - RPC falhou, tentando fallback:', rpcError);
-                      throw rpcError;
-                    }
-                    
-                    console.log('AuthProvider - Permissões via RPC:', permissions);
-                    setUserPermissions(permissions as Record<string, Record<string, boolean>> || {});
-                    
-                  } catch (rpcError) {
-                    console.warn('AuthProvider - RPC falhou, usando fallback direto...');
-                    
-                    // Fallback: buscar permissões diretamente das tabelas
-                    try {
-                      const { data: fallbackData, error: fallbackError } = await supabase
-                        .from('profiles')
-                        .select(`
-                          access_profiles!inner(
-                            permissions
-                          )
-                        `)
-                        .eq('id', session.user.id)
-                        .eq('approval_status', 'ativo')
-                        .single();
+                    const { data: fallbackData, error: fallbackError } = await supabase
+                      .from('profiles')
+                      .select(`
+                        access_profiles!inner(
+                          permissions
+                        )
+                      `)
+                      .eq('id', session.user.id)
+                      .eq('approval_status', 'ativo')
+                      .single();
 
-                      if (fallbackError) {
-                        console.error('AuthProvider - Erro no fallback de permissões:', fallbackError);
-                        setUserPermissions({});
-                      } else {
-                        const fallbackPermissions = fallbackData?.access_profiles?.permissions || {};
-                        console.log('AuthProvider - Permissões via fallback:', fallbackPermissions);
-                        setUserPermissions(fallbackPermissions as Record<string, Record<string, boolean>>);
-                      }
-                    } catch (fallbackError) {
-                      console.error('AuthProvider - Erro fatal ao buscar permissões:', fallbackError);
+                    if (fallbackError) {
+                      console.error('AuthProvider - Erro no fallback de permissões:', fallbackError);
                       setUserPermissions({});
+                    } else {
+                      const fallbackPermissions = fallbackData?.access_profiles?.permissions || {};
+                      console.log('AuthProvider - Permissões via fallback:', fallbackPermissions);
+                      setUserPermissions(fallbackPermissions as Record<string, Record<string, boolean>>);
                     }
+                  } catch (fallbackError) {
+                    console.error('AuthProvider - Erro fatal ao buscar permissões:', fallbackError);
+                    setUserPermissions({});
                   }
                 } else {
                   console.log('AuthProvider - User not approved, setting worker role');
@@ -203,47 +187,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 console.log('AuthProvider - Initial access profile name:', accessProfileName);
                 setUserAccessProfile(accessProfileName);
                 
-                // Buscar permissões do usuário com fallback
+                // Buscar permissões do usuário - usar diretamente o fallback que sabemos que funciona
+                console.log('AuthProvider - Buscando permissões iniciais via fallback direto...');
                 try {
-                  console.log('AuthProvider - Tentando buscar permissões iniciais via RPC...');
-                  const { data: permissions, error: rpcError } = await supabase.rpc('get_current_user_permissions');
-                  
-                  if (rpcError) {
-                    console.warn('AuthProvider - RPC inicial falhou, tentando fallback:', rpcError);
-                    throw rpcError;
-                  }
-                  
-                  console.log('AuthProvider - Permissões iniciais via RPC:', permissions);
-                  setUserPermissions(permissions as Record<string, Record<string, boolean>> || {});
-                  
-                } catch (rpcError) {
-                  console.warn('AuthProvider - RPC inicial falhou, usando fallback direto...');
-                  
-                  // Fallback: buscar permissões diretamente das tabelas
-                  try {
-                    const { data: fallbackData, error: fallbackError } = await supabase
-                      .from('profiles')
-                      .select(`
-                        access_profiles!inner(
-                          permissions
-                        )
-                      `)
-                      .eq('id', session.user.id)
-                      .eq('approval_status', 'ativo')
-                      .single();
+                  const { data: fallbackData, error: fallbackError } = await supabase
+                    .from('profiles')
+                    .select(`
+                      access_profiles!inner(
+                        permissions
+                      )
+                    `)
+                    .eq('id', session.user.id)
+                    .eq('approval_status', 'ativo')
+                    .single();
 
-                    if (fallbackError) {
-                      console.error('AuthProvider - Erro no fallback inicial de permissões:', fallbackError);
-                      setUserPermissions({});
-                    } else {
-                      const fallbackPermissions = fallbackData?.access_profiles?.permissions || {};
-                      console.log('AuthProvider - Permissões iniciais via fallback:', fallbackPermissions);
-                      setUserPermissions(fallbackPermissions as Record<string, Record<string, boolean>>);
-                    }
-                  } catch (fallbackError) {
-                    console.error('AuthProvider - Erro fatal ao buscar permissões iniciais:', fallbackError);
+                  if (fallbackError) {
+                    console.error('AuthProvider - Erro no fallback inicial de permissões:', fallbackError);
                     setUserPermissions({});
+                  } else {
+                    const fallbackPermissions = fallbackData?.access_profiles?.permissions || {};
+                    console.log('AuthProvider - Permissões iniciais via fallback:', fallbackPermissions);
+                    setUserPermissions(fallbackPermissions as Record<string, Record<string, boolean>>);
                   }
+                } catch (fallbackError) {
+                  console.error('AuthProvider - Erro fatal ao buscar permissões iniciais:', fallbackError);
+                  setUserPermissions({});
                 }
               } else {
                 console.log('AuthProvider - Initial user not approved, setting worker role');
@@ -395,14 +363,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     // Para outros usuários, verificar permissões
-    if (!userPermissions) {
-      console.log(`[AuthContext] Sem permissões para usuário, negando acesso a ${module}:${action}`);
+    if (!userPermissions || Object.keys(userPermissions).length === 0) {
+      console.log(`[AuthContext] Sem permissões ou permissões vazias para usuário, negando acesso a ${module}:${action}`);
       return false;
     }
     
     // Log do objeto de permissões para debug
     console.log(`[AuthContext] userPermissions:`, userPermissions);
     console.log(`[AuthContext] Verificando ${module}:${action}`);
+    console.log(`[AuthContext] userPermissions[${module}]:`, userPermissions[module]);
     
     const hasAccess = userPermissions[module]?.[action] === true;
     console.log(`[AuthContext] Resultado da verificação: ${hasAccess}`);
