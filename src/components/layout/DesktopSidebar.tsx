@@ -61,7 +61,14 @@ const DesktopSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut } = useAuth();
-  const { canViewModule } = usePermissions();
+  const { 
+    canViewModule,
+    canViewPaidAccounts,
+    canViewPendingApproval,
+    canViewAuthorizeAccounts,
+    canViewApprovedAccounts,
+    canViewNewAccount
+  } = usePermissions();
   const { data: congregationAccess } = useUserCongregationAccess();
   const hasAccessToAnyCongregation = congregationAccess?.hasAccess || false;
   const { state } = useSidebar();
@@ -257,21 +264,28 @@ const DesktopSidebar = () => {
                     }}
                     isActiveSubmenu={isActiveSubmenu(accountsPayableSubmenus)}
                   >
-                    <div className="space-y-1">
-                      {accountsPayableSubmenus.map((submenu) => (
-                        <Button
-                          key={submenu.route}
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(submenu.route)}
-                          className={`w-full justify-start text-sm ${
-                            isActiveRoute(submenu.route) ? 'bg-muted' : ''
-                          }`}
-                        >
-                          {submenu.title}
-                        </Button>
-                      ))}
-                    </div>
+                     <div className="space-y-1">
+                       {accountsPayableSubmenus.filter(submenu => {
+                         if (submenu.route === '/contas-pagar/nova') return canViewNewAccount();
+                         if (submenu.route === '/contas-pagar/pendente-aprovacao') return canViewPendingApproval();
+                         if (submenu.route === '/contas-pagar/autorizar') return canViewAuthorizeAccounts();
+                         if (submenu.route === '/contas-pagar/aprovadas') return canViewApprovedAccounts();
+                         if (submenu.route === '/contas-pagar/pagas') return canViewPaidAccounts();
+                         return canViewModule('contas-pagar');
+                       }).map((submenu) => (
+                         <Button
+                           key={submenu.route}
+                           variant="ghost"
+                           size="sm"
+                           onClick={() => navigate(submenu.route)}
+                           className={`w-full justify-start text-sm ${
+                             isActiveRoute(submenu.route) ? 'bg-muted' : ''
+                           }`}
+                         >
+                           {submenu.title}
+                         </Button>
+                       ))}
+                     </div>
                   </CollapsibleMenuItem>
                 </SidebarMenuItem>
               )}
