@@ -11,7 +11,9 @@ interface AuthContextType {
   session: Session | null;
   userRole: UserRole | null;
   userPermissions: Record<string, Record<string, boolean>> | null;
+  userAccessProfile: string | null;
   hasPermission: (module: string, action: string) => boolean;
+  getUserAccessProfile: () => string | null;
   signUp: (email: string, password: string, name: string, congregationId?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -54,6 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [userPermissions, setUserPermissions] = useState<Record<string, Record<string, boolean>> | null>(null);
+  const [userAccessProfile, setUserAccessProfile] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -85,10 +88,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUserRole('worker'); // Role padrão
                 setUserPermissions(null);
               } else {
-                // Only set role if user is approved
+                 // Only set role if user is approved
                 if (profile?.approval_status === 'ativo') {
                   console.log('AuthProvider - Setting user role:', profile.role);
                   setUserRole(profile?.role ?? 'worker');
+                  
+                  // Extrair nome do perfil de acesso
+                  const accessProfileName = profile?.access_profiles?.name || null;
+                  console.log('AuthProvider - Access profile name:', accessProfileName);
+                  setUserAccessProfile(accessProfileName);
                   
                   // Buscar permissões do usuário
                   try {
@@ -103,6 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   console.log('AuthProvider - User not approved, setting worker role');
                   setUserRole('worker'); // Pending/rejected users get worker role (no access)
                   setUserPermissions(null);
+                  setUserAccessProfile(null);
                 }
               }
             } catch (err) {
@@ -115,6 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('AuthProvider - No user, clearing role and permissions');
           setUserRole(null);
           setUserPermissions(null);
+          setUserAccessProfile(null);
         }
         
         setLoading(false);
@@ -155,6 +165,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 console.log('AuthProvider - Setting initial user role:', profile.role);
                 setUserRole(profile?.role ?? 'worker');
                 
+                // Extrair nome do perfil de acesso
+                const accessProfileName = profile?.access_profiles?.name || null;
+                console.log('AuthProvider - Initial access profile name:', accessProfileName);
+                setUserAccessProfile(accessProfileName);
+                
                 // Buscar permissões do usuário
                 try {
                   const { data: permissions } = await supabase.rpc('get_current_user_permissions');
@@ -168,11 +183,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 console.log('AuthProvider - Initial user not approved, setting worker role');
                 setUserRole('worker'); // Pending/rejected users get worker role (no access)
                 setUserPermissions(null);
+                setUserAccessProfile(null);
               }
             } catch (err) {
               console.log('AuthProvider - Erro ao buscar perfil inicial:', err);
               setUserRole('worker');
               setUserPermissions(null);
+              setUserAccessProfile(null);
             }
           }, 100);
         }
@@ -297,6 +314,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const getUserAccessProfile = (): string | null => {
+    return userAccessProfile;
+  };
+
   const hasPermission = (module: string, action: string): boolean => {
     // Superadmins e admins têm acesso completo a todos os módulos
     if (userRole === 'superadmin' || userRole === 'admin') {
@@ -320,7 +341,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     userRole,
     userPermissions,
+    userAccessProfile,
     hasPermission,
+    getUserAccessProfile,
     signUp,
     signIn,
     signOut,

@@ -12,6 +12,7 @@ import { AccountPayable, useApproveAccount, useRejectAccount, useMarkAsPaid } fr
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { validateApprovalPermission, canApproveAtLevel } from '@/utils/accountsPayableUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MobileTableCard } from '@/components/ui/mobile-table-card';
 import { format } from 'date-fns';
@@ -44,7 +45,7 @@ const AccountPayableList: React.FC<AccountPayableListProps> = ({
   const [paymentNotes, setPaymentNotes] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
-  const { userRole } = useAuth();
+  const { userRole, getUserAccessProfile } = useAuth();
   const { hasPermission } = usePermissions();
   const isMobile = useIsMobile();
   const approveMutation = useApproveAccount();
@@ -131,22 +132,41 @@ const AccountPayableList: React.FC<AccountPayableListProps> = ({
 
   // Função para verificar se o usuário pode aprovar determinado status
   const canApprove = (account: AccountPayable) => {
-    if (!userRole) return false;
+    console.log(`[AccountPayableList] Checking approval permission for account ${account.id} with status ${account.status}`);
+    
+    if (!userRole) {
+      console.log(`[AccountPayableList] No user role, denying approval`);
+      return false;
+    }
     
     // Verificar se tem permissão básica para aprovar contas-pagar
-    if (!hasPermission('contas-pagar', 'approve')) return false;
-    
-    // Mapear status para níveis de aprovação baseado nos perfis
-    // Por enquanto, simplificado - todos com permissão de approve podem aprovar qualquer nível
-    // Futuramente pode ser refinado com verificações mais granulares por nível
-    switch (account.status) {
-      case 'pending_management':
-      case 'pending_director':
-      case 'pending_president':
-        return hasPermission('contas-pagar', 'approve');
-      default:
-        return false;
+    const hasBasicPermission = hasPermission('contas-pagar', 'approve');
+    if (!hasBasicPermission) {
+      console.log(`[AccountPayableList] No basic permission for contas-pagar:approve`);
+      return false;
     }
+    
+    // Obter perfil de acesso do usuário
+    const userAccessProfile = getUserAccessProfile();
+    if (!userAccessProfile) {
+      console.log(`[AccountPayableList] No access profile found for user`);
+      return false;
+    }
+    
+    // Validar permissão de aprovação hierárquica
+    const validationResult = validateApprovalPermission(
+      userAccessProfile, 
+      account.status as any, 
+      hasBasicPermission
+    );
+    
+    console.log(`[AccountPayableList] Approval validation result:`, validationResult);
+    
+    if (!validationResult.canApprove && validationResult.reason) {
+      console.log(`[AccountPayableList] Approval denied: ${validationResult.reason}`);
+    }
+    
+    return validationResult.canApprove;
   };
 
   const handleMarkAsPaid = (account: AccountPayable) => {

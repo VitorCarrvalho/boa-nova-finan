@@ -303,8 +303,59 @@ export const useApproveAccount = () => {
       approvalLevel: 'management' | 'director' | 'president';
       notes?: string;
     }) => {
+      console.log(`[useApproveAccount] Starting approval process for account ${accountId} at level ${approvalLevel}`);
+      
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Usuário não autenticado');
+
+      // Buscar perfil do usuário e dados da conta
+      const [profileResult, accountResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('role, approval_status, access_profiles(name)')
+          .eq('id', user.user.id)
+          .single(),
+        supabase
+          .from('accounts_payable')
+          .select('status')
+          .eq('id', accountId)
+          .single()
+      ]);
+
+      const { data: profile, error: profileError } = profileResult;
+      const { data: account, error: accountError } = accountResult;
+
+      if (profileError || !profile) {
+        console.error('[useApproveAccount] Profile error:', profileError);
+        throw new Error('Erro ao verificar perfil do usuário');
+      }
+
+      if (accountError || !account) {
+        console.error('[useApproveAccount] Account error:', accountError);
+        throw new Error('Erro ao verificar dados da conta');
+      }
+
+      // Verificar se o usuário tem o perfil correto para aprovar este nível
+      const userAccessProfile = profile?.access_profiles?.name;
+      
+      if (!userAccessProfile) {
+        throw new Error('Usuário sem perfil de acesso definido');
+      }
+
+      console.log(`[useApproveAccount] User profile: ${userAccessProfile}, Required level: ${approvalLevel}, Account status: ${account.status}`);
+
+      // Verificar se o perfil pode aprovar este nível específico
+      const { validateApprovalPermission } = await import('@/utils/accountsPayableUtils');
+      const validationResult = validateApprovalPermission(
+        userAccessProfile, 
+        account.status as any, 
+        true // Já validado que tem permissão básica
+      );
+
+      if (!validationResult.canApprove) {
+        console.error('[useApproveAccount] Validation failed:', validationResult.reason);
+        throw new Error(validationResult.reason || 'Sem permissão para aprovar neste nível');
+      }
 
       // Determinar próximo status
       let nextStatus: string;
@@ -321,6 +372,8 @@ export const useApproveAccount = () => {
         default:
           throw new Error('Nível de aprovação inválido');
       }
+
+      console.log(`[useApproveAccount] Updating account status to: ${nextStatus}`);
 
       // Atualizar status da conta
       const { error: updateError } = await supabase
@@ -345,6 +398,8 @@ export const useApproveAccount = () => {
         });
 
       if (approvalError) throw approvalError;
+      
+      console.log(`[useApproveAccount] Account approved successfully`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts-payable'] });
@@ -379,8 +434,61 @@ export const useRejectAccount = () => {
       approvalLevel: 'management' | 'director' | 'president';
       reason: string;
     }) => {
+      console.log(`[useRejectAccount] Starting rejection process for account ${accountId} at level ${approvalLevel}`);
+      
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Usuário não autenticado');
+
+      // Buscar perfil do usuário e dados da conta
+      const [profileResult, accountResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('role, approval_status, access_profiles(name)')
+          .eq('id', user.user.id)
+          .single(),
+        supabase
+          .from('accounts_payable')
+          .select('status')
+          .eq('id', accountId)
+          .single()
+      ]);
+
+      const { data: profile, error: profileError } = profileResult;
+      const { data: account, error: accountError } = accountResult;
+
+      if (profileError || !profile) {
+        console.error('[useRejectAccount] Profile error:', profileError);
+        throw new Error('Erro ao verificar perfil do usuário');
+      }
+
+      if (accountError || !account) {
+        console.error('[useRejectAccount] Account error:', accountError);
+        throw new Error('Erro ao verificar dados da conta');
+      }
+
+      // Verificar se o usuário tem o perfil correto para rejeitar este nível
+      const userAccessProfile = profile?.access_profiles?.name;
+      
+      if (!userAccessProfile) {
+        throw new Error('Usuário sem perfil de acesso definido');
+      }
+
+      console.log(`[useRejectAccount] User profile: ${userAccessProfile}, Required level: ${approvalLevel}, Account status: ${account.status}`);
+
+      // Verificar se o perfil pode rejeitar este nível específico
+      const { validateApprovalPermission } = await import('@/utils/accountsPayableUtils');
+      const validationResult = validateApprovalPermission(
+        userAccessProfile, 
+        account.status as any, 
+        true // Já validado que tem permissão básica
+      );
+
+      if (!validationResult.canApprove) {
+        console.error('[useRejectAccount] Validation failed:', validationResult.reason);
+        throw new Error(validationResult.reason || 'Sem permissão para rejeitar neste nível');
+      }
+
+      console.log(`[useRejectAccount] Rejecting account with reason: ${reason}`);
 
       // Atualizar status da conta para rejeitado
       const { error: updateError } = await supabase
@@ -406,6 +514,8 @@ export const useRejectAccount = () => {
         });
 
       if (approvalError) throw approvalError;
+      
+      console.log(`[useRejectAccount] Account rejected successfully`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts-payable'] });
