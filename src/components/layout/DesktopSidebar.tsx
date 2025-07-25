@@ -11,7 +11,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -263,8 +265,8 @@ const DesktopSidebar = () => {
                       if (!accountsPayableOpen) navigate('/contas-pagar');
                     }}
                     isActiveSubmenu={isActiveSubmenu(accountsPayableSubmenus)}
-                  >
-                     <div className="space-y-1">
+                   >
+                     <SidebarMenuSub>
                        {accountsPayableSubmenus.filter(submenu => {
                          if (submenu.route === '/contas-pagar/nova') return canViewNewAccount();
                          if (submenu.route === '/contas-pagar/pendente-aprovacao') return canViewPendingApproval();
@@ -273,19 +275,16 @@ const DesktopSidebar = () => {
                          if (submenu.route === '/contas-pagar/pagas') return canViewPaidAccounts();
                          return canViewModule('contas-pagar');
                        }).map((submenu) => (
-                         <Button
-                           key={submenu.route}
-                           variant="ghost"
-                           size="sm"
-                           onClick={() => navigate(submenu.route)}
-                           className={`w-full justify-start text-sm ${
-                             isActiveRoute(submenu.route) ? 'bg-muted' : ''
-                           }`}
-                         >
-                           {submenu.title}
-                         </Button>
+                         <SidebarMenuSubItem key={submenu.route}>
+                           <SidebarMenuSubButton
+                             onClick={() => navigate(submenu.route)}
+                             className={isActiveRoute(submenu.route) ? 'bg-muted' : ''}
+                           >
+                             {submenu.title}
+                           </SidebarMenuSubButton>
+                         </SidebarMenuSubItem>
                        ))}
-                     </div>
+                     </SidebarMenuSub>
                   </CollapsibleMenuItem>
                 </SidebarMenuItem>
               )}
@@ -302,21 +301,18 @@ const DesktopSidebar = () => {
                     }}
                     isActiveSubmenu={isActiveSubmenu(reportSubmenus)}
                   >
-                    <div className="space-y-1">
+                    <SidebarMenuSub>
                       {reportSubmenus.map((submenu) => (
-                        <Button
-                          key={submenu.route}
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(submenu.route)}
-                          className={`w-full justify-start text-sm ${
-                            isActiveRoute(submenu.route) ? 'bg-muted' : ''
-                          }`}
-                        >
-                          {submenu.title}
-                        </Button>
+                        <SidebarMenuSubItem key={submenu.route}>
+                          <SidebarMenuSubButton
+                            onClick={() => navigate(submenu.route)}
+                            className={isActiveRoute(submenu.route) ? 'bg-muted' : ''}
+                          >
+                            {submenu.title}
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
                       ))}
-                    </div>
+                    </SidebarMenuSub>
                   </CollapsibleMenuItem>
                 </SidebarMenuItem>
               )}
@@ -333,21 +329,18 @@ const DesktopSidebar = () => {
                     }}
                     isActiveSubmenu={isActiveSubmenu(notificationSubmenus)}
                   >
-                    <div className="space-y-1">
+                    <SidebarMenuSub>
                       {notificationSubmenus.map((submenu) => (
-                        <Button
-                          key={submenu.route}
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(submenu.route)}
-                          className={`w-full justify-start text-sm ${
-                            isActiveRoute(submenu.route) ? 'bg-muted' : ''
-                          }`}
-                        >
-                          {submenu.title}
-                        </Button>
+                        <SidebarMenuSubItem key={submenu.route}>
+                          <SidebarMenuSubButton
+                            onClick={() => navigate(submenu.route)}
+                            className={isActiveRoute(submenu.route) ? 'bg-muted' : ''}
+                          >
+                            {submenu.title}
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
                       ))}
-                    </div>
+                    </SidebarMenuSub>
                   </CollapsibleMenuItem>
                 </SidebarMenuItem>
               )}
