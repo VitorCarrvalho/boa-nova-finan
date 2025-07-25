@@ -256,92 +256,34 @@ const DesktopSidebar = () => {
 
               {canViewModule('contas-pagar') && (
                 <SidebarMenuItem key="contas-pagar">
-                  <CollapsibleMenuItem
-                    icon={Receipt}
-                    title="Contas a Pagar"
-                    isOpen={accountsPayableOpen}
-                    onToggle={() => {
-                      setAccountsPayableOpen(!accountsPayableOpen);
-                      if (!accountsPayableOpen) navigate('/contas-pagar');
-                    }}
-                    isActiveSubmenu={isActiveSubmenu(accountsPayableSubmenus)}
-                   >
-                     <SidebarMenuSub>
-                       {accountsPayableSubmenus.filter(submenu => {
-                         if (submenu.route === '/contas-pagar/nova') return canViewNewAccount();
-                         if (submenu.route === '/contas-pagar/pendente-aprovacao') return canViewPendingApproval();
-                         if (submenu.route === '/contas-pagar/autorizar') return canViewAuthorizeAccounts();
-                         if (submenu.route === '/contas-pagar/aprovadas') return canViewApprovedAccounts();
-                         if (submenu.route === '/contas-pagar/pagas') return canViewPaidAccounts();
-                         return canViewModule('contas-pagar');
-                       }).map((submenu) => (
-                         <SidebarMenuSubItem key={submenu.route}>
-                           <SidebarMenuSubButton
-                             onClick={() => navigate(submenu.route)}
-                             className={isActiveRoute(submenu.route) ? 'bg-muted' : ''}
-                           >
-                             {submenu.title}
-                           </SidebarMenuSubButton>
-                         </SidebarMenuSubItem>
-                       ))}
-                     </SidebarMenuSub>
-                  </CollapsibleMenuItem>
+                  <MenuItemComponent item={{
+                    title: 'Contas a Pagar',
+                    icon: Receipt,
+                    route: '/contas-pagar',
+                    module: 'contas-pagar'
+                  }} />
                 </SidebarMenuItem>
               )}
 
               {canViewModule('relatorios') && (
                 <SidebarMenuItem key="relatorios">
-                  <CollapsibleMenuItem
-                    icon={BarChart3}
-                    title="Relatórios"
-                    isOpen={reportsOpen}
-                    onToggle={() => {
-                      setReportsOpen(!reportsOpen);
-                      if (!reportsOpen) navigate('/relatorios');
-                    }}
-                    isActiveSubmenu={isActiveSubmenu(reportSubmenus)}
-                  >
-                    <SidebarMenuSub>
-                      {reportSubmenus.map((submenu) => (
-                        <SidebarMenuSubItem key={submenu.route}>
-                          <SidebarMenuSubButton
-                            onClick={() => navigate(submenu.route)}
-                            className={isActiveRoute(submenu.route) ? 'bg-muted' : ''}
-                          >
-                            {submenu.title}
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleMenuItem>
+                  <MenuItemComponent item={{
+                    title: 'Relatórios',
+                    icon: BarChart3,
+                    route: '/relatorios',
+                    module: 'relatorios'
+                  }} />
                 </SidebarMenuItem>
               )}
 
               {canViewModule('notificacoes') && (
                 <SidebarMenuItem key="notificacoes">
-                  <CollapsibleMenuItem
-                    icon={MessageSquare}
-                    title="Notificações"
-                    isOpen={notificationsOpen}
-                    onToggle={() => {
-                      setNotificationsOpen(!notificationsOpen);
-                      if (!notificationsOpen) navigate('/notificacoes');
-                    }}
-                    isActiveSubmenu={isActiveSubmenu(notificationSubmenus)}
-                  >
-                    <SidebarMenuSub>
-                      {notificationSubmenus.map((submenu) => (
-                        <SidebarMenuSubItem key={submenu.route}>
-                          <SidebarMenuSubButton
-                            onClick={() => navigate(submenu.route)}
-                            className={isActiveRoute(submenu.route) ? 'bg-muted' : ''}
-                          >
-                            {submenu.title}
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleMenuItem>
+                  <MenuItemComponent item={{
+                    title: 'Notificações',
+                    icon: MessageSquare,
+                    route: '/notificacoes',
+                    module: 'notificacoes'
+                  }} />
                 </SidebarMenuItem>
               )}
 

@@ -32,6 +32,8 @@ import ScheduledMessages from "@/pages/notifications/ScheduledMessages";
 import SentHistory from "@/pages/notifications/SentHistory";
 import VideoLibrary from "@/pages/notifications/VideoLibrary";
 import RecurringMessages from "@/pages/notifications/RecurringMessages";
+import ReportsMenu from "@/pages/ReportsMenu";
+import AccountsPayableMenu from "@/pages/AccountsPayableMenu";
 
 // Import report pages
 import EventsReports from "@/pages/reports/EventsReports";
@@ -120,9 +122,11 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              {/* Reports Routes - Main route redirects to first submenu */}
+              {/* Reports Routes */}
               <Route path="/relatorios" element={
-                <Navigate to="/relatorios/financeiro" replace />
+                <ProtectedRoute>
+                  <ReportsMenu />
+                </ProtectedRoute>
               } />
               
               <Route path="/relatorios/eventos" element={
@@ -155,9 +159,11 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              {/* Notifications Routes - Main route redirects to first submenu */}
+              {/* Notifications Routes */}
               <Route path="/notificacoes" element={
-                <Navigate to="/notificacoes/nova" replace />
+                <ProtectedRoute>
+                  <Notifications />
+                </ProtectedRoute>
               } />
               
               <Route path="/notificacoes/nova" element={
@@ -209,9 +215,11 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              {/* Accounts Payable Routes - Main route redirects to first submenu */}
+              {/* Accounts Payable Routes */}
               <Route path="/contas-pagar" element={
-                <Navigate to="/contas-pagar/nova" replace />
+                <ProtectedRoute>
+                  <AccountsPayableMenu />
+                </ProtectedRoute>
               } />
               
               <Route path="/contas-pagar/nova" element={
