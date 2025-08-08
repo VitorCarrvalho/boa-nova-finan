@@ -5,6 +5,7 @@ import { useImageUpload } from '@/hooks/useImageUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 interface UserProfile {
   name: string;
@@ -103,6 +104,7 @@ const HeaderProfile: React.FC = () => {
 
   return (
     <div className="flex items-center gap-3">
+      <ThemeToggle />
       <div className="relative group">
         <Avatar className="w-8 h-8 cursor-pointer border-2 border-primary/20">
           <AvatarImage src={profile.photo_url} alt="Foto do perfil" />
