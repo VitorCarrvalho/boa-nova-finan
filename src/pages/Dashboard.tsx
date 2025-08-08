@@ -64,8 +64,8 @@ const Dashboard = () => {
     return (
       <Layout>
         <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando dados...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Carregando dados...</p>
         </div>
       </Layout>
     );
@@ -85,17 +85,17 @@ const Dashboard = () => {
       onClick={() => handleCardClick(route)}
     >
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-gray-600">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
         <div className="flex items-center gap-2">
           {trend && (
-            <div className="h-2 w-8 bg-gray-200 rounded overflow-hidden">
-              <div className={`h-full ${color.includes('red') ? 'bg-red-500' : 'bg-green-500'} rounded`} style={{width: '60%'}}></div>
+            <div className="h-2 w-8 bg-muted rounded overflow-hidden">
+              <div className={`h-full ${color.includes('red') ? 'bg-destructive' : 'bg-primary'} rounded`} style={{width: '60%'}}></div>
             </div>
           )}
           <Icon className={`h-4 w-4 ${color} group-hover:scale-110 transition-transform`} />
-          <ArrowUpRight className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
+          <ArrowUpRight className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition-colors" />
         </div>
       </CardHeader>
       <CardContent>
@@ -103,7 +103,7 @@ const Dashboard = () => {
           {value}
         </div>
         <div className="flex items-center justify-between mt-1">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             {description}
           </p>
           {trend && (
@@ -119,7 +119,7 @@ const Dashboard = () => {
   const SectionTitle = ({ icon, title }: { icon: string; title: string }) => (
     <div className="flex items-center gap-2 mb-4">
       <span className="text-lg">{icon}</span>
-      <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
     </div>
   );
 
@@ -128,10 +128,10 @@ const Dashboard = () => {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className={`font-bold text-gray-900 ${isMobile ? 'text-2xl' : 'text-3xl'}`}>
+          <h1 className={`font-bold text-foreground ${isMobile ? 'text-2xl' : 'text-3xl'}`}>
             Dashboard
           </h1>
-          <p className={`text-gray-600 mt-2 ${isMobile ? 'text-sm' : ''}`}>
+          <p className={`text-muted-foreground mt-2 ${isMobile ? 'text-sm' : ''}`}>
             Bem-vindo ao sistema de gestão da igreja
           </p>
         </div>
@@ -178,7 +178,7 @@ const Dashboard = () => {
         {/* Financial Section */}
         {canViewModule('financeiro') && (
           <section>
-            <h2 className={`font-semibold text-gray-800 mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
+            <h2 className={`font-semibold text-foreground mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
               💰 Financeiro
             </h2>
             <MobileDashboardGrid>
@@ -224,7 +224,7 @@ const Dashboard = () => {
         {/* Members Section */}
         {canViewModule('membros') && (
           <section>
-            <h2 className={`font-semibold text-gray-800 mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
+            <h2 className={`font-semibold text-foreground mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
               👥 Membros
             </h2>
             <MobileDashboardGrid>
@@ -260,7 +260,7 @@ const Dashboard = () => {
         {/* Events Section */}
         {canViewModule('eventos') && (
           <section>
-            <h2 className={`font-semibold text-gray-800 mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
+            <h2 className={`font-semibold text-foreground mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
               📅 Eventos
             </h2>
             <MobileDashboardGrid>
@@ -287,7 +287,7 @@ const Dashboard = () => {
         {/* Notifications Section */}
         {canViewModule('notificacoes') && (
           <section>
-            <h2 className={`font-semibold text-gray-800 mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
+            <h2 className={`font-semibold text-foreground mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
               🔔 Notificações
             </h2>
             <MobileDashboardGrid>
@@ -313,7 +313,7 @@ const Dashboard = () => {
 
         {/* System Section */}
         <section>
-          <h2 className={`font-semibold text-gray-800 mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
+          <h2 className={`font-semibold text-foreground mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
             ⚙️ Sistema
           </h2>
           <MobileDashboardGrid>
@@ -368,7 +368,7 @@ const Dashboard = () => {
 
         {/* Recent Activities */}
         <section>
-          <h2 className={`font-semibold text-gray-800 mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
+          <h2 className={`font-semibold text-foreground mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
             🕓 Atividades Recentes
           </h2>
           <Card>
