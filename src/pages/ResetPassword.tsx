@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,22 +12,39 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [validToken, setValidToken] = useState(false);
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Função para parsear parâmetros do fragment (#) da URL
+  const parseUrlFragment = () => {
+    const fragment = window.location.hash.slice(1); // Remove o #
+    const params: Record<string, string> = {};
+    
+    if (fragment) {
+      const pairs = fragment.split('&');
+      pairs.forEach(pair => {
+        const [key, value] = pair.split('=');
+        if (key && value) {
+          params[decodeURIComponent(key)] = decodeURIComponent(value);
+        }
+      });
+    }
+    
+    return params;
+  };
+
   useEffect(() => {
     // DEBUG: Mostrar todos os parâmetros recebidos na URL
-    const allParams = Object.fromEntries(searchParams.entries());
-    console.log('🔍 Todos os parâmetros da URL:', allParams);
+    const fragmentParams = parseUrlFragment();
+    console.log('🔍 Parâmetros do fragment (#):', fragmentParams);
     console.log('🔍 URL completa:', window.location.href);
     
-    // Verificar se temos os parâmetros necessários do link de reset
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    const type = searchParams.get('type');
-    const error = searchParams.get('error');
-    const errorDescription = searchParams.get('error_description');
+    // Extrair parâmetros necessários do fragment
+    const accessToken = fragmentParams['access_token'];
+    const refreshToken = fragmentParams['refresh_token'];
+    const type = fragmentParams['type'];
+    const error = fragmentParams['error'];
+    const errorDescription = fragmentParams['error_description'];
 
     console.log('🔍 Parâmetros específicos:', { 
       accessToken: accessToken ? '✅ Presente' : '❌ Ausente',
@@ -63,7 +80,7 @@ const ResetPassword = () => {
       });
       navigate('/auth');
     }
-  }, [searchParams, navigate, toast]);
+  }, [navigate, toast]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
