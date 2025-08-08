@@ -37,8 +37,8 @@ const Dashboard = () => {
     window.open(route, '_blank');
   };
 
-  // Calculate stats
-  const generalMonthlyRevenue = (financialStats?.totalIncome || 0) + (reconciliationStats?.totalApprovedAmount || 0);
+  // Calculate stats - totalIncome now includes reconciliations
+  const generalMonthlyRevenue = financialStats?.totalIncome || 0;
   const upcomingEvent = events?.find(event => new Date(event.date) > new Date());
   const thisMonthEvents = events?.filter(event => {
     const eventDate = new Date(event.date);
