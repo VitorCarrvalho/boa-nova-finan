@@ -53,6 +53,7 @@ import PaidAccounts from "@/pages/accounts-payable/PaidAccounts";
 import TestDropdowns from "@/pages/TestDropdowns";
 
 import NotFound from "@/pages/NotFound";
+import VerifyRedirect from "@/components/VerifyRedirect";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/verify" element={<VerifyRedirect />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
               
               <Route path="/dashboard" element={
