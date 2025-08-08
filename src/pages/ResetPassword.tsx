@@ -17,12 +17,25 @@ const ResetPassword = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // DEBUG: Mostrar todos os parâmetros recebidos na URL
+    const allParams = Object.fromEntries(searchParams.entries());
+    console.log('🔍 Todos os parâmetros da URL:', allParams);
+    console.log('🔍 URL completa:', window.location.href);
+    
     // Verificar se temos os parâmetros necessários do link de reset
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
     const type = searchParams.get('type');
+    const error = searchParams.get('error');
+    const errorDescription = searchParams.get('error_description');
 
-    console.log('Reset password params:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
+    console.log('🔍 Parâmetros específicos:', { 
+      accessToken: accessToken ? '✅ Presente' : '❌ Ausente',
+      refreshToken: refreshToken ? '✅ Presente' : '❌ Ausente', 
+      type,
+      error,
+      errorDescription
+    });
 
     if (type === 'recovery' && accessToken && refreshToken) {
       setValidToken(true);

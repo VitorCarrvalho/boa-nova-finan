@@ -353,16 +353,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Enviando email de recuperação para:', email);
       
+      // Usar URL absoluta fixa ao invés de window.location.origin
+      const resetUrl = 'https://a4e9f62a-d1cb-47f7-9954-c726936cfd81.lovableproject.com/reset-password';
+      console.log('URL de redirecionamento configurada:', resetUrl);
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`
+        redirectTo: resetUrl
       });
       
       if (error) {
         console.log('Erro no reset de senha:', error);
+        
+        // Tratar erros específicos de rate limiting
+        if (error.message?.includes('rate limit') || error.message?.includes('too many')) {
+          return { 
+            error: { 
+              ...error, 
+              message: 'Muitas tentativas de reset de senha. Aguarde alguns minutos antes de tentar novamente.' 
+            } 
+          };
+        }
+        
         return { error };
       }
       
-      console.log('Email de recuperação enviado com sucesso');
+      console.log('Email de recuperação enviado com sucesso para:', resetUrl);
       return { error: null };
     } catch (err) {
       console.log('Erro inesperado no reset de senha:', err);
