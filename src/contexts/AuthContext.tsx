@@ -17,6 +17,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name: string, congregationId?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: any }>;
   loading: boolean;
 }
 
@@ -348,6 +349,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      console.log('Enviando email de recuperação para:', email);
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+      
+      if (error) {
+        console.log('Erro no reset de senha:', error);
+        return { error };
+      }
+      
+      console.log('Email de recuperação enviado com sucesso');
+      return { error: null };
+    } catch (err) {
+      console.log('Erro inesperado no reset de senha:', err);
+      return { error: err };
+    }
+  };
+
   const getUserAccessProfile = (): string | null => {
     console.log('[AuthContext] getUserAccessProfile - Current userAccessProfile:', userAccessProfile);
     console.log('[AuthContext] getUserAccessProfile - Current user:', user?.email);
@@ -390,6 +412,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signIn,
     signOut,
+    resetPassword,
     loading
   };
 

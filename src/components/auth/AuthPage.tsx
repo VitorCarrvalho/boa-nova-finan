@@ -16,7 +16,9 @@ const AuthPage = () => {
   const [name, setName] = useState('');
   const [congregation, setCongregation] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const { signIn, signUp, resetPassword, user } = useAuth();
   const { data: congregations } = useCongregations();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -158,6 +160,66 @@ const AuthPage = () => {
     setLoading(false);
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!resetEmail) {
+      toast({
+        title: "Email obrigatório",
+        description: "Por favor, insira seu email.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setResetLoading(true);
+    console.log('Enviando email de recuperação...');
+
+    try {
+      const { error } = await resetPassword(resetEmail);
+
+      if (error) {
+        console.log('Erro no reset:', error);
+        let errorMessage = "Erro desconhecido";
+        
+        if (error.message.includes('request this after')) {
+          errorMessage = "Aguarde 60 segundos antes de solicitar novamente";
+        } else if (error.message.includes('rate limit')) {
+          errorMessage = "Muitas tentativas. Aguarde alguns minutos";
+        } else {
+          errorMessage = error.message;
+        }
+        
+        toast({
+          title: "Erro ao enviar email",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Email enviado!",
+          description: "Se o email existir, você receberá um link para redefinir sua senha.",
+        });
+        setResetEmail('');
+        
+        // Voltar para aba de login
+        const loginTab = document.querySelector('[value="signin"]') as HTMLElement;
+        if (loginTab) {
+          loginTab.click();
+        }
+      }
+    } catch (err) {
+      console.log('Erro inesperado:', err);
+      toast({
+        title: "Erro ao enviar email",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+
+    setResetLoading(false);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <Card className="w-full max-w-md">
@@ -171,9 +233,10 @@ const AuthPage = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="signin">Entrar</TabsTrigger>
               <TabsTrigger value="signup">Cadastrar</TabsTrigger>
+              <TabsTrigger value="reset">Esqueci</TabsTrigger>
             </TabsList>
             
             <TabsContent value="signin">
@@ -273,6 +336,33 @@ const AuthPage = () => {
                 >
                   {loading ? 'Cadastrando...' : 'Cadastrar'}
                 </Button>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="reset">
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">Email</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="Digite seu email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                    disabled={resetLoading}
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full bg-red-600 hover:bg-red-700"
+                  disabled={resetLoading}
+                >
+                  {resetLoading ? 'Enviando...' : 'Enviar Link de Recuperação'}
+                </Button>
+                <p className="text-sm text-gray-600 text-center">
+                  Você receberá um email com instruções para redefinir sua senha.
+                </p>
               </form>
             </TabsContent>
           </Tabs>
