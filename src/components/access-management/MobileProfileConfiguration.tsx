@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Edit, Copy, Trash2, Shield, Settings } from 'lucide-react';
+import { Plus, Edit, Copy, Trash2 } from 'lucide-react';
 import { useAccessProfiles, useCreateAccessProfile, useUpdateAccessProfile, useDeleteAccessProfile } from '@/hooks/useAccessProfiles';
 import { MODULE_STRUCTURE } from '@/utils/moduleStructure';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useMobileToast } from '@/hooks/useMobileToast';
 import { MobileTableCard } from '@/components/ui/mobile-table-card';
+import ProfileTemplates from './ProfileTemplates';
+import PermissionPreview from './PermissionPreview';
+import PermissionValidator from './PermissionValidator';
 
 const systemModules = MODULE_STRUCTURE.map(module => ({
   name: module.key,
@@ -229,8 +231,14 @@ const MobileProfileConfiguration: React.FC = () => {
     Object.values(permissions).forEach((modulePerms: any) => {
       if (typeof modulePerms === 'boolean' && modulePerms) {
         count++;
-      } else if (typeof modulePerms === 'object') {
-        count += Object.values(modulePerms).filter(Boolean).length;
+      } else if (typeof modulePerms === 'object' && modulePerms !== null) {
+        Object.values(modulePerms).forEach((value) => {
+          if (typeof value === 'boolean' && value) {
+            count++;
+          } else if (typeof value === 'object' && value !== null) {
+            count += Object.values(value as Record<string, boolean>).filter(Boolean).length;
+          }
+        });
       }
     });
     return count;

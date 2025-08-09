@@ -27,40 +27,7 @@ export const MODULE_STRUCTURE: Module[] = [
     icon: 'LayoutDashboard',
     actions: [
       { key: 'view', label: 'Visualizar', applicable: true },
-    ],
-  },
-  {
-    key: 'financeiro',
-    label: 'Financeiro',
-    icon: 'DollarSign',
-    actions: [
-      { key: 'view', label: 'Visualizar', applicable: true },
-      { key: 'insert', label: 'Inserir', applicable: true },
-      { key: 'edit', label: 'Editar', applicable: true },
-      { key: 'inactivate', label: 'Inativar', applicable: true },
       { key: 'export', label: 'Exportar', applicable: true },
-    ],
-    subModules: [
-      {
-        key: 'receitas',
-        label: 'Receitas',
-        actions: [
-          { key: 'view', label: 'Visualizar', applicable: true },
-          { key: 'insert', label: 'Inserir', applicable: true },
-          { key: 'edit', label: 'Editar', applicable: true },
-          { key: 'export', label: 'Exportar', applicable: true },
-        ],
-      },
-      {
-        key: 'despesas',
-        label: 'Despesas',
-        actions: [
-          { key: 'view', label: 'Visualizar', applicable: true },
-          { key: 'insert', label: 'Inserir', applicable: true },
-          { key: 'edit', label: 'Editar', applicable: true },
-          { key: 'export', label: 'Exportar', applicable: true },
-        ],
-      },
     ],
   },
   {
@@ -71,7 +38,43 @@ export const MODULE_STRUCTURE: Module[] = [
       { key: 'view', label: 'Visualizar', applicable: true },
       { key: 'insert', label: 'Inserir', applicable: true },
       { key: 'edit', label: 'Editar', applicable: true },
-      { key: 'inactivate', label: 'Inativar', applicable: true },
+      { key: 'delete', label: 'Excluir', applicable: true },
+      { key: 'export', label: 'Exportar', applicable: true },
+    ],
+  },
+  {
+    key: 'congregacoes',
+    label: 'Congregações',
+    icon: 'Church',
+    actions: [
+      { key: 'view', label: 'Visualizar', applicable: true },
+      { key: 'insert', label: 'Inserir', applicable: true },
+      { key: 'edit', label: 'Editar', applicable: true },
+      { key: 'delete', label: 'Excluir', applicable: true },
+      { key: 'export', label: 'Exportar', applicable: true },
+    ],
+  },
+  {
+    key: 'departamentos',
+    label: 'Departamentos',
+    icon: 'Building2',
+    actions: [
+      { key: 'view', label: 'Visualizar', applicable: true },
+      { key: 'insert', label: 'Inserir', applicable: true },
+      { key: 'edit', label: 'Editar', applicable: true },
+      { key: 'delete', label: 'Excluir', applicable: true },
+      { key: 'export', label: 'Exportar', applicable: true },
+    ],
+  },
+  {
+    key: 'ministerios',
+    label: 'Ministérios',
+    icon: 'Heart',
+    actions: [
+      { key: 'view', label: 'Visualizar', applicable: true },
+      { key: 'insert', label: 'Inserir', applicable: true },
+      { key: 'edit', label: 'Editar', applicable: true },
+      { key: 'delete', label: 'Excluir', applicable: true },
       { key: 'export', label: 'Exportar', applicable: true },
     ],
   },
@@ -83,103 +86,42 @@ export const MODULE_STRUCTURE: Module[] = [
       { key: 'view', label: 'Visualizar', applicable: true },
       { key: 'insert', label: 'Inserir', applicable: true },
       { key: 'edit', label: 'Editar', applicable: true },
-      { key: 'inactivate', label: 'Inativar', applicable: true },
+      { key: 'delete', label: 'Excluir', applicable: true },
       { key: 'export', label: 'Exportar', applicable: true },
     ],
   },
   {
-    key: 'relatorios',
-    label: 'Relatórios',
-    icon: 'BarChart3',
-    actions: [
-      { key: 'view', label: 'Visualizar', applicable: true },
-      { key: 'export', label: 'Exportar', applicable: true },
-    ],
-    subModules: [
-      {
-        key: 'eventos',
-        label: 'Eventos',
-        actions: [
-          { key: 'view', label: 'Visualizar', applicable: true },
-          { key: 'export', label: 'Exportar', applicable: true },
-        ],
-      },
-      {
-        key: 'financeiro',
-        label: 'Financeiro',
-        actions: [
-          { key: 'view', label: 'Visualizar', applicable: true },
-          { key: 'export', label: 'Exportar', applicable: true },
-        ],
-      },
-      {
-        key: 'membros',
-        label: 'Membros',
-        actions: [
-          { key: 'view', label: 'Visualizar', applicable: true },
-          { key: 'export', label: 'Exportar', applicable: true },
-        ],
-      },
-      {
-        key: 'conciliacoes',
-        label: 'Conciliações',
-        actions: [
-          { key: 'view', label: 'Visualizar', applicable: true },
-          { key: 'export', label: 'Exportar', applicable: true },
-        ],
-      },
-      {
-        key: 'fornecedores',
-        label: 'Fornecedores',
-        actions: [
-          { key: 'view', label: 'Visualizar', applicable: true },
-          { key: 'export', label: 'Exportar', applicable: true },
-        ],
-      },
-    ],
-  },
-  {
-    key: 'notificacoes',
-    label: 'Notificações',
-    icon: 'Bell',
+    key: 'financeiro',
+    label: 'Financeiro',
+    icon: 'DollarSign',
     actions: [
       { key: 'view', label: 'Visualizar', applicable: true },
       { key: 'insert', label: 'Inserir', applicable: true },
       { key: 'edit', label: 'Editar', applicable: true },
-      { key: 'send_notification', label: 'Enviar Notificação', applicable: true },
+      { key: 'delete', label: 'Excluir', applicable: true },
+      { key: 'export', label: 'Exportar', applicable: true },
     ],
     subModules: [
       {
-        key: 'nova',
-        label: 'Nova Notificação',
-        actions: [
-          { key: 'view', label: 'Visualizar', applicable: true },
-          { key: 'insert', label: 'Inserir', applicable: true },
-          { key: 'send_notification', label: 'Enviar', applicable: true },
-        ],
-      },
-      {
-        key: 'agendadas',
-        label: 'Mensagens Agendadas',
-        actions: [
-          { key: 'view', label: 'Visualizar', applicable: true },
-          { key: 'edit', label: 'Editar', applicable: true },
-        ],
-      },
-      {
-        key: 'historico',
-        label: 'Histórico Enviado',
-        actions: [
-          { key: 'view', label: 'Visualizar', applicable: true },
-        ],
-      },
-      {
-        key: 'videos',
-        label: 'Biblioteca de Vídeos',
+        key: 'despesas',
+        label: 'Despesas',
         actions: [
           { key: 'view', label: 'Visualizar', applicable: true },
           { key: 'insert', label: 'Inserir', applicable: true },
           { key: 'edit', label: 'Editar', applicable: true },
+          { key: 'delete', label: 'Excluir', applicable: true },
+          { key: 'export', label: 'Exportar', applicable: true },
+        ],
+      },
+      {
+        key: 'receitas',
+        label: 'Receitas',
+        actions: [
+          { key: 'view', label: 'Visualizar', applicable: true },
+          { key: 'insert', label: 'Inserir', applicable: true },
+          { key: 'edit', label: 'Editar', applicable: true },
+          { key: 'delete', label: 'Excluir', applicable: true },
+          { key: 'export', label: 'Exportar', applicable: true },
         ],
       },
     ],
@@ -190,9 +132,22 @@ export const MODULE_STRUCTURE: Module[] = [
     icon: 'Calculator',
     actions: [
       { key: 'view', label: 'Visualizar', applicable: true },
-      { key: 'submit', label: 'Enviar', applicable: true },
+      { key: 'insert', label: 'Inserir', applicable: true },
+      { key: 'edit', label: 'Editar', applicable: true },
+      { key: 'delete', label: 'Excluir', applicable: true },
       { key: 'approve', label: 'Aprovar', applicable: true },
-      { key: 'reject', label: 'Reprovar', applicable: true },
+      { key: 'export', label: 'Exportar', applicable: true },
+    ],
+  },
+  {
+    key: 'fornecedores',
+    label: 'Fornecedores',
+    icon: 'Truck',
+    actions: [
+      { key: 'view', label: 'Visualizar', applicable: true },
+      { key: 'insert', label: 'Inserir', applicable: true },
+      { key: 'edit', label: 'Editar', applicable: true },
+      { key: 'delete', label: 'Excluir', applicable: true },
       { key: 'export', label: 'Exportar', applicable: true },
     ],
   },
@@ -210,6 +165,14 @@ export const MODULE_STRUCTURE: Module[] = [
     ],
     subModules: [
       {
+        key: 'paid_accounts',
+        label: 'Contas Pagas',
+        actions: [
+          { key: 'view', label: 'Visualizar', applicable: true },
+          { key: 'export', label: 'Exportar', applicable: true },
+        ],
+      },
+      {
         key: 'new_account',
         label: 'Incluir Nova Conta',
         actions: [
@@ -222,6 +185,7 @@ export const MODULE_STRUCTURE: Module[] = [
         label: 'Pendentes de Aprovação',
         actions: [
           { key: 'view', label: 'Visualizar', applicable: true },
+          { key: 'approve', label: 'Aprovar', applicable: true },
         ],
       },
       {
@@ -237,12 +201,55 @@ export const MODULE_STRUCTURE: Module[] = [
         label: 'Contas Aprovadas',
         actions: [
           { key: 'view', label: 'Visualizar', applicable: true },
-          { key: 'edit', label: 'Editar', applicable: true },
+          { key: 'export', label: 'Exportar', applicable: true },
+        ],
+      },
+    ],
+  },
+  {
+    key: 'relatorios',
+    label: 'Relatórios',
+    icon: 'BarChart3',
+    actions: [
+      { key: 'view', label: 'Visualizar', applicable: true },
+      { key: 'export', label: 'Exportar', applicable: true },
+    ],
+    subModules: [
+      {
+        key: 'eventos',
+        label: 'Relatório de Eventos',
+        actions: [
+          { key: 'view', label: 'Visualizar', applicable: true },
+          { key: 'export', label: 'Exportar', applicable: true },
         ],
       },
       {
-        key: 'paid_accounts',
-        label: 'Contas Pagas',
+        key: 'financeiro',
+        label: 'Relatório Financeiro',
+        actions: [
+          { key: 'view', label: 'Visualizar', applicable: true },
+          { key: 'export', label: 'Exportar', applicable: true },
+        ],
+      },
+      {
+        key: 'membros',
+        label: 'Relatório de Membros',
+        actions: [
+          { key: 'view', label: 'Visualizar', applicable: true },
+          { key: 'export', label: 'Exportar', applicable: true },
+        ],
+      },
+      {
+        key: 'conciliacoes',
+        label: 'Relatório de Conciliações',
+        actions: [
+          { key: 'view', label: 'Visualizar', applicable: true },
+          { key: 'export', label: 'Exportar', applicable: true },
+        ],
+      },
+      {
+        key: 'fornecedores',
+        label: 'Relatório de Fornecedores',
         actions: [
           { key: 'view', label: 'Visualizar', applicable: true },
           { key: 'export', label: 'Exportar', applicable: true },
@@ -251,48 +258,48 @@ export const MODULE_STRUCTURE: Module[] = [
     ],
   },
   {
-    key: 'congregacoes',
-    label: 'Congregações',
-    icon: 'Church',
+    key: 'notificacoes',
+    label: 'Notificações',
+    icon: 'Bell',
     actions: [
       { key: 'view', label: 'Visualizar', applicable: true },
       { key: 'insert', label: 'Inserir', applicable: true },
       { key: 'edit', label: 'Editar', applicable: true },
-      { key: 'inactivate', label: 'Inativar', applicable: true },
+      { key: 'delete', label: 'Excluir', applicable: true },
+      { key: 'send', label: 'Enviar', applicable: true },
     ],
   },
   {
-    key: 'ministerios',
-    label: 'Ministérios',
-    icon: 'Heart',
+    key: 'gestao-acessos',
+    label: 'Gestão de Acessos',
+    icon: 'Shield',
     actions: [
       { key: 'view', label: 'Visualizar', applicable: true },
       { key: 'insert', label: 'Inserir', applicable: true },
       { key: 'edit', label: 'Editar', applicable: true },
-      { key: 'inactivate', label: 'Inativar', applicable: true },
+      { key: 'delete', label: 'Excluir', applicable: true },
+      { key: 'approve', label: 'Aprovar', applicable: true },
     ],
   },
   {
-    key: 'departamentos',
-    label: 'Departamentos',
-    icon: 'Building2',
+    key: 'documentacao',
+    label: 'Documentação',
+    icon: 'Book',
     actions: [
       { key: 'view', label: 'Visualizar', applicable: true },
       { key: 'insert', label: 'Inserir', applicable: true },
       { key: 'edit', label: 'Editar', applicable: true },
-      { key: 'inactivate', label: 'Inativar', applicable: true },
-    ],
-  },
-  {
-    key: 'fornecedores',
-    label: 'Fornecedores',
-    icon: 'Truck',
-    actions: [
-      { key: 'view', label: 'Visualizar', applicable: true },
-      { key: 'insert', label: 'Inserir', applicable: true },
-      { key: 'edit', label: 'Editar', applicable: true },
-      { key: 'inactivate', label: 'Inativar', applicable: true },
+      { key: 'delete', label: 'Excluir', applicable: true },
       { key: 'export', label: 'Exportar', applicable: true },
+    ],
+  },
+  {
+    key: 'configuracoes',
+    label: 'Configurações',
+    icon: 'Settings',
+    actions: [
+      { key: 'view', label: 'Visualizar', applicable: true },
+      { key: 'edit', label: 'Editar', applicable: true },
     ],
   },
 ];
