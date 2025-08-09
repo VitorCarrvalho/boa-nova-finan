@@ -91,8 +91,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               } else {
                  // Only set role if user is approved
                 if (profile?.approval_status === 'ativo') {
-                  console.log('AuthProvider - Setting user role:', profile.role);
-                  setUserRole(profile?.role ?? 'worker');
+                  console.log('AuthProvider - Setting user role from profile:', profile.role);
+                  
+                  // DEBUG: Log especial para Robson
+                  if (session.user.email === 'robribeir20@gmail.com') {
+                    console.log('🔍 ROBSON DEBUG - Profile data:', profile);
+                    console.log('🔍 ROBSON DEBUG - Profile role:', profile.role);
+                    console.log('🔍 ROBSON DEBUG - Approval status:', profile.approval_status);
+                  }
+                  
+                  // Usar get_current_user_role() para obter o role correto mapeado
+                  const { data: mappedRole } = await supabase.rpc('get_current_user_role');
+                  const finalRole = mappedRole ?? 'worker';
+                  console.log('AuthProvider - Role mapeado pela função:', finalRole);
+                  
+                  // DEBUG: Log especial para Robson
+                  if (session.user.email === 'robribeir20@gmail.com') {
+                    console.log('🔍 ROBSON DEBUG - Role mapeado:', finalRole);
+                  }
+                  
+                  setUserRole(finalRole);
                   
                   // Extrair nome do perfil de acesso
                   const accessProfileName = profile?.access_profiles?.name || null;
@@ -180,8 +198,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               
               // Only set role if user is approved
               if (profile?.approval_status === 'ativo') {
-                console.log('AuthProvider - Setting initial user role:', profile.role);
-                setUserRole(profile?.role ?? 'worker');
+                console.log('AuthProvider - Setting initial user role from profile:', profile.role);
+                
+                // DEBUG: Log especial para Robson na sessão inicial
+                if (session.user.email === 'robribeir20@gmail.com') {
+                  console.log('🔍 ROBSON DEBUG (Initial) - Profile data:', profile);
+                  console.log('🔍 ROBSON DEBUG (Initial) - Profile role:', profile.role);
+                  console.log('🔍 ROBSON DEBUG (Initial) - Approval status:', profile.approval_status);
+                }
+                
+                // Usar get_current_user_role() para obter o role correto mapeado
+                const { data: mappedRole } = await supabase.rpc('get_current_user_role');
+                const finalRole = mappedRole ?? 'worker';
+                console.log('AuthProvider - Role inicial mapeado pela função:', finalRole);
+                
+                // DEBUG: Log especial para Robson na sessão inicial
+                if (session.user.email === 'robribeir20@gmail.com') {
+                  console.log('🔍 ROBSON DEBUG (Initial) - Role mapeado:', finalRole);
+                }
+                
+                setUserRole(finalRole);
                 
                 // Extrair nome do perfil de acesso
                 const accessProfileName = profile?.access_profiles?.name || null;
