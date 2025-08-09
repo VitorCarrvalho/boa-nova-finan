@@ -12,7 +12,8 @@ interface AuthContextType {
   userRole: UserRole | null;
   userPermissions: Record<string, Record<string, boolean>> | null;
   userAccessProfile: string | null;
-  hasPermission: (module: string, action: string) => boolean;
+  hasPermission: (module: string, action?: string) => boolean;
+  hasNestedPermission: (path: string) => boolean;
   getUserAccessProfile: () => string | null;
   signUp: (email: string, password: string, name: string, congregationId?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
@@ -428,28 +429,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return userAccessProfile;
   };
 
-  const hasPermission = (module: string, action: string): boolean => {
-    // Superadmins e admins têm acesso completo a todos os módulos
-    if (userRole === 'superadmin' || userRole === 'admin') {
-      console.log(`[AuthContext] ${userRole} tem acesso completo ao módulo: ${module}, ação: ${action}`);
-      return true;
-    }
+  const hasPermission = (module: string, action: string = 'view'): boolean => {
+    console.log(`🔍 hasPermission - Checking ${module}.${action}`, { 
+      userPermissions, 
+      userAccessProfile 
+    });
     
-    // Para outros usuários, verificar permissões
-    if (!userPermissions || Object.keys(userPermissions).length === 0) {
-      console.log(`[AuthContext] Sem permissões ou permissões vazias para usuário, negando acesso a ${module}:${action}`);
+    if (!userPermissions) {
+      console.log('🔍 hasPermission - No userPermissions found');
       return false;
     }
+
+    // Check specific permissions from access_profile
+    const modulePermissions = userPermissions[module];
+    console.log(`🔍 hasPermission - Module ${module} permissions:`, modulePermissions);
     
-    // Log do objeto de permissões para debug
-    console.log(`[AuthContext] userPermissions:`, userPermissions);
-    console.log(`[AuthContext] Verificando ${module}:${action}`);
-    console.log(`[AuthContext] userPermissions[${module}]:`, userPermissions[module]);
+    if (modulePermissions && typeof modulePermissions === 'object') {
+      const hasAccess = modulePermissions[action] === true;
+      console.log(`🔍 hasPermission - Access result: ${hasAccess}`);
+      return hasAccess;
+    }
+
+    console.log('🔍 hasPermission - No permissions found, denying access');
+    return false;
+  };
+
+  // Support nested permissions (e.g., 'contas-pagar.paid_accounts.view')
+  const hasNestedPermission = (path: string): boolean => {
+    if (!userPermissions) return false;
     
-    const hasAccess = userPermissions[module]?.[action] === true;
-    console.log(`[AuthContext] Resultado da verificação: ${hasAccess}`);
+    const keys = path.split('.');
+    let current: any = userPermissions;
     
-    return hasAccess;
+    for (let i = 0; i < keys.length; i++) {
+      if (!current || typeof current !== 'object') return false;
+      current = current[keys[i]];
+    }
+    
+    return current === true;
   };
 
   const value = {
@@ -459,6 +476,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     userPermissions,
     userAccessProfile,
     hasPermission,
+    hasNestedPermission,
     getUserAccessProfile,
     signUp,
     signIn,

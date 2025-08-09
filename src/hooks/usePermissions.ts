@@ -1,14 +1,29 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
+import { hasNestedPermission, getPermissionForModule, MODULE_DEFINITIONS } from '@/utils/permissionUtils';
 
 export const usePermissions = () => {
   const { userPermissions, hasPermission } = useAuth();
+  const { data: congregationAccess } = useUserCongregationAccess();
+  const hasAccessToAnyCongregation = congregationAccess?.hasAccess || false;
 
   const checkModuleAccess = (module: string, action: string = 'view'): boolean => {
     return hasPermission(module, action);
   };
 
   const canViewModule = (module: string): boolean => {
-    return checkModuleAccess(module, 'view');
+    // Check basic permission first
+    if (!hasPermission(module, 'view')) {
+      return false;
+    }
+    
+    // Check congregation access if required
+    const moduleConfig = MODULE_DEFINITIONS[module as keyof typeof MODULE_DEFINITIONS];
+    if (moduleConfig?.requiresCongregation) {
+      return hasAccessToAnyCongregation;
+    }
+    
+    return true;
   };
 
   const canInsertModule = (module: string): boolean => {
@@ -35,34 +50,45 @@ export const usePermissions = () => {
     return checkModuleAccess(module, 'send_notification');
   };
 
-  // Funções específicas para submódulos de contas a pagar
-  // As permissões dos submódulos estão aninhadas dentro do módulo principal 'contas-pagar'
+  // Funções específicas para submódulos de contas a pagar com permissões aninhadas
   const canViewPaidAccounts = (): boolean => {
-    return hasPermission('contas-pagar', 'view') || hasPermission('paid_accounts', 'view');
+    return hasNestedPermission(userPermissions, 'contas-pagar.paid_accounts.view') || 
+           hasPermission('contas-pagar', 'view');
   };
 
   const canViewPendingApproval = (): boolean => {
-    return hasPermission('contas-pagar', 'view') || hasPermission('pending_approval', 'view');
+    return hasNestedPermission(userPermissions, 'contas-pagar.pending_approval.view') || 
+           hasPermission('contas-pagar', 'view');
   };
 
   const canViewAuthorizeAccounts = (): boolean => {
-    return hasPermission('contas-pagar', 'approve') || hasPermission('authorize_accounts', 'view');
+    return hasNestedPermission(userPermissions, 'contas-pagar.authorize_accounts.view') || 
+           hasPermission('contas-pagar', 'approve');
   };
 
   const canViewApprovedAccounts = (): boolean => {
-    return hasPermission('contas-pagar', 'view') || hasPermission('approved_accounts', 'view');
+    return hasNestedPermission(userPermissions, 'contas-pagar.approved_accounts.view') || 
+           hasPermission('contas-pagar', 'view');
   };
 
   const canViewNewAccount = (): boolean => {
-    return hasPermission('contas-pagar', 'insert') || hasPermission('new_account', 'view');
+    return hasNestedPermission(userPermissions, 'contas-pagar.new_account.view') || 
+           hasPermission('contas-pagar', 'insert');
   };
 
   const canExportPaidAccounts = (): boolean => {
-    return hasPermission('contas-pagar', 'export') || hasPermission('paid_accounts', 'export');
+    return hasNestedPermission(userPermissions, 'contas-pagar.paid_accounts.export') || 
+           hasPermission('contas-pagar', 'export');
   };
 
   const canExportApprovedAccounts = (): boolean => {
-    return hasPermission('contas-pagar', 'export') || hasPermission('approved_accounts', 'export');
+    return hasNestedPermission(userPermissions, 'contas-pagar.approved_accounts.export') || 
+           hasPermission('contas-pagar', 'export');
+  };
+
+  // Nova função para verificar acesso baseado apenas em permissões
+  const canAccessCongregation = (): boolean => {
+    return hasAccessToAnyCongregation;
   };
 
   return {
@@ -76,6 +102,7 @@ export const usePermissions = () => {
     canApproveModule,
     canExportModule,
     canSendNotificationModule,
+    canAccessCongregation,
     // Submódulo específicas
     canViewPaidAccounts,
     canViewPendingApproval,

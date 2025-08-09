@@ -52,7 +52,7 @@ import {
 } from '@/components/ui/collapsible';
 
 const MobileSidebar = () => {
-  const { signOut, userRole, user } = useAuth();
+  const { signOut, user } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
   const { canViewModule, canViewNewAccount, canViewPendingApproval, canViewAuthorizeAccounts, canViewApprovedAccounts, canViewPaidAccounts } = usePermissions();
   const location = useLocation();
@@ -261,32 +261,14 @@ const MobileSidebar = () => {
   ];
 
   const visibleItems = menuItems.filter(item => {
-    if (!canViewModule(item.module)) {
-      return false;
-    }
-
-    if (item.requiresCongregationAccess) {
-      if (userRole === 'finance' || userRole === 'worker') {
-        return false;
-      }
-      
-      if (userRole === 'admin' || userRole === 'superadmin') {
-        return true;
-      }
-      
-      if (userRole === 'pastor') {
-        return congregationAccess?.hasAccess || false;
-      }
-    }
-
-    return true;
+    return canViewModule(item.module); // canViewModule now handles congregation access internally
   });
 
   const canAccessReports = canViewModule('relatorios');
   const canAccessNotifications = canViewModule('notificacoes');
   const canAccessAccountsPayable = canViewModule('contas-pagar');
-  const canAccessSettings = canViewModule('configuracoes') || userRole === 'admin' || userRole === 'superadmin';
-  const canAccessAccessManagement = canViewModule('gestao-acessos') || userRole === 'admin' || userRole === 'superadmin';
+  const canAccessSettings = canViewModule('configuracoes');
+  const canAccessAccessManagement = canViewModule('gestao-acessos');
 
   if (!user || !profileData) {
     return (

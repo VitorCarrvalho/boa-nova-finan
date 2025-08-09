@@ -117,9 +117,7 @@ const DesktopSidebar = () => {
 
   const visibleItems = menuItems.filter(item => {
     if (!item) return false; // Guard against undefined items
-    const hasPermission = canViewModule(item.module);
-    const hasCongregationAccess = item.requiresCongregationAccess ? hasAccessToAnyCongregation : true;
-    return hasPermission && hasCongregationAccess;
+    return canViewModule(item.module); // canViewModule now handles congregation access internally
   });
 
   const handleLogout = async () => {
