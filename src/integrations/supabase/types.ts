@@ -1076,6 +1076,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      module_requires_congregation_access: {
+        Args: { _module: string }
+        Returns: boolean
+      }
       reject_user: {
         Args:
           | {
@@ -1089,6 +1093,14 @@ export type Database = {
               _rejected_by?: string
               _allow_reapply?: boolean
             }
+        Returns: boolean
+      }
+      user_has_congregation_access: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      user_has_nested_permission: {
+        Args: { _permission_path: string }
         Returns: boolean
       }
       user_has_permission: {
