@@ -61,6 +61,109 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userAccessProfile, setUserAccessProfile] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Função para buscar permissões com retry automático
+  const fetchUserPermissionsWithRetry = async (userId: string, userEmail?: string, retryCount: number = 0): Promise<void> => {
+    const maxRetries = 3;
+    const isDebugUser = userEmail === 'robribeir20@gmail.com' || userEmail === 'contato@leonardosale.com';
+    
+    if (isDebugUser) {
+      console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - Tentativa ${retryCount + 1} de buscar permissões`);
+    }
+    
+    try {
+      // Primeira tentativa: query direta mais simples
+      const { data: directData, error: directError } = await supabase
+        .from('profiles')
+        .select('access_profiles(permissions)')
+        .eq('id', userId)
+        .eq('approval_status', 'ativo')
+        .single();
+
+      if (isDebugUser) {
+        console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - Query direta resultado:`, { directData, directError });
+      }
+
+      if (!directError && directData?.access_profiles?.permissions) {
+        const permissions = directData.access_profiles.permissions;
+        
+        // Validar se as permissões não estão vazias
+        if (typeof permissions === 'object' && Object.keys(permissions).length > 0) {
+          if (isDebugUser) {
+            console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - Permissões válidas encontradas:`, permissions);
+          }
+          setUserPermissions(permissions as Record<string, Record<string, boolean>>);
+          return;
+        }
+      }
+
+      // Segunda tentativa: query com inner join
+      const { data: innerData, error: innerError } = await supabase
+        .from('profiles')
+        .select('access_profiles!inner(permissions)')
+        .eq('id', userId)
+        .eq('approval_status', 'ativo')
+        .single();
+
+      if (isDebugUser) {
+        console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - Query inner join resultado:`, { innerData, innerError });
+      }
+
+      if (!innerError && innerData?.access_profiles?.permissions) {
+        const permissions = innerData.access_profiles.permissions;
+        
+        // Validar se as permissões não estão vazias
+        if (typeof permissions === 'object' && Object.keys(permissions).length > 0) {
+          if (isDebugUser) {
+            console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - Permissões válidas encontradas (inner):`, permissions);
+          }
+          setUserPermissions(permissions as Record<string, Record<string, boolean>>);
+          return;
+        }
+      }
+
+      // Terceira tentativa: usar função RPC
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_current_user_permissions');
+      
+      if (isDebugUser) {
+        console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - RPC resultado:`, { rpcData, rpcError });
+      }
+
+      if (!rpcError && rpcData && typeof rpcData === 'object' && Object.keys(rpcData).length > 0) {
+        if (isDebugUser) {
+          console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - Permissões válidas via RPC:`, rpcData);
+        }
+        setUserPermissions(rpcData as Record<string, Record<string, boolean>>);
+        return;
+      }
+
+      // Se chegou aqui, algo está errado - retry se ainda temos tentativas
+      if (retryCount < maxRetries) {
+        console.warn(`AuthProvider - Tentativa ${retryCount + 1} falhou, tentando novamente em 1s...`);
+        setTimeout(() => {
+          fetchUserPermissionsWithRetry(userId, userEmail, retryCount + 1);
+        }, 1000);
+        return;
+      }
+
+      // Se esgotaram as tentativas, setar permissões vazias e alertar
+      console.error('AuthProvider - ERRO CRÍTICO: Não foi possível carregar permissões após todas as tentativas');
+      if (isDebugUser) {
+        console.error(`🔍 ${userEmail?.toUpperCase()} DEBUG - FALHA CRÍTICA ao carregar permissões`);
+      }
+      setUserPermissions({});
+
+    } catch (error) {
+      console.error('AuthProvider - Erro ao buscar permissões:', error);
+      if (retryCount < maxRetries) {
+        setTimeout(() => {
+          fetchUserPermissionsWithRetry(userId, userEmail, retryCount + 1);
+        }, 1000);
+      } else {
+        setUserPermissions({});
+      }
+    }
+  };
+
   useEffect(() => {
     console.log('AuthProvider - Configurando AuthProvider...');
     
@@ -94,11 +197,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (profile?.approval_status === 'ativo') {
                   console.log('AuthProvider - Setting user role from profile:', profile.role);
                   
-                  // DEBUG: Log especial para Robson
-                  if (session.user.email === 'robribeir20@gmail.com') {
-                    console.log('🔍 ROBSON DEBUG - Profile data:', profile);
-                    console.log('🔍 ROBSON DEBUG - Profile role:', profile.role);
-                    console.log('🔍 ROBSON DEBUG - Approval status:', profile.approval_status);
+                  // DEBUG: Logs especiais para usuários problemáticos
+                  if (session.user.email === 'robribeir20@gmail.com' || session.user.email === 'contato@leonardosale.com') {
+                    console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG - Profile data:`, profile);
+                    console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG - Profile role:`, profile.role);
+                    console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG - Approval status:`, profile.approval_status);
                   }
                   
                   // Usar get_current_user_role() para obter o role correto mapeado
@@ -106,9 +209,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   const finalRole = mappedRole ?? 'worker';
                   console.log('AuthProvider - Role mapeado pela função:', finalRole);
                   
-                  // DEBUG: Log especial para Robson
-                  if (session.user.email === 'robribeir20@gmail.com') {
-                    console.log('🔍 ROBSON DEBUG - Role mapeado:', finalRole);
+                  // DEBUG: Logs especiais para usuários problemáticos
+                  if (session.user.email === 'robribeir20@gmail.com' || session.user.email === 'contato@leonardosale.com') {
+                    console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG - Role mapeado:`, finalRole);
                   }
                   
                   setUserRole(finalRole);
@@ -118,32 +221,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   console.log('AuthProvider - Access profile name:', accessProfileName);
                   setUserAccessProfile(accessProfileName);
                   
-                  // Buscar permissões do usuário - usar diretamente o fallback que sabemos que funciona
-                  console.log('AuthProvider - Buscando permissões via fallback direto...');
-                  try {
-                    const { data: fallbackData, error: fallbackError } = await supabase
-                      .from('profiles')
-                      .select(`
-                        access_profiles!inner(
-                          permissions
-                        )
-                      `)
-                      .eq('id', session.user.id)
-                      .eq('approval_status', 'ativo')
-                      .single();
-
-                    if (fallbackError) {
-                      console.error('AuthProvider - Erro no fallback de permissões:', fallbackError);
-                      setUserPermissions({});
-                    } else {
-                      const fallbackPermissions = fallbackData?.access_profiles?.permissions || {};
-                      console.log('AuthProvider - Permissões via fallback:', fallbackPermissions);
-                      setUserPermissions(fallbackPermissions as Record<string, Record<string, boolean>>);
-                    }
-                  } catch (fallbackError) {
-                    console.error('AuthProvider - Erro fatal ao buscar permissões:', fallbackError);
-                    setUserPermissions({});
-                  }
+                  // Buscar permissões com retry automático
+                  await fetchUserPermissionsWithRetry(session.user.id, session.user.email);
                 } else {
                   console.log('AuthProvider - User not approved, setting worker role');
                   setUserRole('worker'); // Pending/rejected users get worker role (no access)
@@ -201,11 +280,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (profile?.approval_status === 'ativo') {
                 console.log('AuthProvider - Setting initial user role from profile:', profile.role);
                 
-                // DEBUG: Log especial para Robson na sessão inicial
-                if (session.user.email === 'robribeir20@gmail.com') {
-                  console.log('🔍 ROBSON DEBUG (Initial) - Profile data:', profile);
-                  console.log('🔍 ROBSON DEBUG (Initial) - Profile role:', profile.role);
-                  console.log('🔍 ROBSON DEBUG (Initial) - Approval status:', profile.approval_status);
+                // DEBUG: Logs especiais para usuários problemáticos na sessão inicial
+                if (session.user.email === 'robribeir20@gmail.com' || session.user.email === 'contato@leonardosale.com') {
+                  console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG (Initial) - Profile data:`, profile);
+                  console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG (Initial) - Profile role:`, profile.role);
+                  console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG (Initial) - Approval status:`, profile.approval_status);
                 }
                 
                 // Usar get_current_user_role() para obter o role correto mapeado
@@ -213,9 +292,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const finalRole = mappedRole ?? 'worker';
                 console.log('AuthProvider - Role inicial mapeado pela função:', finalRole);
                 
-                // DEBUG: Log especial para Robson na sessão inicial
-                if (session.user.email === 'robribeir20@gmail.com') {
-                  console.log('🔍 ROBSON DEBUG (Initial) - Role mapeado:', finalRole);
+                // DEBUG: Logs especiais para usuários problemáticos na sessão inicial
+                if (session.user.email === 'robribeir20@gmail.com' || session.user.email === 'contato@leonardosale.com') {
+                  console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG (Initial) - Role mapeado:`, finalRole);
                 }
                 
                 setUserRole(finalRole);
@@ -225,32 +304,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 console.log('AuthProvider - Initial access profile name:', accessProfileName);
                 setUserAccessProfile(accessProfileName);
                 
-                // Buscar permissões do usuário - usar diretamente o fallback que sabemos que funciona
-                console.log('AuthProvider - Buscando permissões iniciais via fallback direto...');
-                try {
-                  const { data: fallbackData, error: fallbackError } = await supabase
-                    .from('profiles')
-                    .select(`
-                      access_profiles!inner(
-                        permissions
-                      )
-                    `)
-                    .eq('id', session.user.id)
-                    .eq('approval_status', 'ativo')
-                    .single();
-
-                  if (fallbackError) {
-                    console.error('AuthProvider - Erro no fallback inicial de permissões:', fallbackError);
-                    setUserPermissions({});
-                  } else {
-                    const fallbackPermissions = fallbackData?.access_profiles?.permissions || {};
-                    console.log('AuthProvider - Permissões iniciais via fallback:', fallbackPermissions);
-                    setUserPermissions(fallbackPermissions as Record<string, Record<string, boolean>>);
-                  }
-                } catch (fallbackError) {
-                  console.error('AuthProvider - Erro fatal ao buscar permissões iniciais:', fallbackError);
-                  setUserPermissions({});
-                }
+                // Buscar permissões com retry automático na sessão inicial
+                await fetchUserPermissionsWithRetry(session.user.id, session.user.email);
               } else {
                 console.log('AuthProvider - Initial user not approved, setting worker role');
                 setUserRole('worker'); // Pending/rejected users get worker role (no access)
