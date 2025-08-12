@@ -151,6 +151,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "accounts_payable_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "accounts_payable_requested_by_fkey"
             columns: ["requested_by"]
             isOneToOne: false
@@ -243,6 +250,13 @@ export type Database = {
             columns: ["congregation_id"]
             isOneToOne: false
             referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "approval_audit_logs_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations_public"
             referencedColumns: ["id"]
           },
         ]
@@ -650,6 +664,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "financial_records_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "financial_records_responsible_pastor_id_fkey"
             columns: ["responsible_pastor_id"]
             isOneToOne: false
@@ -725,6 +746,13 @@ export type Database = {
             columns: ["congregation_id"]
             isOneToOne: false
             referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "members_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations_public"
             referencedColumns: ["id"]
           },
         ]
@@ -902,6 +930,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "profiles_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "profiles_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
@@ -977,6 +1012,13 @@ export type Database = {
             columns: ["congregation_id"]
             isOneToOne: false
             referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconciliations_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1104,7 +1146,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      congregations_public: {
+        Row: {
+          city: string | null
+          id: string | null
+          is_active: boolean | null
+          name: string | null
+          state: string | null
+        }
+        Insert: {
+          city?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          state?: string | null
+        }
+        Update: {
+          city?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          state?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       approve_user: {
@@ -1115,6 +1180,10 @@ export type Database = {
           _ministries?: string[]
           _approved_by?: string
         }
+        Returns: boolean
+      }
+      assign_unique_profile: {
+        Args: { _user_id: string; _profile_id: string; _assigned_by?: string }
         Returns: boolean
       }
       get_current_user_permissions: {
