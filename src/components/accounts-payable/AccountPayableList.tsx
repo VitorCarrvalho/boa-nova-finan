@@ -45,7 +45,7 @@ const AccountPayableList: React.FC<AccountPayableListProps> = ({
   const [paymentNotes, setPaymentNotes] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
-  const { userRole, getUserAccessProfile } = useAuth();
+  const { getUserAccessProfile } = useAuth();
   const { hasPermission } = usePermissions();
   const isMobile = useIsMobile();
   const approveMutation = useApproveAccount();
@@ -135,9 +135,9 @@ const AccountPayableList: React.FC<AccountPayableListProps> = ({
     console.log(`[AccountPayableList] === DEBUGGING ACCOUNT APPROVAL ===`);
     console.log(`[AccountPayableList] Account ID: ${account.id}`);
     console.log(`[AccountPayableList] Account Status: ${account.status}`);
-    console.log(`[AccountPayableList] Current User Role: ${userRole}`);
+    console.log(`[AccountPayableList] Current User Access Profile: ${getUserAccessProfile()}`);
     
-    if (!userRole) {
+    if (!getUserAccessProfile()) {
       console.log(`[AccountPayableList] FAIL: No user role found`);
       return false;
     }
@@ -152,19 +152,18 @@ const AccountPayableList: React.FC<AccountPayableListProps> = ({
     }
     
     // Obter perfil de acesso do usuário
-    const userAccessProfile = getUserAccessProfile();
-    console.log(`[AccountPayableList] User access profile returned: ${userAccessProfile}`);
-    console.log(`[AccountPayableList] AuthContext userRole: ${userRole}`);
+    const currentUserAccessProfile = getUserAccessProfile();
+    console.log(`[AccountPayableList] User access profile returned: ${currentUserAccessProfile}`);
     console.log(`[AccountPayableList] AuthContext userAccessProfile: ${useAuth().userAccessProfile}`);
     
-    if (!userAccessProfile) {
+    if (!currentUserAccessProfile) {
       console.log(`[AccountPayableList] FAIL: No access profile found for user`);
       return false;
     }
     
     // Validar permissão de aprovação hierárquica
     const validationResult = validateApprovalPermission(
-      userAccessProfile, 
+      currentUserAccessProfile, 
       account.status as any, 
       hasBasicPermission
     );

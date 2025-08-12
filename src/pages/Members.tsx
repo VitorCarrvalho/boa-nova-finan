@@ -16,7 +16,7 @@ const Members = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const { data: stats, isLoading: statsLoading } = useMemberStats();
-  const { userRole } = useAuth();
+  const { userAccessProfile } = useAuth();
 
   const handleFormSuccess = () => {
     setShowForm(false);
@@ -33,7 +33,7 @@ const Members = () => {
     setShowForm(true);
   };
 
-  const canManageMembers = userRole === 'superadmin' || userRole === 'admin' || userRole === 'pastor';
+  const canManageMembers = userAccessProfile === 'Admin' || userAccessProfile === 'Pastor';
 
   const statsCards = [
     {

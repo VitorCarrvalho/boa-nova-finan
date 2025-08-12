@@ -13,7 +13,7 @@ const Congregations = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCongregation, setEditingCongregation] = useState<any>(null);
   const { data: congregations, isLoading } = useCongregations();
-  const { userRole } = useAuth();
+  const { userAccessProfile } = useAuth();
 
   const handleEdit = (congregation: any) => {
     setEditingCongregation(congregation);
@@ -25,8 +25,8 @@ const Congregations = () => {
     setEditingCongregation(null);
   };
 
-  // Only admins and superadmins can create/edit congregations
-  const canManageCongregations = userRole === 'admin' || userRole === 'superadmin';
+  // Only admins can create/edit congregations
+  const canManageCongregations = userAccessProfile === 'Admin';
 
   return (
     <Layout>

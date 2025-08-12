@@ -4,25 +4,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useUserCongregationAccess = () => {
-  const { user, userRole } = useAuth();
+  const { user, userAccessProfile } = useAuth();
 
   return useQuery({
     queryKey: ['userCongregationAccess', user?.id],
     queryFn: async () => {
       if (!user?.id) return { hasAccess: false, assignedCongregations: [] };
 
-      // Admins e superadmins sempre têm acesso
-      if (userRole === 'admin' || userRole === 'superadmin') {
+      // Admins sempre têm acesso
+      if (userAccessProfile === 'Admin') {
         return { hasAccess: true, assignedCongregations: [] };
       }
 
-      // Finance e worker não têm acesso
-      if (userRole === 'finance' || userRole === 'worker') {
+      // Analistas e outros perfis financeiros não têm acesso
+      if (userAccessProfile === 'Analista' || userAccessProfile === 'Gerente Financeiro') {
         return { hasAccess: false, assignedCongregations: [] };
       }
 
       // Para pastores, verificar se estão atribuídos a alguma congregação
-      if (userRole === 'pastor') {
+      if (userAccessProfile === 'Pastor') {
         // Primeiro verificar se o usuário tem um perfil de membro correspondente
         const { data: profile } = await supabase
           .from('profiles')
@@ -71,6 +71,6 @@ export const useUserCongregationAccess = () => {
 
       return { hasAccess: false, assignedCongregations: [] };
     },
-    enabled: !!user?.id && !!userRole,
+    enabled: !!user?.id && !!userAccessProfile,
   });
 };

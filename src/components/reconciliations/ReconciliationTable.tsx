@@ -17,7 +17,7 @@ interface ReconciliationTableProps {
 
 const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliations, onEdit }) => {
   const updateMutation = useUpdateReconciliation();
-  const { userRole } = useAuth();
+  const { userAccessProfile } = useAuth();
   const { canEditModule, hasPermission } = usePermissions();
   const isMobile = useIsMobile();
 

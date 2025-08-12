@@ -29,14 +29,14 @@ export const useReconciliationForm = ({ reconciliation, onClose }: UseReconcilia
   const createMutation = useCreateReconciliation();
   const updateMutation = useUpdateReconciliation();
   const { data: congregations } = useCongregations();
-  const { userRole, user } = useAuth();
+  const { userAccessProfile, user } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
   const { canInsertModule, canEditModule, canApproveModule } = usePermissions();
   const isEditing = !!reconciliation;
 
   // For pastors, filter to only their assigned congregations
   const availableCongregations = React.useMemo(() => {
-    if (userRole === 'pastor' && congregationAccess?.assignedCongregations) {
+    if (userAccessProfile === 'Pastor' && congregationAccess?.assignedCongregations) {
       return congregationAccess.assignedCongregations;
     }
     return congregations || [];

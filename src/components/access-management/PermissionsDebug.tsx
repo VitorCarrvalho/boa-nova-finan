@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 
 const PermissionsDebug = () => {
-  const { user, userRole, userPermissions, userAccessProfile, loading } = useAuth();
+  const { user, userPermissions, userAccessProfile, loading } = useAuth();
 
   // Recarregar a página para forçar refresh das permissões
   const handleRefresh = () => {
@@ -45,9 +45,9 @@ const PermissionsDebug = () => {
           </div>
           
           <div>
-            <strong>User Role:</strong>{' '}
-            <Badge variant={userRole ? "default" : "secondary"}>
-              {userRole || 'Não definido'}
+            <strong>User Access Profile:</strong>{' '}
+            <Badge variant={userAccessProfile ? "default" : "secondary"}>
+              {userAccessProfile || 'Não definido'}
             </Badge>
           </div>
           

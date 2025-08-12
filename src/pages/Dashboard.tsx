@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '@/hooks/usePermissions';
 
 const Dashboard = () => {
-  const { userRole } = useAuth();
+  const { userAccessProfile } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { canViewModule } = usePermissions();

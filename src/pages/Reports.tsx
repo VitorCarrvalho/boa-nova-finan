@@ -10,10 +10,10 @@ import ExportControls from '@/components/reports/ExportControls';
 import { ReportsProvider } from '@/contexts/ReportsContext';
 
 const Reports = () => {
-  const { userRole } = useAuth();
+  const { userAccessProfile } = useAuth();
 
-  // Only allow specific roles to access reports
-  if (!['superadmin', 'admin', 'finance', 'pastor'].includes(userRole || '')) {
+  // Only allow specific profiles to access reports
+  if (!['Admin', 'Gerente Financeiro', 'Pastor', 'Analista'].includes(userAccessProfile || '')) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[400px]">

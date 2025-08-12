@@ -30,13 +30,13 @@ export const useFinancialRecords = () => {
 };
 
 export const useFinancialStats = () => {
-  const { userRole } = useAuth();
+  const { userAccessProfile } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
 
   return useQuery({
-    queryKey: ['financial-stats', userRole, congregationAccess?.assignedCongregations],
+    queryKey: ['financial-stats', userAccessProfile, congregationAccess?.assignedCongregations],
     queryFn: async () => {
-      console.log('Fetching financial stats for user role:', userRole);
+      console.log('Fetching financial stats for user access profile:', userAccessProfile);
       
       // Get current month date for reconciliations filter
       const currentDate = new Date();
@@ -45,13 +45,13 @@ export const useFinancialStats = () => {
       // Build financial records query
       let financialQuery = supabase.from('financial_records').select('*');
       
-      // Apply congregation filters based on user role
-      if (userRole === 'pastor' && congregationAccess?.assignedCongregations) {
+      // Apply congregation filters based on user access profile
+      if (userAccessProfile === 'Pastor' && congregationAccess?.assignedCongregations) {
         const assignedCongregationIds = congregationAccess.assignedCongregations.map(c => c.id);
         if (assignedCongregationIds.length > 0) {
           financialQuery = financialQuery.in('congregation_id', assignedCongregationIds);
         }
-      } else if (userRole !== 'admin') {
+      } else if (userAccessProfile !== 'Admin') {
         // For non-admin, non-pastor users, filter by headquarters (Sede)
         const { data: headquarters } = await supabase
           .from('congregations')
@@ -80,7 +80,7 @@ export const useFinancialStats = () => {
         .lt('month', new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1).toISOString().split('T')[0]);
 
       // Apply same congregation filters for reconciliations
-      if (userRole === 'pastor' && congregationAccess?.assignedCongregations) {
+      if (userAccessProfile === 'Pastor' && congregationAccess?.assignedCongregations) {
         const assignedCongregationIds = congregationAccess.assignedCongregations.map(c => c.id);
         if (assignedCongregationIds.length > 0) {
           reconciliationsQuery = reconciliationsQuery.in('congregation_id', assignedCongregationIds);
@@ -160,6 +160,6 @@ export const useFinancialStats = () => {
         thisMonthRecords: thisMonthRecords.length
       };
     },
-    enabled: !!userRole,
+    enabled: !!userAccessProfile,
   });
 };

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 const PermissionsDiagnostic = () => {
-  const { user, userRole, userPermissions } = useAuth();
+  const { user, userAccessProfile, userPermissions } = useAuth();
   const { canViewModule } = usePermissions();
 
   const testModules = [
@@ -35,7 +35,7 @@ const PermissionsDiagnostic = () => {
       <CardContent>
         <div className="space-y-4">
           <div>
-            <strong>Usuário:</strong> {user.email} ({userRole})
+            <strong>Usuário:</strong> {user.email} ({userAccessProfile})
           </div>
           
           <div>

@@ -35,7 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const Sidebar = () => {
-  const { signOut, userRole, user } = useAuth();
+  const { signOut, user } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
   const { canViewModule, canViewNewAccount, canViewPendingApproval, canViewAuthorizeAccounts, canViewApprovedAccounts, canViewPaidAccounts } = usePermissions();
   const location = useLocation();
@@ -280,23 +280,8 @@ const Sidebar = () => {
       return false;
     }
 
-    // Para itens que requerem acesso a congregações
-    if (item.requiresCongregationAccess) {
-      // Finance e worker nunca veem esses itens
-      if (userRole === 'finance' || userRole === 'worker') {
-        return false;
-      }
-      
-      // Admin e superadmin sempre veem
-      if (userRole === 'admin' || userRole === 'superadmin') {
-        return true;
-      }
-      
-      // Para pastores, verificar se têm acesso a congregações
-      if (userRole === 'pastor') {
-        return congregationAccess?.hasAccess || false;
-      }
-    }
+    // Para itens que requerem acesso a congregações - agora gerenciado pelo canViewModule
+    // O hook usePermissions já trata da verificação de congregação internamente
 
     return true;
   });
@@ -316,11 +301,11 @@ const Sidebar = () => {
   // State for accounts payable submenu
   const [accountsPayableOpen, setAccountsPayableOpen] = React.useState(false);
 
-  // Check if user can access settings (only admins)
-  const canAccessSettings = canViewModule('configuracoes') || userRole === 'admin' || userRole === 'superadmin';
+  // Check if user can access settings
+  const canAccessSettings = canViewModule('configuracoes');
   
-  // Check if user can access access management (only admins)
-  const canAccessAccessManagement = canViewModule('gestao-acessos') || userRole === 'admin' || userRole === 'superadmin';
+  // Check if user can access access management
+  const canAccessAccessManagement = canViewModule('gestao-acessos');
 
   if (!user || !profileData) {
     return (

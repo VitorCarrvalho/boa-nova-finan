@@ -25,7 +25,7 @@ export interface FinancialFormData {
 }
 
 export const useFinancialForm = () => {
-  const { user, userRole } = useAuth();
+  const { user } = useAuth();
   const { data: suppliers } = useSuppliers();
   const [loading, setLoading] = useState(false);
   

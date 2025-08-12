@@ -14,7 +14,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   requiresCongregationAccess = false 
 }) => {
-  const { user, userRole, loading } = useAuth();
+  const { user, userAccessProfile, loading } = useAuth();
   const { data: congregationAccess, isLoading: congregationLoading } = useUserCongregationAccess();
   const location = useLocation();
 
@@ -33,8 +33,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/auth" replace />;
   }
 
-  // Check if user is approved - se não tem userRole válido, pode estar pendente
-  if (!userRole) {
+  // Check if user is approved - se não tem userAccessProfile válido, pode estar pendente
+  if (!userAccessProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md">
@@ -61,18 +61,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
 
     if (isRestrictedRoute) {
-      // Finance não tem acesso
-      if (userRole === 'finance') {
+      // Analistas e perfis financeiros não têm acesso
+      if (userAccessProfile === 'Analista' || userAccessProfile === 'Gerente Financeiro') {
         return <Navigate to="/dashboard" replace />;
       }
 
-      // Admin e superadmin sempre têm acesso
-      if (userRole === 'admin' || userRole === 'superadmin') {
+      // Admin sempre têm acesso
+      if (userAccessProfile === 'Admin') {
         return <>{children}</>;
       }
 
       // Para pastores, verificar se têm acesso a congregações
-      if (userRole === 'pastor') {
+      if (userAccessProfile === 'Pastor') {
         if (!congregationAccess?.hasAccess) {
           return <Navigate to="/dashboard" replace />;
         }

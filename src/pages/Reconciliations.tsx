@@ -15,7 +15,7 @@ const Reconciliations = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingReconciliation, setEditingReconciliation] = useState<any>(null);
   const { data: reconciliations, isLoading } = useReconciliations();
-  const { userRole } = useAuth();
+  const { userAccessProfile } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
   const { canViewModule, hasPermission } = usePermissions();
 
@@ -29,8 +29,8 @@ const Reconciliations = () => {
     setEditingReconciliation(null);
   };
 
-  const isAdmin = userRole === 'admin' || userRole === 'superadmin';
-  const isPastor = userRole === 'pastor';
+  const isAdmin = userAccessProfile === 'Admin';
+  const isPastor = userAccessProfile === 'Pastor';
   const canSubmit = hasPermission('conciliacoes', 'insert');
   
   // Verificar se o usuário pode visualizar o módulo

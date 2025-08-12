@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
 
 export const useReconciliationStats = () => {
-  const { userRole } = useAuth();
+  const { userAccessProfile } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
 
   return useQuery({

@@ -13,7 +13,7 @@ interface UserProfile {
 }
 
 const HeaderProfile: React.FC = () => {
-  const { user, userRole } = useAuth();
+  const { user } = useAuth();
   const { uploadEventBanner, isUploading } = useImageUpload();
   const { toast } = useToast();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -135,7 +135,7 @@ const HeaderProfile: React.FC = () => {
           {profile.name}
         </p>
         <p className="text-xs text-muted-foreground capitalize">
-          {useAuth().userAccessProfile || userRole}
+          {useAuth().userAccessProfile || 'Membro'}
         </p>
       </div>
     </div>

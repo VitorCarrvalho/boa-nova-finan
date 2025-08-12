@@ -9,7 +9,6 @@ type UserRole = Database['public']['Enums']['user_role'];
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  userRole: UserRole | null;
   userPermissions: Record<string, Record<string, boolean>> | null;
   userAccessProfile: string | null;
   hasPermission: (module: string, action?: string) => boolean;
@@ -56,7 +55,6 @@ const cleanupAuthState = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [userPermissions, setUserPermissions] = useState<Record<string, Record<string, boolean>> | null>(null);
   const [userAccessProfile, setUserAccessProfile] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -217,31 +215,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               
               if (error) {
                 console.log('AuthProvider - Erro ao buscar perfil:', error);
-                setUserRole('worker'); // Role padrão
                 setUserPermissions(null);
+                setUserAccessProfile(null);
               } else {
-                 // Only set role if user is approved
+                 // Only load permissions if user is approved
                 if (profile?.approval_status === 'ativo') {
-                  console.log('AuthProvider - Setting user role from profile:', profile.role);
+                  console.log('AuthProvider - User approved, loading access profile');
                   
                   // DEBUG: Logs especiais para usuários problemáticos
                   if (session.user.email === 'robribeir20@gmail.com' || session.user.email === 'contato@leonardosale.com') {
                     console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG - Profile data:`, profile);
-                    console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG - Profile role:`, profile.role);
                     console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG - Approval status:`, profile.approval_status);
                   }
-                  
-                  // Usar get_current_user_role() para obter o role correto mapeado
-                  const { data: mappedRole } = await supabase.rpc('get_current_user_role');
-                  const finalRole = mappedRole ?? 'worker';
-                  console.log('AuthProvider - Role mapeado pela função:', finalRole);
-                  
-                  // DEBUG: Logs especiais para usuários problemáticos
-                  if (session.user.email === 'robribeir20@gmail.com' || session.user.email === 'contato@leonardosale.com') {
-                    console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG - Role mapeado:`, finalRole);
-                  }
-                  
-                  setUserRole(finalRole);
                   
                   // Extrair nome do perfil de acesso
                   const accessProfileName = profile?.access_profiles?.name || null;
@@ -251,21 +236,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   // Buscar permissões com retry automático
                   await fetchUserPermissionsWithRetry(session.user.id, session.user.email);
                 } else {
-                  console.log('AuthProvider - User not approved, setting worker role');
-                  setUserRole('worker'); // Pending/rejected users get worker role (no access)
+                  console.log('AuthProvider - User not approved');
                   setUserPermissions(null);
                   setUserAccessProfile(null);
                 }
               }
             } catch (err) {
               console.log('AuthProvider - Erro na busca do perfil:', err);
-              setUserRole('worker');
               setUserPermissions(null);
+              setUserAccessProfile(null);
             }
           }, 100);
         } else {
-          console.log('AuthProvider - No user, clearing role and permissions');
-          setUserRole(null);
+          console.log('AuthProvider - No user, clearing permissions');
           setUserPermissions(null);
           setUserAccessProfile(null);
         }
@@ -303,28 +286,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               
               console.log('AuthProvider - Initial profile data:', profile);
               
-              // Only set role if user is approved
+              // Only load permissions if user is approved
               if (profile?.approval_status === 'ativo') {
-                console.log('AuthProvider - Setting initial user role from profile:', profile.role);
+                console.log('AuthProvider - Initial user approved, loading access profile');
                 
                 // DEBUG: Logs especiais para usuários problemáticos na sessão inicial
                 if (session.user.email === 'robribeir20@gmail.com' || session.user.email === 'contato@leonardosale.com') {
                   console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG (Initial) - Profile data:`, profile);
-                  console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG (Initial) - Profile role:`, profile.role);
                   console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG (Initial) - Approval status:`, profile.approval_status);
                 }
-                
-                // Usar get_current_user_role() para obter o role correto mapeado
-                const { data: mappedRole } = await supabase.rpc('get_current_user_role');
-                const finalRole = mappedRole ?? 'worker';
-                console.log('AuthProvider - Role inicial mapeado pela função:', finalRole);
-                
-                // DEBUG: Logs especiais para usuários problemáticos na sessão inicial
-                if (session.user.email === 'robribeir20@gmail.com' || session.user.email === 'contato@leonardosale.com') {
-                  console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG (Initial) - Role mapeado:`, finalRole);
-                }
-                
-                setUserRole(finalRole);
                 
                 // Extrair nome do perfil de acesso
                 const accessProfileName = profile?.access_profiles?.name || null;
@@ -334,14 +304,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 // Buscar permissões com retry automático na sessão inicial
                 await fetchUserPermissionsWithRetry(session.user.id, session.user.email);
               } else {
-                console.log('AuthProvider - Initial user not approved, setting worker role');
-                setUserRole('worker'); // Pending/rejected users get worker role (no access)
+                console.log('AuthProvider - Initial user not approved');
                 setUserPermissions(null);
                 setUserAccessProfile(null);
               }
             } catch (err) {
               console.log('AuthProvider - Erro ao buscar perfil inicial:', err);
-              setUserRole('worker');
               setUserPermissions(null);
               setUserAccessProfile(null);
             }
@@ -507,7 +475,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getUserAccessProfile = (): string | null => {
     console.log('[AuthContext] getUserAccessProfile - Current userAccessProfile:', userAccessProfile);
     console.log('[AuthContext] getUserAccessProfile - Current user:', user?.email);
-    console.log('[AuthContext] getUserAccessProfile - Current userRole:', userRole);
     return userAccessProfile;
   };
 
@@ -554,7 +521,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     user,
     session,
-    userRole,
     userPermissions,
     userAccessProfile,
     hasPermission,

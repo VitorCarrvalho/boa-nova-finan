@@ -11,7 +11,7 @@ import { useReconciliationFilters, useFilteredReconciliations, useChartData } fr
 import { useReconciliationExports } from './hooks/useReconciliationExports';
 
 const ReconciliationSubmissions = () => {
-  const { user, userRole } = useAuth();
+  const { user } = useAuth();
   const { data: reconciliations, isLoading } = useReconciliations();
   const { data: congregations } = useCongregations();
   

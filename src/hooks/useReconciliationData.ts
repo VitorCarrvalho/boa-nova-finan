@@ -10,7 +10,7 @@ type ReconciliationInsert = Database['public']['Tables']['reconciliations']['Ins
 type ReconciliationUpdate = Database['public']['Tables']['reconciliations']['Update'];
 
 export const useReconciliations = () => {
-  const { userRole } = useAuth();
+  const { userAccessProfile } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
 
   return useQuery({

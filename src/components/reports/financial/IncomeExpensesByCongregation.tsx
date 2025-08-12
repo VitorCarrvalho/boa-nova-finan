@@ -21,7 +21,7 @@ const IncomeExpensesByCongregation = ({
   transactionTypeFilter, 
   onTransactionTypeChange 
 }: IncomeExpensesByCongregationProps) => {
-  const { userRole } = useAuth();
+  const { userAccessProfile } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
   const { data: financialRecords, isLoading } = useFinancialRecords();
   const { data: congregations } = useCongregations();
@@ -41,7 +41,7 @@ const IncomeExpensesByCongregation = ({
     let filtered = [...financialRecords];
 
     // Apply user role filters
-    if (userRole === 'pastor' && congregationAccess?.assignedCongregations) {
+    if (userAccessProfile === 'Pastor' && congregationAccess?.assignedCongregations) {
       const assignedIds = congregationAccess.assignedCongregations.map(c => c.id);
       assignedIds.push('00000000-0000-0000-0000-000000000100'); // Include headquarters
       filtered = filtered.filter(record => 

@@ -18,7 +18,7 @@ interface ProfileTest {
 }
 
 export const usePermissionTester = () => {
-  const { userPermissions, userRole, user } = useAuth();
+  const { userPermissions, userAccessProfile, user } = useAuth();
   const {
     canViewModule,
     canInsertModule,
@@ -292,7 +292,7 @@ export const usePermissionTester = () => {
     return {
       profileName,
       email: user.email || '',
-      role: userRole || '',
+      role: userAccessProfile || '',
       tests,
       overall
     };
@@ -323,7 +323,7 @@ export const usePermissionTester = () => {
     testCurrentUserPermissions,
     getCurrentPermissionsSummary,
     userPermissions,
-    userRole,
+    userAccessProfile,
     user
   };
 };

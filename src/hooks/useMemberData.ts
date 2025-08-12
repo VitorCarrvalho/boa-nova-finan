@@ -10,11 +10,11 @@ type MemberInsert = Database['public']['Tables']['members']['Insert'];
 type MemberUpdate = Database['public']['Tables']['members']['Update'];
 
 export const useMembers = () => {
-  const { userRole } = useAuth();
+  const { userAccessProfile } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
 
   return useQuery({
-    queryKey: ['members', userRole, congregationAccess?.assignedCongregations],
+    queryKey: ['members', userAccessProfile, congregationAccess?.assignedCongregations],
     queryFn: async () => {
       let query = supabase
         .from('members')
@@ -22,7 +22,7 @@ export const useMembers = () => {
         .order('name', { ascending: true });
 
       // Filter for pastors to only their assigned congregations
-      if (userRole === 'pastor' && congregationAccess?.assignedCongregations) {
+      if (userAccessProfile === 'Pastor' && congregationAccess?.assignedCongregations) {
         const assignedCongregationIds = congregationAccess.assignedCongregations.map(c => c.id);
         if (assignedCongregationIds.length > 0) {
           query = query.in('congregation_id', assignedCongregationIds);
@@ -37,23 +37,23 @@ export const useMembers = () => {
       if (error) throw error;
       return data as Member[];
     },
-    enabled: !!userRole,
+    enabled: !!userAccessProfile,
   });
 };
 
 export const useMemberStats = () => {
-  const { userRole } = useAuth();
+  const { userAccessProfile } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
 
   return useQuery({
-    queryKey: ['member-stats', userRole, congregationAccess?.assignedCongregations],
+    queryKey: ['member-stats', userAccessProfile, congregationAccess?.assignedCongregations],
     queryFn: async () => {
       let query = supabase
         .from('members')
         .select('*');
 
       // Filter for pastors to only their assigned congregations
-      if (userRole === 'pastor' && congregationAccess?.assignedCongregations) {
+      if (userAccessProfile === 'Pastor' && congregationAccess?.assignedCongregations) {
         const assignedCongregationIds = congregationAccess.assignedCongregations.map(c => c.id);
         if (assignedCongregationIds.length > 0) {
           query = query.in('congregation_id', assignedCongregationIds);
@@ -104,7 +104,7 @@ export const useMemberStats = () => {
         ministryStats
       };
     },
-    enabled: !!userRole,
+    enabled: !!userAccessProfile,
   });
 };
 

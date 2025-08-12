@@ -6,11 +6,11 @@ import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
 import { SupplierPayment } from '../types/SupplierPaymentTypes';
 
 export const useSupplierPayments = () => {
-  const { userRole } = useAuth();
+  const { userAccessProfile } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
 
   return useQuery({
-    queryKey: ['supplier-payments', userRole, congregationAccess?.assignedCongregations],
+    queryKey: ['supplier-payments', userAccessProfile, congregationAccess?.assignedCongregations],
     queryFn: async () => {
       let query = supabase
         .from('financial_records')
@@ -33,8 +33,8 @@ export const useSupplierPayments = () => {
         .eq('category', 'supplier')
         .order('created_at', { ascending: false });
 
-      // Apply user role filters
-      if (userRole === 'pastor' && congregationAccess?.assignedCongregations) {
+      // Apply user access profile filters
+      if (userAccessProfile === 'Pastor' && congregationAccess?.assignedCongregations) {
         const assignedIds = congregationAccess.assignedCongregations.map(c => c.id);
         assignedIds.push('00000000-0000-0000-0000-000000000100'); // Include headquarters
         query = query.in('congregation_id', assignedIds);
@@ -47,6 +47,6 @@ export const useSupplierPayments = () => {
       }
       return data as SupplierPayment[];
     },
-    enabled: !!userRole,
+    enabled: !!userAccessProfile,
   });
 };
