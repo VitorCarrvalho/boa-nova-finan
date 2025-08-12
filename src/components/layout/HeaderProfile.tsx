@@ -135,7 +135,7 @@ const HeaderProfile: React.FC = () => {
           {profile.name}
         </p>
         <p className="text-xs text-muted-foreground capitalize">
-          {userRole}
+          {useAuth().userAccessProfile || userRole}
         </p>
       </div>
     </div>
