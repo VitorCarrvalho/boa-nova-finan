@@ -18,27 +18,30 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { data: congregationAccess, isLoading: congregationLoading } = useUserCongregationAccess();
   const location = useLocation();
 
+  // Mostrar loading enquanto está carregando dados essenciais
   if (loading || (requiresCongregationAccess && congregationLoading)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Carregando...</p>
         </div>
       </div>
     );
   }
 
+  // Se não tem usuário, redirecionar para login
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
 
-  // Check if user is approved - se não tem userAccessProfile válido, pode estar pendente
-  if (!userAccessProfile) {
+  // CORREÇÃO: Só mostrar "em análise" se realmente não carregou o perfil após o loading estar completo
+  // E se o usuário não tem permissões válidas (não apenas userAccessProfile null)
+  if (!loading && !userAccessProfile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center max-w-md">
-          <h2 className="text-xl font-semibold mb-2">Seu cadastro está em análise</h2>
+          <h2 className="text-xl font-semibold mb-2 text-foreground">Seu cadastro está em análise</h2>
           <p className="text-muted-foreground mb-4">
             Aguarde aprovação para acessar o sistema.
           </p>
