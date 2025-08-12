@@ -25,7 +25,7 @@ export interface FinancialFormData {
 }
 
 export const useFinancialForm = () => {
-  const { user } = useAuth();
+  const { user, userAccessProfile } = useAuth();
   const { data: suppliers } = useSuppliers();
   const [loading, setLoading] = useState(false);
   
@@ -78,7 +78,7 @@ export const useFinancialForm = () => {
   const { data: currentUserPastor } = useQuery({
     queryKey: ['current-user-pastor', user?.id],
     queryFn: async () => {
-      if (!user?.id || userRole !== 'pastor') return null;
+      if (!user?.id || userAccessProfile !== 'Pastor') return null;
 
       // First check if user exists in members table
       const { data: memberPastor, error: memberError } = await supabase
@@ -92,7 +92,7 @@ export const useFinancialForm = () => {
       if (memberError) throw memberError;
       return memberPastor;
     },
-    enabled: !!user?.id && userRole === 'pastor',
+    enabled: !!user?.id && userAccessProfile === 'Pastor',
   });
 
   // Set default values when data loads
@@ -107,13 +107,13 @@ export const useFinancialForm = () => {
   }, [congregations, formData.congregation_id]);
 
   useEffect(() => {
-    if (currentUserPastor && userRole === 'pastor') {
+    if (currentUserPastor && userAccessProfile === 'Pastor') {
       setFormData(prev => ({
         ...prev,
         responsible_pastor_id: currentUserPastor.id
       }));
     }
-  }, [currentUserPastor, userRole]);
+  }, [currentUserPastor, userAccessProfile]);
 
   const resetForm = () => {
     const defaultCongregationId = congregations?.find(c => c.name === 'Sede')?.id || congregations?.[0]?.id || '';
@@ -127,7 +127,7 @@ export const useFinancialForm = () => {
       attendees: '',
       description: '',
       supplier_id: '',
-      responsible_pastor_id: userRole === 'pastor' && currentUserPastor ? currentUserPastor.id : '',
+      responsible_pastor_id: userAccessProfile === 'Pastor' && currentUserPastor ? currentUserPastor.id : '',
       congregation_id: defaultCongregationId
     });
   };
@@ -141,7 +141,7 @@ export const useFinancialForm = () => {
     congregations,
     pastors,
     currentUserPastor,
-    userRole,
+    userAccessProfile,
     user,
     resetForm
   };

@@ -9,16 +9,16 @@ export const useReconciliationStats = () => {
   const { data: congregationAccess } = useUserCongregationAccess();
 
   return useQuery({
-    queryKey: ['reconciliation-stats', userRole, congregationAccess?.assignedCongregations],
+    queryKey: ['reconciliation-stats', userAccessProfile, congregationAccess?.assignedCongregations],
     queryFn: async () => {
-      console.log('Fetching reconciliation stats for user role:', userRole);
+      console.log('Fetching reconciliation stats for user access profile:', userAccessProfile);
       
       let query = supabase
         .from('reconciliations')
         .select('*');
 
       // Filter for pastors to only their assigned congregations
-      if (userRole === 'pastor' && congregationAccess?.assignedCongregations) {
+      if (userAccessProfile === 'Pastor' && congregationAccess?.assignedCongregations) {
         const assignedCongregationIds = congregationAccess.assignedCongregations.map(c => c.id);
         if (assignedCongregationIds.length > 0) {
           query = query.in('congregation_id', assignedCongregationIds);
@@ -72,6 +72,6 @@ export const useReconciliationStats = () => {
         totalPendingAmount
       };
     },
-    enabled: !!userRole,
+    enabled: !!userAccessProfile,
   });
 };

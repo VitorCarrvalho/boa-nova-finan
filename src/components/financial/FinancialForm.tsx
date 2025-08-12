@@ -27,7 +27,7 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
     congregations,
     pastors,
     currentUserPastor,
-    userRole,
+    userAccessProfile,
     user,
     resetForm
   } = useFinancialForm();
@@ -92,7 +92,7 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
     }
   };
 
-  const isCurrentUserPastor = userRole === 'pastor';
+  const isCurrentUserPastor = userAccessProfile === 'Pastor';
   const availablePastors = isCurrentUserPastor && currentUserPastor ? [currentUserPastor] : pastors || [];
 
   return (

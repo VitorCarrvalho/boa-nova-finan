@@ -40,18 +40,18 @@ export const useReconciliationForm = ({ reconciliation, onClose }: UseReconcilia
       return congregationAccess.assignedCongregations;
     }
     return congregations || [];
-  }, [userRole, congregationAccess, congregations]);
+  }, [userAccessProfile, congregationAccess, congregations]);
 
   // Auto-select first congregation for pastors with only one congregation
   const defaultCongregationId = React.useMemo(() => {
     if (reconciliation?.congregation_id) {
       return reconciliation.congregation_id;
     }
-    if (userRole === 'pastor' && availableCongregations.length === 1) {
+    if (userAccessProfile === 'Pastor' && availableCongregations.length === 1) {
       return availableCongregations[0].id;
     }
     return '';
-  }, [reconciliation, userRole, availableCongregations]);
+  }, [reconciliation, userAccessProfile, availableCongregations]);
 
   // Format functions for date handling
   const formatDateForInput = (dateString: string): string => {
@@ -138,7 +138,7 @@ export const useReconciliationForm = ({ reconciliation, onClose }: UseReconcilia
         debit: Number(data.debit) || 0,
         credit: Number(data.credit) || 0,
         cash: Number(data.cash) || 0,
-        status: userRole === 'pastor' ? 'pending' as const : (data.status || 'pending' as const),
+        status: userAccessProfile === 'Pastor' ? 'pending' as const : (data.status || 'pending' as const),
         // Include sent_by for new reconciliations to satisfy RLS policy
         ...(isEditing ? {} : { sent_by: user.id })
       };
@@ -161,8 +161,8 @@ export const useReconciliationForm = ({ reconciliation, onClose }: UseReconcilia
   };
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
-  const isPastor = userRole === 'pastor';
-  const isAdmin = userRole === 'admin' || userRole === 'superadmin';
+  const isPastor = userAccessProfile === 'Pastor';
+  const isAdmin = userAccessProfile === 'Admin';
   const canInsert = canInsertModule('conciliacoes');
   const canEdit = canEditModule('conciliacoes');
   const canApprove = canApproveModule('conciliacoes');

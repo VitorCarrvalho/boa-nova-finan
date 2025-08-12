@@ -20,7 +20,7 @@ const ReconciliationSubmissions = () => {
   const chartData = useChartData(reconciliations, congregations);
   const { generatePDF, exportToCSV } = useReconciliationExports(reconciliations, congregations, user);
 
-  const canDownloadPDF = userRole === 'admin' || userRole === 'superadmin';
+  const canDownloadPDF = useAuth().userAccessProfile === 'Admin';
 
   if (isLoading) {
     return <div className="flex justify-center p-4">Carregando...</div>;

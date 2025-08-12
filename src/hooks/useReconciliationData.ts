@@ -14,9 +14,9 @@ export const useReconciliations = () => {
   const { data: congregationAccess } = useUserCongregationAccess();
 
   return useQuery({
-    queryKey: ['reconciliations', userRole, congregationAccess?.assignedCongregations],
+    queryKey: ['reconciliations', userAccessProfile, congregationAccess?.assignedCongregations],
     queryFn: async () => {
-      console.log('Fetching reconciliations for user role:', userRole);
+      console.log('Fetching reconciliations for user access profile:', userAccessProfile);
       
       let query = supabase
         .from('reconciliations')
@@ -29,7 +29,7 @@ export const useReconciliations = () => {
         .order('created_at', { ascending: false });
 
       // Filter for pastors to only their assigned congregations
-      if (userRole === 'pastor' && congregationAccess?.assignedCongregations) {
+      if (userAccessProfile === 'Pastor' && congregationAccess?.assignedCongregations) {
         const assignedCongregationIds = congregationAccess.assignedCongregations.map(c => c.id);
         if (assignedCongregationIds.length > 0) {
           query = query.in('congregation_id', assignedCongregationIds);
@@ -49,7 +49,7 @@ export const useReconciliations = () => {
       console.log('Reconciliations fetched successfully:', data);
       return data as (Reconciliation & { congregations?: { name: string } })[];
     },
-    enabled: !!userRole,
+    enabled: !!userAccessProfile,
   });
 };
 
