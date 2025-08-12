@@ -133,6 +133,7 @@ const FinancialTable = () => {
                 <TableHead>Data</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Categoria</TableHead>
+                <TableHead>Descrição</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead>Método</TableHead>
                 <TableHead>Evento</TableHead>
@@ -149,6 +150,9 @@ const FinancialTable = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>{getCategoryLabel(record.category)}</TableCell>
+                  <TableCell className="max-w-xs truncate" title={record.description || ''}>
+                    {record.description || '-'}
+                  </TableCell>
                   <TableCell className={record.type === 'income' ? 'text-green-600' : 'text-red-600'}>
                     {formatCurrency(Number(record.amount))}
                   </TableCell>
@@ -190,7 +194,7 @@ const FinancialTable = () => {
               ))}
               {(!records || records.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={(canEdit || canDelete) ? 7 : 6} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={(canEdit || canDelete) ? 8 : 7} className="text-center py-8 text-gray-500">
                     Nenhum registro encontrado
                   </TableCell>
                 </TableRow>

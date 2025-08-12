@@ -61,7 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userAccessProfile, setUserAccessProfile] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Função para buscar permissões com retry automático
+  // Função para buscar permissões com retry automático e perfil único
   const fetchUserPermissionsWithRetry = async (userId: string, userEmail?: string, retryCount: number = 0): Promise<void> => {
     const maxRetries = 3;
     const isDebugUser = userEmail === 'robribeir20@gmail.com' || userEmail === 'contato@leonardosale.com';
@@ -71,27 +71,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     try {
-      // Primeira tentativa: query direta mais simples
-      const { data: directData, error: directError } = await supabase
+      // Método 1: Verificar perfil único na tabela profiles
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('access_profiles(permissions)')
+        .select(`
+          id,
+          profile_id,
+          name,
+          email,
+          approval_status
+        `)
         .eq('id', userId)
         .eq('approval_status', 'ativo')
         .single();
 
       if (isDebugUser) {
-        console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - Query direta resultado:`, { directData, directError });
+        console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - Profile data:`, { profileData, profileError });
       }
 
-      if (!directError && directData?.access_profiles?.permissions) {
-        const permissions = directData.access_profiles.permissions;
+      if (profileError || !profileData?.profile_id) {
+        throw new Error(`No profile found: ${profileError?.message}`);
+      }
+
+      // Método 2: Buscar permissões do perfil específico
+      const { data: permissionsData, error: permissionsError } = await supabase
+        .from('access_profiles')
+        .select('id, name, permissions')
+        .eq('id', profileData.profile_id)
+        .eq('is_active', true)
+        .single();
+
+      if (isDebugUser) {
+        console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - Permissions data:`, { permissionsData, permissionsError });
+      }
+
+      if (!permissionsError && permissionsData?.permissions) {
+        const permissions = permissionsData.permissions;
         
         // Validar se as permissões não estão vazias
         if (typeof permissions === 'object' && Object.keys(permissions).length > 0) {
           if (isDebugUser) {
-            console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - Permissões válidas encontradas:`, permissions);
+            console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - ✅ Permissões válidas encontradas:`, permissions);
+            console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - Perfil: ${permissionsData.name}`);
           }
           setUserPermissions(permissions as Record<string, Record<string, boolean>>);
+          setUserAccessProfile(permissionsData.name);
           return;
         }
       }
@@ -130,7 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!rpcError && rpcData && typeof rpcData === 'object' && Object.keys(rpcData).length > 0) {
         if (isDebugUser) {
-          console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - Permissões válidas via RPC:`, rpcData);
+          console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - ✅ Permissões válidas via RPC:`, rpcData);
         }
         setUserPermissions(rpcData as Record<string, Record<string, boolean>>);
         return;
@@ -139,6 +163,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Se chegou aqui, algo está errado - retry se ainda temos tentativas
       if (retryCount < maxRetries) {
         console.warn(`AuthProvider - Tentativa ${retryCount + 1} falhou, tentando novamente em 1s...`);
+        if (isDebugUser) {
+          console.warn(`🔍 ${userEmail?.toUpperCase()} DEBUG - Retry ${retryCount + 1} in 1s...`);
+        }
         setTimeout(() => {
           fetchUserPermissionsWithRetry(userId, userEmail, retryCount + 1);
         }, 1000);
@@ -148,7 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Se esgotaram as tentativas, setar permissões vazias e alertar
       console.error('AuthProvider - ERRO CRÍTICO: Não foi possível carregar permissões após todas as tentativas');
       if (isDebugUser) {
-        console.error(`🔍 ${userEmail?.toUpperCase()} DEBUG - FALHA CRÍTICA ao carregar permissões`);
+        console.error(`🔍 ${userEmail?.toUpperCase()} DEBUG - ❌ FALHA CRÍTICA ao carregar permissões`);
       }
       setUserPermissions({});
 

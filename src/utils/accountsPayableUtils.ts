@@ -41,6 +41,12 @@ export const getApprovalLevelsForProfile = (profileName: string): ApprovalLevel[
 export const canApproveAtLevel = (profileName: string, accountStatus: AccountStatus): boolean => {
   console.log(`[accountsPayableUtils] Checking if profile ${profileName} can approve status ${accountStatus}`);
   
+  // Validação adicional para perfis que não existem
+  if (!profileName || profileName.trim() === '') {
+    console.log(`[accountsPayableUtils] FAIL: Empty or null profile name`);
+    return false;
+  }
+  
   const allowedLevels = getApprovalLevelsForProfile(profileName);
   const requiredLevel = getRequiredApprovalLevel(accountStatus);
   

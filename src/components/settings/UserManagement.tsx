@@ -64,22 +64,27 @@ const UserManagement = () => {
 
   const handleSaveUser = async (userId: string) => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          profile_id: editForm.profileId
-        })
-        .eq('id', userId);
+      // Usar a nova função para atribuir perfil único
+      const { data, error } = await supabase
+        .rpc('assign_unique_profile' as any, {
+          _user_id: userId,
+          _profile_id: editForm.profileId
+        });
 
       if (error) throw error;
 
       toast({
         title: "Usuário atualizado",
-        description: "Os dados do usuário foram atualizados com sucesso!",
+        description: "Perfil atribuído com sucesso! As permissões foram atualizadas.",
       });
 
       setEditingUser(null);
       refetch();
+      
+      // Força refresh da página para recarregar permissões
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error: any) {
       toast({
         title: "Erro",
