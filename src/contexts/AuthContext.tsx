@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   // Função para buscar permissões com retry automático e perfil único
-  const fetchUserPermissionsWithRetry = async (userId: string, userEmail?: string, retryCount: number = 0): Promise<void> => {
+  const fetchUserPermissionsWithRetry = async (userId: string, userEmail?: string, retryCount: number = 0): Promise<boolean> => {
     const maxRetries = 3;
     const isDebugUser = userEmail === 'robribeir20@gmail.com' || userEmail === 'contato@leonardosale.com';
     
@@ -114,14 +114,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
           setUserPermissions(permissions as Record<string, Record<string, boolean>>);
           setUserAccessProfile(permissionsData.name);
-          return;
+          return true;
         }
       }
 
       // Segunda tentativa: query com inner join
       const { data: innerData, error: innerError } = await supabase
         .from('profiles')
-        .select('access_profiles!inner(permissions)')
+        .select('access_profiles!inner(name, permissions)')
         .eq('id', userId)
         .eq('approval_status', 'ativo')
         .single();
@@ -132,6 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!innerError && innerData?.access_profiles?.permissions) {
         const permissions = innerData.access_profiles.permissions;
+        const profileName = innerData.access_profiles.name;
         
         // Validar se as permissões não estão vazias
         if (typeof permissions === 'object' && Object.keys(permissions).length > 0) {
@@ -139,23 +140,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - Permissões válidas encontradas (inner):`, permissions);
           }
           setUserPermissions(permissions as Record<string, Record<string, boolean>>);
-          return;
+          setUserAccessProfile(profileName);
+          return true;
         }
-      }
-
-      // Terceira tentativa: usar função RPC
-      const { data: rpcData, error: rpcError } = await supabase.rpc('get_current_user_permissions');
-      
-      if (isDebugUser) {
-        console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - RPC resultado:`, { rpcData, rpcError });
-      }
-
-      if (!rpcError && rpcData && typeof rpcData === 'object' && Object.keys(rpcData).length > 0) {
-        if (isDebugUser) {
-          console.log(`🔍 ${userEmail?.toUpperCase()} DEBUG - ✅ Permissões válidas via RPC:`, rpcData);
-        }
-        setUserPermissions(rpcData as Record<string, Record<string, boolean>>);
-        return;
       }
 
       // Se chegou aqui, algo está errado - retry se ainda temos tentativas
@@ -164,10 +151,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (isDebugUser) {
           console.warn(`🔍 ${userEmail?.toUpperCase()} DEBUG - Retry ${retryCount + 1} in 1s...`);
         }
-        setTimeout(() => {
-          fetchUserPermissionsWithRetry(userId, userEmail, retryCount + 1);
-        }, 1000);
-        return;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return await fetchUserPermissionsWithRetry(userId, userEmail, retryCount + 1);
       }
 
       // Se esgotaram as tentativas, setar permissões vazias e alertar
@@ -176,15 +161,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error(`🔍 ${userEmail?.toUpperCase()} DEBUG - ❌ FALHA CRÍTICA ao carregar permissões`);
       }
       setUserPermissions({});
+      setUserAccessProfile(null);
+      return false;
 
     } catch (error) {
       console.error('AuthProvider - Erro ao buscar permissões:', error);
       if (retryCount < maxRetries) {
-        setTimeout(() => {
-          fetchUserPermissionsWithRetry(userId, userEmail, retryCount + 1);
-        }, 1000);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return await fetchUserPermissionsWithRetry(userId, userEmail, retryCount + 1);
       } else {
         setUserPermissions({});
+        setUserAccessProfile(null);
+        return false;
       }
     }
   };
@@ -202,58 +190,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (session?.user) {
           console.log('AuthProvider - User authenticated, fetching role and permissions...');
-          // Buscar role e permissões do usuário - usar setTimeout para evitar deadlock
-          setTimeout(async () => {
-            try {
-              const { data: profile, error } = await supabase
-                .from('profiles')
-                .select('role, approval_status, access_profiles(name)')
-                .eq('id', session.user.id)
-                .single();
-              
-              console.log('AuthProvider - Profile data:', profile);
-              
-              if (error) {
-                console.log('AuthProvider - Erro ao buscar perfil:', error);
-                setUserPermissions(null);
-                setUserAccessProfile(null);
-              } else {
-                 // Only load permissions if user is approved
-                if (profile?.approval_status === 'ativo') {
-                  console.log('AuthProvider - User approved, loading access profile');
-                  
-                  // DEBUG: Logs especiais para usuários problemáticos
-                  if (session.user.email === 'robribeir20@gmail.com' || session.user.email === 'contato@leonardosale.com') {
-                    console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG - Profile data:`, profile);
-                    console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG - Approval status:`, profile.approval_status);
-                  }
-                  
-                  // Extrair nome do perfil de acesso
-                  const accessProfileName = profile?.access_profiles?.name || null;
-                  console.log('AuthProvider - Access profile name:', accessProfileName);
-                  setUserAccessProfile(accessProfileName);
-                  
-                  // Buscar permissões com retry automático
-                  await fetchUserPermissionsWithRetry(session.user.id, session.user.email);
-                } else {
-                  console.log('AuthProvider - User not approved');
-                  setUserPermissions(null);
-                  setUserAccessProfile(null);
-                }
-              }
-            } catch (err) {
-              console.log('AuthProvider - Erro na busca do perfil:', err);
+          
+          try {
+            const { data: profile, error } = await supabase
+              .from('profiles')
+              .select('role, approval_status, access_profiles(name)')
+              .eq('id', session.user.id)
+              .single();
+            
+            console.log('AuthProvider - Profile data:', profile);
+            
+            if (error) {
+              console.log('AuthProvider - Erro ao buscar perfil:', error);
               setUserPermissions(null);
               setUserAccessProfile(null);
+              setLoading(false);
+            } else {
+               // Only load permissions if user is approved
+              if (profile?.approval_status === 'ativo') {
+                console.log('AuthProvider - User approved, loading access profile');
+                
+                // DEBUG: Logs especiais para usuários problemáticos
+                if (session.user.email === 'robribeir20@gmail.com' || session.user.email === 'contato@leonardosale.com') {
+                  console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG - Profile data:`, profile);
+                  console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG - Approval status:`, profile.approval_status);
+                }
+                
+                // Extrair nome do perfil de acesso
+                const accessProfileName = profile?.access_profiles?.name || null;
+                console.log('AuthProvider - Access profile name:', accessProfileName);
+                setUserAccessProfile(accessProfileName);
+                
+                // Buscar permissões com retry automático - AGUARDAR antes de setar loading=false
+                const permissionsLoaded = await fetchUserPermissionsWithRetry(session.user.id, session.user.email);
+                
+                if (!permissionsLoaded) {
+                  console.warn('AuthProvider - Falha ao carregar permissões, mas usuário está aprovado');
+                }
+                
+                setLoading(false);
+              } else {
+                console.log('AuthProvider - User not approved');
+                setUserPermissions(null);
+                setUserAccessProfile(null);
+                setLoading(false);
+              }
             }
-          }, 100);
+          } catch (err) {
+            console.log('AuthProvider - Erro na busca do perfil:', err);
+            setUserPermissions(null);
+            setUserAccessProfile(null);
+            setLoading(false);
+          }
         } else {
           console.log('AuthProvider - No user, clearing permissions');
           setUserPermissions(null);
           setUserAccessProfile(null);
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
 
@@ -276,47 +270,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (session?.user) {
           console.log('AuthProvider - Existing user found, fetching role and permissions...');
-          setTimeout(async () => {
-            try {
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('role, approval_status, access_profiles(name)')
-                .eq('id', session.user.id)
-                .single();
+          
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('role, approval_status, access_profiles(name)')
+              .eq('id', session.user.id)
+              .single();
+            
+            console.log('AuthProvider - Initial profile data:', profile);
+            
+            // Only load permissions if user is approved
+            if (profile?.approval_status === 'ativo') {
+              console.log('AuthProvider - Initial user approved, loading access profile');
               
-              console.log('AuthProvider - Initial profile data:', profile);
-              
-              // Only load permissions if user is approved
-              if (profile?.approval_status === 'ativo') {
-                console.log('AuthProvider - Initial user approved, loading access profile');
-                
-                // DEBUG: Logs especiais para usuários problemáticos na sessão inicial
-                if (session.user.email === 'robribeir20@gmail.com' || session.user.email === 'contato@leonardosale.com') {
-                  console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG (Initial) - Profile data:`, profile);
-                  console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG (Initial) - Approval status:`, profile.approval_status);
-                }
-                
-                // Extrair nome do perfil de acesso
-                const accessProfileName = profile?.access_profiles?.name || null;
-                console.log('AuthProvider - Initial access profile name:', accessProfileName);
-                setUserAccessProfile(accessProfileName);
-                
-                // Buscar permissões com retry automático na sessão inicial
-                await fetchUserPermissionsWithRetry(session.user.id, session.user.email);
-              } else {
-                console.log('AuthProvider - Initial user not approved');
-                setUserPermissions(null);
-                setUserAccessProfile(null);
+              // DEBUG: Logs especiais para usuários problemáticos na sessão inicial
+              if (session.user.email === 'robribeir20@gmail.com' || session.user.email === 'contato@leonardosale.com') {
+                console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG (Initial) - Profile data:`, profile);
+                console.log(`🔍 ${session.user.email.toUpperCase()} DEBUG (Initial) - Approval status:`, profile.approval_status);
               }
-            } catch (err) {
-              console.log('AuthProvider - Erro ao buscar perfil inicial:', err);
+              
+              // Extrair nome do perfil de acesso
+              const accessProfileName = profile?.access_profiles?.name || null;
+              console.log('AuthProvider - Initial access profile name:', accessProfileName);
+              setUserAccessProfile(accessProfileName);
+              
+              // Buscar permissões com retry automático na sessão inicial - AGUARDAR antes de setar loading=false
+              const permissionsLoaded = await fetchUserPermissionsWithRetry(session.user.id, session.user.email);
+              
+              if (!permissionsLoaded) {
+                console.warn('AuthProvider - Falha ao carregar permissões iniciais, mas usuário está aprovado');
+              }
+              
+              setLoading(false);
+            } else {
+              console.log('AuthProvider - Initial user not approved');
               setUserPermissions(null);
               setUserAccessProfile(null);
+              setLoading(false);
             }
-          }, 100);
+          } catch (err) {
+            console.log('AuthProvider - Erro ao buscar perfil inicial:', err);
+            setUserPermissions(null);
+            setUserAccessProfile(null);
+            setLoading(false);
+          }
+        } else {
+          setLoading(false);
         }
-        
-        setLoading(false);
       } catch (err) {
         console.log('AuthProvider - Erro geral na verificação de sessão:', err);
         cleanupAuthState();
