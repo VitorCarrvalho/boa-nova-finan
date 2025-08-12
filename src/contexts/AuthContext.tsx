@@ -59,51 +59,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userAccessProfile, setUserAccessProfile] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Função simplificada para buscar permissões usando RPC
+  // Função corrigida para buscar permissões diretamente
   const fetchUserPermissions = async (userId: string, userEmail?: string): Promise<void> => {
     console.log(`AuthProvider - Carregando permissões para: ${userEmail}`);
     
     try {
-      // Usar RPC function que bypassa RLS
-      const { data: permissions, error: permissionsError } = await supabase
-        .rpc('get_current_user_permissions');
-
-      if (permissionsError) {
-        console.error('AuthProvider - Erro ao buscar permissões via RPC:', permissionsError);
-        throw permissionsError;
-      }
-
-      // Buscar o nome do perfil via query normal
+      // Query direta que funciona corretamente
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('access_profiles(name)')
+        .select(`
+          id, 
+          approval_status,
+          access_profiles!inner(
+            name,
+            permissions
+          )
+        `)
         .eq('id', userId)
         .eq('approval_status', 'ativo')
+        .eq('access_profiles.is_active', true)
         .single();
 
       if (profileError) {
-        console.error('AuthProvider - Erro ao buscar profile:', profileError);
+        console.error('AuthProvider - Erro ao buscar perfil e permissões:', profileError);
         throw profileError;
       }
 
+      const permissions = profile?.access_profiles?.permissions || {};
       const profileName = profile?.access_profiles?.name;
       
-      console.log('AuthProvider - Permissões carregadas:', {
+      console.log('AuthProvider - Dados carregados:', {
         permissions,
         profileName,
-        permissionsValid: permissions && typeof permissions === 'object' && Object.keys(permissions).length > 0
+        permissionsCount: Object.keys(permissions).length
       });
 
-      // Validar permissões
-      if (permissions && typeof permissions === 'object' && Object.keys(permissions).length > 0) {
-        setUserPermissions(permissions as Record<string, Record<string, boolean>>);
-        setUserAccessProfile(profileName || null);
-        console.log('AuthProvider - ✅ Permissões definidas com sucesso');
-      } else {
-        console.warn('AuthProvider - ⚠️ Permissões vazias ou inválidas');
-        setUserPermissions({});
-        setUserAccessProfile(profileName || null);
-      }
+      // Definir permissões e perfil
+      setUserPermissions(permissions as Record<string, Record<string, boolean>>);
+      setUserAccessProfile(profileName || null);
+      console.log('AuthProvider - ✅ Permissões e perfil definidos com sucesso');
+      
     } catch (error) {
       console.error('AuthProvider - Erro fatal ao carregar permissões:', error);
       setUserPermissions({});
