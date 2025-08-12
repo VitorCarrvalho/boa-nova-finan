@@ -154,6 +154,8 @@ const AccountPayableList: React.FC<AccountPayableListProps> = ({
     // Obter perfil de acesso do usuário
     const userAccessProfile = getUserAccessProfile();
     console.log(`[AccountPayableList] User access profile returned: ${userAccessProfile}`);
+    console.log(`[AccountPayableList] AuthContext userRole: ${userRole}`);
+    console.log(`[AccountPayableList] AuthContext userAccessProfile: ${useAuth().userAccessProfile}`);
     
     if (!userAccessProfile) {
       console.log(`[AccountPayableList] FAIL: No access profile found for user`);
