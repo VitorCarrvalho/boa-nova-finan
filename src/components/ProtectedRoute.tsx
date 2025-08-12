@@ -35,15 +35,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/auth" replace />;
   }
 
-  // CORREÇÃO DEFINITIVA: Só mostrar "em análise" se loading está completo E userAccessProfile está null
-  // Aguardar um tempo adicional para garantir que as permissões foram processadas
+  // Só mostrar "em análise" se realmente não há perfil de acesso
   if (!loading && !userAccessProfile) {
-    // Adicionar timeout adicional para garantir que não é um problema de timing
-    setTimeout(() => {
-      if (!userAccessProfile) {
-        console.log('ProtectedRoute - User sem perfil após timeout, realmente em análise');
-      }
-    }, 500);
+    console.log('ProtectedRoute - User sem perfil de acesso, mostrando tela de análise');
     
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
