@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userAccessProfile, setUserAccessProfile] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Função corrigida para buscar permissões diretamente
+  // Função corrigida para buscar permissões diretamente com timeout
   const fetchUserPermissions = async (userId: string, userEmail?: string): Promise<void> => {
     console.log(`AuthProvider - Carregando permissões para: ${userEmail}`);
     
@@ -82,6 +82,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (profileError) {
         console.error('AuthProvider - Erro ao buscar perfil e permissões:', profileError);
+        
+        // Fallback para usuários ativos sem perfil específico
+        const { data: fallbackProfile } = await supabase
+          .from('profiles')
+          .select('id, approval_status')
+          .eq('id', userId)
+          .eq('approval_status', 'ativo')
+          .single();
+
+        if (fallbackProfile) {
+          console.log('AuthProvider - Usuário ativo encontrado, mas sem perfil de acesso específico');
+          setUserPermissions({});
+          setUserAccessProfile('Membro');
+          return;
+        }
+        
         throw profileError;
       }
 

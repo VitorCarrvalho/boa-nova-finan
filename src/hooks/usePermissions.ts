@@ -4,25 +4,43 @@ import { hasNestedPermission, getPermissionForModule, MODULE_DEFINITIONS } from 
 
 export const usePermissions = () => {
   const { userPermissions, hasPermission } = useAuth();
-  const { data: congregationAccess } = useUserCongregationAccess();
+  const { data: congregationAccess, isLoading: congregationLoading } = useUserCongregationAccess();
   const hasAccessToAnyCongregation = congregationAccess?.hasAccess || false;
+  
+  console.log('usePermissions - Estado atual:', { 
+    hasUserPermissions: !!userPermissions && Object.keys(userPermissions).length > 0,
+    congregationLoading,
+    hasAccessToAnyCongregation
+  });
 
   const checkModuleAccess = (module: string, action: string = 'view'): boolean => {
     return hasPermission(module, action);
   };
 
   const canViewModule = (module: string): boolean => {
+    console.log('usePermissions - canViewModule verificando:', { module });
+    
     // Check basic permission first
     if (!hasPermission(module, 'view')) {
+      console.log('usePermissions - Sem permissão básica para:', module);
       return false;
     }
     
     // Check congregation access if required
     const moduleConfig = MODULE_DEFINITIONS[module as keyof typeof MODULE_DEFINITIONS];
     if (moduleConfig?.requiresCongregation) {
-      return hasAccessToAnyCongregation;
+      // Se ainda está carregando congregação, permitir acesso temporário
+      if (congregationLoading) {
+        console.log('usePermissions - Congregação ainda carregando, permitindo acesso temporário');
+        return true;
+      }
+      
+      const result = hasAccessToAnyCongregation;
+      console.log('usePermissions - Módulo requer congregação:', { module, hasAccess: result });
+      return result;
     }
     
+    console.log('usePermissions - Módulo autorizado:', module);
     return true;
   };
 

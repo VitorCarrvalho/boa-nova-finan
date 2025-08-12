@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '@/hooks/usePermissions';
 
 const Dashboard = () => {
-  const { userAccessProfile } = useAuth();
+  const { userAccessProfile, loading } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { canViewModule } = usePermissions();
@@ -25,6 +25,15 @@ const Dashboard = () => {
   const { data: memberStats, isLoading: memberLoading } = useMemberStats();
   const { data: reconciliationStats, isLoading: reconciliationLoading } = useReconciliationStats();
   const { data: events, isLoading: eventsLoading } = useEvents();
+
+  console.log('Dashboard - Estado de carregamento:', {
+    authLoading: loading,
+    userProfile: userAccessProfile,
+    financialLoading,
+    memberLoading,
+    reconciliationLoading,
+    eventsLoading
+  });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -60,15 +69,22 @@ const Dashboard = () => {
     "Novo usuário admin adicionado"
   ];
 
-  if (financialLoading || memberLoading || reconciliationLoading || eventsLoading) {
+  // Loading state apenas para auth essencial
+  if (loading) {
+    console.log('Dashboard - Aguardando autenticação...');
     return (
       <Layout>
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Carregando dados...</p>
+          <p className="mt-4 text-muted-foreground">Carregando autenticação...</p>
         </div>
       </Layout>
     );
+  }
+
+  // Para dados específicos, renderizar com loading parcial
+  if (financialLoading || memberLoading || reconciliationLoading || eventsLoading) {
+    console.log('Dashboard - Dados específicos carregando, renderizando parcialmente...');
   }
 
   const DashboardCard = ({ title, value, icon: Icon, color, description, route, trend }: {
