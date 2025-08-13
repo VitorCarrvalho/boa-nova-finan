@@ -120,9 +120,13 @@ export const useBatchApproval = () => {
       queryClient.invalidateQueries({ queryKey: ['account-payable'] });
       queryClient.invalidateQueries({ queryKey: ['account-payable-approvals'] });
       
+      const nextStepMessage = result.approvedCount > 0 
+        ? ' As contas foram enviadas para o próximo nível de aprovação.'
+        : '';
+      
       toast({
-        title: 'Sucesso',
-        description: `${result.approvedCount} conta(s) aprovada(s) em lote!`,
+        title: 'Aprovação Realizada',
+        description: `${result.approvedCount} conta(s) aprovada(s) em lote!${nextStepMessage}`,
       });
     },
     onError: (error) => {

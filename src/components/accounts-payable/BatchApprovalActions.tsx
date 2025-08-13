@@ -73,59 +73,79 @@ const BatchApprovalActions: React.FC<BatchApprovalActionsProps> = ({
   const handleBatchApproval = async () => {
     if (selectedAccounts.length === 0) return;
 
-    // Agrupar por nível de aprovação
-    const accountsByLevel = selectedAccounts.reduce((acc, accountId) => {
-      const account = approvableAccounts.find(a => a.id === accountId);
-      if (!account) return acc;
-      
-      const level = getApprovalLevel(account.status);
-      if (!level) return acc;
-      
-      if (!acc[level]) acc[level] = [];
-      acc[level].push(accountId);
-      return acc;
-    }, {} as Record<string, string[]>);
+    try {
+      // Agrupar por nível de aprovação
+      const accountsByLevel = selectedAccounts.reduce((acc, accountId) => {
+        const account = approvableAccounts.find(a => a.id === accountId);
+        if (!account) return acc;
+        
+        const level = getApprovalLevel(account.status);
+        if (!level) return acc;
+        
+        if (!acc[level]) acc[level] = [];
+        acc[level].push(accountId);
+        return acc;
+      }, {} as Record<string, string[]>);
 
-    // Processar cada nível
-    for (const [level, accountIds] of Object.entries(accountsByLevel)) {
-      await batchApprovalMutation.mutateAsync({
-        accountIds,
-        approvalLevel: level as any,
-        notes: batchNotes
-      });
+      // Processar cada nível
+      for (const [level, accountIds] of Object.entries(accountsByLevel)) {
+        await batchApprovalMutation.mutateAsync({
+          accountIds,
+          approvalLevel: level as any,
+          notes: batchNotes
+        });
+      }
+
+      setIsApprovalDialogOpen(false);
+      setBatchNotes('');
+      setSelectedAccounts([]);
+      
+      // Aguardar um pouco para garantir que as queries sejam atualizadas
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Erro na aprovação em lote:', error);
     }
-
-    setIsApprovalDialogOpen(false);
-    setBatchNotes('');
-    setSelectedAccounts([]);
   };
 
   const handleBatchRejection = async () => {
     if (selectedAccounts.length === 0 || !batchRejectionReason) return;
 
-    const accountsByLevel = selectedAccounts.reduce((acc, accountId) => {
-      const account = approvableAccounts.find(a => a.id === accountId);
-      if (!account) return acc;
-      
-      const level = getApprovalLevel(account.status);
-      if (!level) return acc;
-      
-      if (!acc[level]) acc[level] = [];
-      acc[level].push(accountId);
-      return acc;
-    }, {} as Record<string, string[]>);
+    try {
+      const accountsByLevel = selectedAccounts.reduce((acc, accountId) => {
+        const account = approvableAccounts.find(a => a.id === accountId);
+        if (!account) return acc;
+        
+        const level = getApprovalLevel(account.status);
+        if (!level) return acc;
+        
+        if (!acc[level]) acc[level] = [];
+        acc[level].push(accountId);
+        return acc;
+      }, {} as Record<string, string[]>);
 
-    for (const [level, accountIds] of Object.entries(accountsByLevel)) {
-      await batchRejectionMutation.mutateAsync({
-        accountIds,
-        approvalLevel: level as any,
-        reason: batchRejectionReason
-      });
+      for (const [level, accountIds] of Object.entries(accountsByLevel)) {
+        await batchRejectionMutation.mutateAsync({
+          accountIds,
+          approvalLevel: level as any,
+          reason: batchRejectionReason
+        });
+      }
+
+      setIsRejectionDialogOpen(false);
+      setBatchRejectionReason('');
+      setSelectedAccounts([]);
+      
+      // Aguardar um pouco para garantir que as queries sejam atualizadas
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Erro na rejeição em lote:', error);
     }
-
-    setIsRejectionDialogOpen(false);
-    setBatchRejectionReason('');
-    setSelectedAccounts([]);
   };
 
   const getStatusBadge = (status: string) => {

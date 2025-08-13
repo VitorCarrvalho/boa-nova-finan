@@ -74,9 +74,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Flag para evitar race conditions
   const [isProcessingAuth, setIsProcessingAuth] = useState(false);
 
-  const fetchUserPermissions = async (userId: string): Promise<void> => {
+  const fetchUserPermissions = async (userId: string, retryCount: number = 0): Promise<void> => {
+    const maxRetries = 3;
+    
     try {
-      console.log('📋 AuthProvider - Fetching user permissions for:', userId);
+      console.log(`📋 AuthProvider - Fetching user permissions for: ${userId} (attempt ${retryCount + 1})`);
+      
+      // Aguardar um pouco em retries para evitar race conditions
+      if (retryCount > 0) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      }
       
       // Force clear any potential cache before fetching
       await supabase.auth.getSession();
@@ -108,14 +115,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (profileError) {
-        console.error('❌ AuthProvider - Error fetching profile:', profileError);
+        console.error(`❌ AuthProvider - Error fetching profile (attempt ${retryCount + 1}):`, profileError);
+        
+        // Retry em caso de erro, mas não em casos de usuário não encontrado
+        if (retryCount < maxRetries && !profileError.message?.includes('No rows returned')) {
+          console.log(`🔄 AuthProvider - Retrying fetchUserPermissions (${retryCount + 1}/${maxRetries})`);
+          return await fetchUserPermissions(userId, retryCount + 1);
+        }
+        
         setUserPermissions({});
         setUserAccessProfile(null);
         return;
       }
 
       if (!profile) {
-        console.log('⚠️ AuthProvider - No profile found for user:', userId);
+        console.log(`⚠️ AuthProvider - No profile found for user: ${userId} (attempt ${retryCount + 1})`);
+        
+        // Retry se não encontrou o perfil, pode ser race condition
+        if (retryCount < maxRetries) {
+          console.log(`🔄 AuthProvider - Retrying fetchUserPermissions for missing profile (${retryCount + 1}/${maxRetries})`);
+          return await fetchUserPermissions(userId, retryCount + 1);
+        }
+        
         setUserPermissions({});
         setUserAccessProfile(null);
         return;
@@ -124,6 +145,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Check approval status first
       if (profile.approval_status !== 'ativo') {
         console.log('⚠️ AuthProvider - User not active, status:', profile.approval_status);
+        
+        // Se o status mudou durante uso, forçar logout
+        if (profile.approval_status === 'em_analise') {
+          console.log('🚪 AuthProvider - Status changed to em_analise, signing out');
+          await supabase.auth.signOut();
+          return;
+        }
+        
         setUserPermissions({});
         setUserAccessProfile(null);
         return;
@@ -163,7 +192,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserAccessProfile(profileName || null);
       
     } catch (error) {
-      console.error('💥 AuthProvider - Exception loading permissions:', error);
+      console.error(`💥 AuthProvider - Exception loading permissions (attempt ${retryCount + 1}):`, error);
+      
+      // Retry em caso de exceção
+      if (retryCount < maxRetries) {
+        console.log(`🔄 AuthProvider - Retrying fetchUserPermissions after exception (${retryCount + 1}/${maxRetries})`);
+        return await fetchUserPermissions(userId, retryCount + 1);
+      }
+      
       console.error('💥 Stack:', error);
       setUserPermissions({});
       setUserAccessProfile(null);
