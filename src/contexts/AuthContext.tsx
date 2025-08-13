@@ -61,6 +61,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserPermissions = async (userId: string): Promise<void> => {
     try {
+      console.log('📋 AuthProvider - Fetching user permissions for:', userId);
+      
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select(`
@@ -74,10 +76,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', userId)
         .eq('approval_status', 'ativo')
         .eq('access_profiles.is_active', true)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
-        console.error('AuthProvider - Erro ao buscar perfil:', profileError);
+        console.error('❌ AuthProvider - Error fetching profile:', profileError);
+        setUserPermissions({});
+        setUserAccessProfile(null);
+        return;
+      }
+
+      if (!profile) {
+        console.log('⚠️ AuthProvider - No active profile found for user:', userId);
         setUserPermissions({});
         setUserAccessProfile(null);
         return;
@@ -86,130 +95,160 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const permissions = profile?.access_profiles?.permissions || {};
       const profileName = profile?.access_profiles?.name;
 
+      console.log('✅ AuthProvider - User permissions loaded:', { 
+        profileName, 
+        hasPermissions: Object.keys(permissions).length > 0 
+      });
+
       setUserPermissions(permissions as Record<string, Record<string, boolean>>);
       setUserAccessProfile(profileName || null);
       
     } catch (error) {
-      console.error('AuthProvider - Erro ao carregar permissões:', error);
+      console.error('💥 AuthProvider - Exception loading permissions:', error);
       setUserPermissions({});
       setUserAccessProfile(null);
     }
   };
 
   useEffect(() => {
-    console.log('AuthProvider - Configurando AuthProvider...');
+    console.log('🚀 AuthProvider - Setting up AuthProvider...');
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
+
+    // Set a maximum loading time of 8 seconds
+    timeoutId = setTimeout(() => {
+      if (isMounted && loading) {
+        console.warn('⏰ AuthProvider - Loading timeout - forcing completion');
+        setLoading(false);
+      }
+    }, 8000);
     
     // Configurar listener de mudanças de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('AuthProvider - Auth state change:', event, session?.user?.email);
+        console.log('🔐 AuthProvider - Auth state change:', event, session?.user?.email);
+        
+        if (!isMounted) return;
         
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          console.log('AuthProvider - User authenticated, verificando status de aprovação...');
+          console.log('👤 AuthProvider - User authenticated, checking approval status...');
           
           try {
             const { data: profile, error } = await supabase
               .from('profiles')
               .select('approval_status')
               .eq('id', session.user.id)
-              .single();
+              .maybeSingle();
             
-            console.log('AuthProvider - Profile data:', profile);
+            console.log('📊 AuthProvider - Profile data:', profile);
             
             if (error) {
-              console.log('AuthProvider - Erro ao buscar perfil:', error);
+              console.error('❌ AuthProvider - Error fetching profile:', error);
               setUserPermissions(null);
               setUserAccessProfile(null);
-              setLoading(false);
+              if (isMounted) setLoading(false);
+              clearTimeout(timeoutId);
               return;
             }
 
             if (profile?.approval_status === 'ativo') {
-              console.log('AuthProvider - User approved, carregando permissões...');
+              console.log('✅ AuthProvider - User approved, loading permissions...');
               await fetchUserPermissions(session.user.id);
-              setLoading(false);
+              if (isMounted) setLoading(false);
             } else {
-              console.log('AuthProvider - User not approved, status:', profile?.approval_status);
+              console.log('⚠️ AuthProvider - User not approved, status:', profile?.approval_status);
               setUserPermissions(null);
               setUserAccessProfile(null);
-              setLoading(false);
+              if (isMounted) setLoading(false);
             }
           } catch (err) {
-            console.log('AuthProvider - Erro na busca do perfil:', err);
+            console.error('💥 AuthProvider - Exception checking profile:', err);
             setUserPermissions(null);
             setUserAccessProfile(null);
-            setLoading(false);
+            if (isMounted) setLoading(false);
           }
         } else {
-          console.log('AuthProvider - No user, clearing permissions');
+          console.log('🚪 AuthProvider - No user, clearing permissions');
           setUserPermissions(null);
           setUserAccessProfile(null);
-          setLoading(false);
+          if (isMounted) setLoading(false);
         }
+        
+        clearTimeout(timeoutId);
       }
     );
 
     // Verificar sessão existente
     const checkSession = async () => {
       try {
-        console.log('AuthProvider - Checking existing session...');
+        console.log('🔍 AuthProvider - Checking existing session...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.log('AuthProvider - Erro ao verificar sessão:', error);
+          console.error('❌ AuthProvider - Error checking session:', error);
           cleanupAuthState();
-          setLoading(false);
+          if (isMounted) setLoading(false);
+          clearTimeout(timeoutId);
           return;
         }
 
-        console.log('AuthProvider - Sessão existente:', session?.user?.email);
+        console.log('📋 AuthProvider - Existing session:', session?.user?.email);
+        if (!isMounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          console.log('AuthProvider - Existing user found, verificando status...');
+          console.log('👤 AuthProvider - Existing user found, checking status...');
           
           try {
             const { data: profile } = await supabase
               .from('profiles')
               .select('approval_status')
               .eq('id', session.user.id)
-              .single();
+              .maybeSingle();
             
-            console.log('AuthProvider - Initial profile data:', profile);
+            console.log('📊 AuthProvider - Initial profile data:', profile);
             
             if (profile?.approval_status === 'ativo') {
-              console.log('AuthProvider - Initial user approved, carregando permissões...');
+              console.log('✅ AuthProvider - Initial user approved, loading permissions...');
               await fetchUserPermissions(session.user.id);
-              setLoading(false);
+              if (isMounted) setLoading(false);
             } else {
-              console.log('AuthProvider - Initial user not approved, status:', profile?.approval_status);
+              console.log('⚠️ AuthProvider - Initial user not approved, status:', profile?.approval_status);
               setUserPermissions(null);
               setUserAccessProfile(null);
-              setLoading(false);
+              if (isMounted) setLoading(false);
             }
           } catch (err) {
-            console.log('AuthProvider - Erro ao buscar perfil inicial:', err);
+            console.error('💥 AuthProvider - Exception checking initial profile:', err);
             setUserPermissions(null);
             setUserAccessProfile(null);
-            setLoading(false);
+            if (isMounted) setLoading(false);
           }
         } else {
-          setLoading(false);
+          if (isMounted) setLoading(false);
         }
+        
+        clearTimeout(timeoutId);
       } catch (err) {
-        console.log('AuthProvider - Erro geral na verificação de sessão:', err);
+        console.error('💥 AuthProvider - General exception checking session:', err);
         cleanupAuthState();
-        setLoading(false);
+        if (isMounted) setLoading(false);
+        clearTimeout(timeoutId);
       }
     };
 
     checkSession();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, name: string, congregationId?: string) => {
@@ -266,7 +305,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .from('profiles')
           .select('approval_status, access_profiles(name)')
           .eq('id', data.user.id)
-          .single();
+          .maybeSingle();
         
         if (profileError) {
           console.log('Erro ao verificar status de aprovação:', profileError);

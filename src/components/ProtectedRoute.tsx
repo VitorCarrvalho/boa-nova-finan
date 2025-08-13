@@ -18,8 +18,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { data: congregationAccess, isLoading: congregationLoading } = useUserCongregationAccess();
   const location = useLocation();
 
-  // Mostrar loading enquanto está carregando dados essenciais
-  if (loading || (requiresCongregationAccess && congregationLoading)) {
+  console.log('🛡️ ProtectedRoute:', { 
+    hasUser: !!user, 
+    userAccessProfile, 
+    loading, 
+    requiresCongregationAccess,
+    congregationLoading,
+    pathname: location.pathname
+  });
+
+  // Mostrar loading apenas para dados essenciais
+  if (loading) {
+    console.log('⏳ ProtectedRoute: Waiting for auth...');
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -59,27 +69,48 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Verificar acesso específico para congregações e conciliações
   if (requiresCongregationAccess) {
+    console.log('🔍 ProtectedRoute: Checking congregation access...');
+    
+    // Aguardar carregamento dos dados de congregação apenas quando necessário
+    if (congregationLoading) {
+      console.log('⏳ ProtectedRoute: Waiting for congregation data...');
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Verificando acesso...</p>
+          </div>
+        </div>
+      );
+    }
+    
     const congregationRoutes = ['/congregacoes', '/conciliacoes'];
     const isRestrictedRoute = congregationRoutes.some(route => 
       location.pathname.startsWith(route)
     );
 
     if (isRestrictedRoute) {
+      console.log('🚪 ProtectedRoute: Restricted route, checking permissions...');
+      
       // Analistas e perfis financeiros não têm acesso
       if (userAccessProfile === 'Analista' || userAccessProfile === 'Gerente Financeiro') {
+        console.log('🚫 ProtectedRoute: Access denied for profile:', userAccessProfile);
         return <Navigate to="/dashboard" replace />;
       }
 
       // Admin sempre têm acesso
       if (userAccessProfile === 'Admin') {
+        console.log('✅ ProtectedRoute: Admin access granted');
         return <>{children}</>;
       }
 
       // Para pastores, verificar se têm acesso a congregações
       if (userAccessProfile === 'Pastor') {
         if (!congregationAccess?.hasAccess) {
+          console.log('🚫 ProtectedRoute: Pastor without congregation access');
           return <Navigate to="/dashboard" replace />;
         }
+        console.log('✅ ProtectedRoute: Pastor with congregation access');
       }
     }
   }

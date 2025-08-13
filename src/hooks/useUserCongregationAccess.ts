@@ -4,43 +4,32 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useUserCongregationAccess = () => {
-  const { user } = useAuth();
+  const { user, userAccessProfile } = useAuth();
 
   return useQuery({
-    queryKey: ['userCongregationAccess', user?.id],
+    queryKey: ['userCongregationAccess', user?.id, userAccessProfile],
     queryFn: async () => {
+      console.log('🏛️ useUserCongregationAccess: Checking access for profile:', userAccessProfile);
+      
       if (!user?.id) {
+        console.log('❌ useUserCongregationAccess: No user ID');
         return { hasAccess: false, assignedCongregations: [] };
       }
 
-      // Buscar o perfil do usuário diretamente sem depender do AuthContext
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          email,
-          approval_status,
-          access_profiles!inner(name)
-        `)
-        .eq('id', user.id)
-        .eq('approval_status', 'ativo')
-        .eq('access_profiles.is_active', true)
-        .maybeSingle();
-
-      const profileName = profile?.access_profiles?.name;
-
-      // Admin sempre tem acesso
-      if (profileName === 'Admin') {
+      // Retorno imediato baseado no perfil já carregado do AuthContext
+      if (userAccessProfile === 'Admin') {
+        console.log('✅ useUserCongregationAccess: Admin has access');
         return { hasAccess: true, assignedCongregations: [] };
       }
 
-      // Analista e Gerente Financeiro não têm acesso a congregações
-      if (profileName === 'Analista' || profileName === 'Gerente Financeiro') {
+      if (userAccessProfile === 'Analista' || userAccessProfile === 'Gerente Financeiro') {
+        console.log('🚫 useUserCongregationAccess: Profile does not have congregation access');
         return { hasAccess: false, assignedCongregations: [] };
       }
 
       // Pastor precisa verificar congregações
-      if (profileName === 'Pastor') {
+      if (userAccessProfile === 'Pastor') {
+        console.log('🔍 useUserCongregationAccess: Checking pastor congregations...');
         try {
           const { data: congregations, error } = await supabase
             .from('congregations')
@@ -48,25 +37,27 @@ export const useUserCongregationAccess = () => {
             .contains('responsible_pastor_ids', [user.id]);
 
           if (error) {
-            console.error('Erro ao verificar congregações:', error);
+            console.error('❌ useUserCongregationAccess: Error fetching congregations:', error);
             return { hasAccess: false, assignedCongregations: [] };
           }
 
           const hasAccess = congregations && congregations.length > 0;
+          console.log('📊 useUserCongregationAccess: Pastor access result:', { hasAccess, count: congregations?.length });
           return { 
             hasAccess, 
             assignedCongregations: congregations || [] 
           };
         } catch (error) {
-          console.error('Erro na verificação do Pastor:', error);
+          console.error('💥 useUserCongregationAccess: Exception checking pastor:', error);
           return { hasAccess: false, assignedCongregations: [] };
         }
       }
 
       // Outros perfis não têm acesso
+      console.log('🚫 useUserCongregationAccess: Unknown profile, no access');
       return { hasAccess: false, assignedCongregations: [] };
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!userAccessProfile,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
