@@ -59,12 +59,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userAccessProfile, setUserAccessProfile] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Função corrigida para buscar permissões diretamente com timeout
-  const fetchUserPermissions = async (userId: string, userEmail?: string): Promise<void> => {
-    console.log(`AuthProvider - Carregando permissões para: ${userEmail}`);
-    
+  const fetchUserPermissions = async (userId: string): Promise<void> => {
     try {
-      // Query direta que funciona corretamente
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select(`
@@ -81,42 +77,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (profileError) {
-        console.error('AuthProvider - Erro ao buscar perfil e permissões:', profileError);
-        
-        // Fallback para usuários ativos sem perfil específico
-        const { data: fallbackProfile } = await supabase
-          .from('profiles')
-          .select('id, approval_status')
-          .eq('id', userId)
-          .eq('approval_status', 'ativo')
-          .single();
-
-        if (fallbackProfile) {
-          console.log('AuthProvider - Usuário ativo encontrado, mas sem perfil de acesso específico');
-          setUserPermissions({});
-          setUserAccessProfile('Membro');
-          return;
-        }
-        
-        throw profileError;
+        console.error('AuthProvider - Erro ao buscar perfil:', profileError);
+        setUserPermissions({});
+        setUserAccessProfile(null);
+        return;
       }
 
       const permissions = profile?.access_profiles?.permissions || {};
       const profileName = profile?.access_profiles?.name;
-      
-      console.log('AuthProvider - Dados carregados:', {
-        permissions,
-        profileName,
-        permissionsCount: Object.keys(permissions).length
-      });
 
-      // Definir permissões e perfil
       setUserPermissions(permissions as Record<string, Record<string, boolean>>);
       setUserAccessProfile(profileName || null);
-      console.log('AuthProvider - ✅ Permissões e perfil definidos com sucesso');
       
     } catch (error) {
-      console.error('AuthProvider - Erro fatal ao carregar permissões:', error);
+      console.error('AuthProvider - Erro ao carregar permissões:', error);
       setUserPermissions({});
       setUserAccessProfile(null);
     }
@@ -155,7 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             if (profile?.approval_status === 'ativo') {
               console.log('AuthProvider - User approved, carregando permissões...');
-              await fetchUserPermissions(session.user.id, session.user.email);
+              await fetchUserPermissions(session.user.id);
               setLoading(false);
             } else {
               console.log('AuthProvider - User not approved, status:', profile?.approval_status);
@@ -209,7 +183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             if (profile?.approval_status === 'ativo') {
               console.log('AuthProvider - Initial user approved, carregando permissões...');
-              await fetchUserPermissions(session.user.id, session.user.email);
+              await fetchUserPermissions(session.user.id);
               setLoading(false);
             } else {
               console.log('AuthProvider - Initial user not approved, status:', profile?.approval_status);

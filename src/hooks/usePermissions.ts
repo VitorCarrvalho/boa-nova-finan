@@ -1,47 +1,15 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
-import { hasNestedPermission, getPermissionForModule, MODULE_DEFINITIONS } from '@/utils/permissionUtils';
+import { hasNestedPermission } from '@/utils/permissionUtils';
 
 export const usePermissions = () => {
   const { userPermissions, hasPermission } = useAuth();
-  const { data: congregationAccess, isLoading: congregationLoading } = useUserCongregationAccess();
-  const hasAccessToAnyCongregation = congregationAccess?.hasAccess || false;
-  
-  console.log('usePermissions - Estado atual:', { 
-    hasUserPermissions: !!userPermissions && Object.keys(userPermissions).length > 0,
-    congregationLoading,
-    hasAccessToAnyCongregation
-  });
 
   const checkModuleAccess = (module: string, action: string = 'view'): boolean => {
     return hasPermission(module, action);
   };
 
   const canViewModule = (module: string): boolean => {
-    console.log('usePermissions - canViewModule verificando:', { module });
-    
-    // Check basic permission first
-    if (!hasPermission(module, 'view')) {
-      console.log('usePermissions - Sem permissão básica para:', module);
-      return false;
-    }
-    
-    // Check congregation access if required
-    const moduleConfig = MODULE_DEFINITIONS[module as keyof typeof MODULE_DEFINITIONS];
-    if (moduleConfig?.requiresCongregation) {
-      // Se ainda está carregando congregação, permitir acesso temporário
-      if (congregationLoading) {
-        console.log('usePermissions - Congregação ainda carregando, permitindo acesso temporário');
-        return true;
-      }
-      
-      const result = hasAccessToAnyCongregation;
-      console.log('usePermissions - Módulo requer congregação:', { module, hasAccess: result });
-      return result;
-    }
-    
-    console.log('usePermissions - Módulo autorizado:', module);
-    return true;
+    return hasPermission(module, 'view');
   };
 
   const canInsertModule = (module: string): boolean => {
@@ -106,7 +74,7 @@ export const usePermissions = () => {
 
   // Nova função para verificar acesso baseado apenas em permissões
   const canAccessCongregation = (): boolean => {
-    return hasAccessToAnyCongregation;
+    return false; // Por enquanto sempre retorna false, pode ser implementado futuramente
   };
 
   return {

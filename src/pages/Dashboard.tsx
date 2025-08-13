@@ -26,15 +26,6 @@ const Dashboard = () => {
   const { data: reconciliationStats, isLoading: reconciliationLoading } = useReconciliationStats();
   const { data: events, isLoading: eventsLoading } = useEvents();
 
-  console.log('Dashboard - Estado de carregamento:', {
-    authLoading: loading,
-    userProfile: userAccessProfile,
-    financialLoading,
-    memberLoading,
-    reconciliationLoading,
-    eventsLoading
-  });
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -71,20 +62,14 @@ const Dashboard = () => {
 
   // Loading state apenas para auth essencial
   if (loading) {
-    console.log('Dashboard - Aguardando autenticação...');
     return (
       <Layout>
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Carregando autenticação...</p>
+          <p className="mt-4 text-muted-foreground">Carregando...</p>
         </div>
       </Layout>
     );
-  }
-
-  // Para dados específicos, renderizar com loading parcial
-  if (financialLoading || memberLoading || reconciliationLoading || eventsLoading) {
-    console.log('Dashboard - Dados específicos carregando, renderizando parcialmente...');
   }
 
   const DashboardCard = ({ title, value, icon: Icon, color, description, route, trend }: {
