@@ -31,24 +31,36 @@ export const useAuth = () => {
   return context;
 };
 
-// Função para limpar estado de autenticação
+// Função para limpar estado de autenticação completa
 const cleanupAuthState = () => {
-  console.log('Limpando estado de autenticação...');
+  console.log('🧹 Limpando estado de autenticação completo...');
   
-  // Remove tokens do localStorage
-  Object.keys(localStorage).forEach((key) => {
-    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-      localStorage.removeItem(key);
-    }
-  });
-  
-  // Remove tokens do sessionStorage se existir
-  if (typeof sessionStorage !== 'undefined') {
-    Object.keys(sessionStorage).forEach((key) => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-        sessionStorage.removeItem(key);
+  try {
+    // Remove ALL auth-related keys from localStorage
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('supabase') || key.includes('sb-') || 
+          key.includes('auth') || key.includes('session') ||
+          key.includes('token') || key.includes('user')) {
+        console.log('🗑️ Removendo localStorage key:', key);
+        localStorage.removeItem(key);
       }
     });
+    
+    // Remove from sessionStorage if it exists
+    if (typeof sessionStorage !== 'undefined') {
+      Object.keys(sessionStorage).forEach((key) => {
+        if (key.startsWith('supabase') || key.includes('sb-') || 
+            key.includes('auth') || key.includes('session') ||
+            key.includes('token') || key.includes('user')) {
+          console.log('🗑️ Removendo sessionStorage key:', key);
+          sessionStorage.removeItem(key);
+        }
+      });
+    }
+    
+    console.log('✅ Limpeza de cache concluída');
+  } catch (error) {
+    console.error('❌ Erro na limpeza de cache:', error);
   }
 };
 
@@ -63,24 +75,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('📋 AuthProvider - Fetching user permissions for:', userId);
       
-      // Simplify query using standard JOIN syntax
+      // Force clear any potential cache before fetching
+      await supabase.auth.getSession();
+      
+      // Use the same query structure that works in SQL
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select(`
           id, 
           approval_status,
           profile_id,
-          access_profiles (
+          access_profiles!left (
             name,
             permissions,
             is_active
           )
         `)
         .eq('id', userId)
-        .eq('approval_status', 'ativo')
         .maybeSingle();
 
-      console.log('🔍 AuthProvider - Profile query result:', { profile, profileError });
+      console.log('🔍 AuthProvider - Raw profile query result:', { 
+        profile, 
+        profileError,
+        userId,
+        profileExists: !!profile,
+        approvalStatus: profile?.approval_status,
+        profileId: profile?.profile_id,
+        accessProfilesData: profile?.access_profiles
+      });
 
       if (profileError) {
         console.error('❌ AuthProvider - Error fetching profile:', profileError);
@@ -90,16 +112,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (!profile) {
-        console.log('⚠️ AuthProvider - No active profile found for user:', userId);
+        console.log('⚠️ AuthProvider - No profile found for user:', userId);
         setUserPermissions({});
         setUserAccessProfile(null);
         return;
       }
 
-      // Check if access_profiles exists and is active
-      const accessProfile = profile.access_profiles;
+      // Check approval status first
+      if (profile.approval_status !== 'ativo') {
+        console.log('⚠️ AuthProvider - User not active, status:', profile.approval_status);
+        setUserPermissions({});
+        setUserAccessProfile(null);
+        return;
+      }
+
+      // Handle access_profiles data (can be array or single object)
+      let accessProfile = profile.access_profiles;
+      if (Array.isArray(accessProfile)) {
+        accessProfile = accessProfile[0];
+      }
+
+      console.log('🔍 AuthProvider - Access profile data:', {
+        accessProfile,
+        isActive: accessProfile?.is_active,
+        name: accessProfile?.name,
+        hasPermissions: !!accessProfile?.permissions
+      });
+
       if (!accessProfile || !accessProfile.is_active) {
-        console.log('⚠️ AuthProvider - No active access profile found for user:', userId);
+        console.log('⚠️ AuthProvider - No active access profile found');
         setUserPermissions({});
         setUserAccessProfile(null);
         return;
@@ -108,9 +149,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const permissions = accessProfile.permissions || {};
       const profileName = accessProfile.name;
 
-      console.log('✅ AuthProvider - User permissions loaded:', { 
+      console.log('✅ AuthProvider - User permissions loaded successfully:', { 
         profileName, 
         hasPermissions: Object.keys(permissions).length > 0,
+        permissionKeys: Object.keys(permissions),
         permissions: permissions 
       });
 
@@ -119,6 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
     } catch (error) {
       console.error('💥 AuthProvider - Exception loading permissions:', error);
+      console.error('💥 Stack:', error);
       setUserPermissions({});
       setUserAccessProfile(null);
     }
@@ -298,10 +341,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('Iniciando login para:', email);
+      console.log('🔑 Iniciando login para:', email);
       
-      // Limpar estado antes do login
+      // Limpar estado completo antes do login
       cleanupAuthState();
+      
+      // Force sign out any existing session
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        console.log('🔄 Ignoring sign out error:', err);
+      }
+      
+      // Wait a bit for cleanup
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -345,7 +398,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
       
-      console.log('Login realizado com sucesso:', data);
+      console.log('✅ Login realizado com sucesso:', data);
+      
+      // Force refresh da página para garantir estado limpo
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1000);
+      
       return { error: null };
     } catch (err) {
       console.log('Erro inesperado no login:', err);
