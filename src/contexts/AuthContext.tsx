@@ -31,11 +31,60 @@ export const useAuth = () => {
   return context;
 };
 
+// Cache utility functions
+const CACHE_KEY = 'lovable_user_data';
+
+const saveUserDataToCache = (user: any, permissions: any, accessProfile: any) => {
+  try {
+    const cacheData = {
+      user,
+      permissions,
+      accessProfile,
+      timestamp: Date.now(),
+      userId: user?.id
+    };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+    console.log('💾 AuthProvider - User data saved to cache');
+  } catch (error) {
+    console.error('❌ AuthProvider - Failed to save cache:', error);
+  }
+};
+
+const getUserDataFromCache = () => {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return null;
+    
+    const data = JSON.parse(cached);
+    const isExpired = Date.now() - data.timestamp > 24 * 60 * 60 * 1000; // 24 hours
+    
+    if (isExpired) {
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    
+    console.log('🔄 AuthProvider - User data loaded from cache');
+    return data;
+  } catch (error) {
+    console.error('❌ AuthProvider - Failed to load cache:', error);
+    localStorage.removeItem(CACHE_KEY);
+    return null;
+  }
+};
+
+const clearUserDataCache = () => {
+  localStorage.removeItem(CACHE_KEY);
+  console.log('🗑️ AuthProvider - User data cache cleared');
+};
+
 // Função para limpar estado de autenticação completa
 const cleanupAuthState = () => {
   console.log('🧹 Limpando estado de autenticação completo...');
   
   try {
+    // Clear our user data cache
+    clearUserDataCache();
+    
     // Remove ALL auth-related keys from localStorage
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith('supabase') || key.includes('sb-') || 
@@ -251,6 +300,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserPermissions(permissions as Record<string, Record<string, boolean>>);
         setUserAccessProfile(accessProfile.name || null);
         
+        // Save successful data to cache
+        saveUserDataToCache(
+          { id: userId, email: user?.email }, 
+          permissions, 
+          accessProfile.name
+        );
+        
       } catch (queryError) {
         clearTimeout(timeoutId);
         throw queryError; // Vai para o catch principal para retry
@@ -331,8 +387,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(currentSession?.user ?? null);
       
       if (currentSession?.user) {
-        console.log(`👤 [${timestamp}] AuthProvider - User found from ${source}, loading permissions...`);
-        await fetchUserPermissions(currentSession.user.id);
+        console.log(`👤 [${timestamp}] AuthProvider - User found from ${source}, checking cache first...`);
+        
+        // Check cache first to avoid unnecessary database calls
+        const cachedData = getUserDataFromCache();
+        if (cachedData && cachedData.userId === currentSession.user.id) {
+          console.log(`✅ [${timestamp}] AuthProvider - Using cached data for instant load`);
+          setUserPermissions(cachedData.permissions);
+          setUserAccessProfile(cachedData.accessProfile);
+        } else {
+          console.log(`📋 [${timestamp}] AuthProvider - No valid cache found, fetching from database`);
+          await fetchUserPermissions(currentSession.user.id);
+        }
       } else {
         console.log(`🚪 [${timestamp}] AuthProvider - No user from ${source}, clearing state`);
         setUserPermissions({});
@@ -549,7 +615,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Fazendo logout...');
       
-      // Limpar estado primeiro
+      // Limpar cache primeiro
+      clearUserDataCache();
+      
+      // Limpar estado completo
       cleanupAuthState();
       
       // Tentar logout global
