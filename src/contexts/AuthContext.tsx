@@ -90,115 +90,166 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Force clear any potential cache before fetching
       await supabase.auth.getSession();
       
-      // Use the same query structure that works in SQL
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select(`
-          id, 
-          approval_status,
-          profile_id,
-          access_profiles!left (
-            name,
-            permissions,
-            is_active
-          )
-        `)
-        .eq('id', userId)
-        .maybeSingle();
-
-      console.log('🔍 AuthProvider - Raw profile query result:', { 
-        profile, 
-        profileError,
-        userId,
-        profileExists: !!profile,
-        approvalStatus: profile?.approval_status,
-        profileId: profile?.profile_id,
-        accessProfilesData: profile?.access_profiles
-      });
-
-      if (profileError) {
-        console.error(`❌ AuthProvider - Error fetching profile (attempt ${retryCount + 1}):`, profileError);
+      // Primeiro, tentar consulta completa com timeout de 30s
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      
+      try {
+        console.log(`🔍 AuthProvider - Trying complete query (attempt ${retryCount + 1})`);
         
-        // Retry em caso de erro, mas não em casos de usuário não encontrado
-        if (retryCount < maxRetries && !profileError.message?.includes('No rows returned')) {
-          console.log(`🔄 AuthProvider - Retrying fetchUserPermissions (${retryCount + 1}/${maxRetries})`);
-          return await fetchUserPermissions(userId, retryCount + 1);
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select(`
+            id, 
+            approval_status,
+            profile_id,
+            access_profiles!left (
+              name,
+              permissions,
+              is_active
+            )
+          `)
+          .eq('id', userId)
+          .abortSignal(controller.signal)
+          .maybeSingle();
+
+        clearTimeout(timeoutId);
+
+        // Se a consulta complexa falhar, tentar uma simples
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.log(`⚠️ AuthProvider - Complex query failed, trying simple approach:`, profileError);
+          throw profileError; // Vai para o catch que tenta consulta simples
         }
-        
-        setUserPermissions({});
-        setUserAccessProfile(null);
-        return;
-      }
 
-      if (!profile) {
-        console.log(`⚠️ AuthProvider - No profile found for user: ${userId} (attempt ${retryCount + 1})`);
-        
-        // Retry se não encontrou o perfil, pode ser race condition
-        if (retryCount < maxRetries) {
-          console.log(`🔄 AuthProvider - Retrying fetchUserPermissions for missing profile (${retryCount + 1}/${maxRetries})`);
-          return await fetchUserPermissions(userId, retryCount + 1);
-        }
-        
-        setUserPermissions({});
-        setUserAccessProfile(null);
-        return;
-      }
+        console.log('🔍 AuthProvider - Complete query result:', { 
+          profile, 
+          profileError,
+          userId,
+          profileExists: !!profile,
+          approvalStatus: profile?.approval_status,
+          profileId: profile?.profile_id,
+          accessProfilesData: profile?.access_profiles
+        });
 
-      // Check approval status first
-      if (profile.approval_status !== 'ativo') {
-        console.log('⚠️ AuthProvider - User not active, status:', profile.approval_status);
-        
-        // Só forçar logout se for uma mudança definitiva de status
-        // Não fazer logout durante operações que podem causar race conditions
-        if (profile.approval_status === 'rejeitado') {
-          console.log('🚪 AuthProvider - Status rejected, signing out');
-          await supabase.auth.signOut();
-          return;
-        }
-        
-        // Para 'em_analise', preservar estado atual se já tinha permissões
-        if (profile.approval_status === 'em_analise' && !userAccessProfile) {
-          console.log('⚠️ AuthProvider - User em_analise, clearing permissions');
+        if (!profile) {
+          console.log(`⚠️ AuthProvider - No profile found for user: ${userId} (attempt ${retryCount + 1})`);
+          
+          // Retry se não encontrou o perfil, pode ser race condition
+          if (retryCount < maxRetries) {
+            console.log(`🔄 AuthProvider - Retrying fetchUserPermissions for missing profile (${retryCount + 1}/${maxRetries})`);
+            return await fetchUserPermissions(userId, retryCount + 1);
+          }
+          
           setUserPermissions({});
           setUserAccessProfile(null);
-        } else if (profile.approval_status === 'em_analise') {
-          console.log('⚠️ AuthProvider - User em_analise but preserving current state for stability');
+          return;
         }
-        return;
+
+        // Check approval status first
+        if (profile.approval_status !== 'ativo') {
+          console.log('⚠️ AuthProvider - User not active, status:', profile.approval_status);
+          
+          // Só forçar logout se for uma mudança definitiva de status
+          if (profile.approval_status === 'rejeitado') {
+            console.log('🚪 AuthProvider - Status rejected, signing out');
+            await supabase.auth.signOut();
+            return;
+          }
+          
+          // Para 'em_analise', preservar estado atual se já tinha permissões
+          if (profile.approval_status === 'em_analise' && !userAccessProfile) {
+            console.log('⚠️ AuthProvider - User em_analise, clearing permissions');
+            setUserPermissions({});
+            setUserAccessProfile(null);
+          } else if (profile.approval_status === 'em_analise') {
+            console.log('⚠️ AuthProvider - User em_analise but preserving current state for stability');
+          }
+          return;
+        }
+
+        // Handle access_profiles data (can be array or single object)
+        let accessProfile = profile.access_profiles;
+        if (Array.isArray(accessProfile)) {
+          accessProfile = accessProfile[0];
+        }
+
+        console.log('🔍 AuthProvider - Access profile data:', {
+          accessProfile,
+          isActive: accessProfile?.is_active,
+          name: accessProfile?.name,
+          hasPermissions: !!accessProfile?.permissions
+        });
+
+        if (!accessProfile || !accessProfile.is_active) {
+          console.log('⚠️ AuthProvider - No active access profile found');
+          setUserPermissions({});
+          setUserAccessProfile(null);
+          return;
+        }
+
+        const permissions = accessProfile.permissions || {};
+        const profileName = accessProfile.name;
+
+        console.log('✅ AuthProvider - User permissions loaded successfully:', { 
+          profileName, 
+          hasPermissions: Object.keys(permissions).length > 0,
+          permissionKeys: Object.keys(permissions),
+          permissions: permissions 
+        });
+
+        setUserPermissions(permissions as Record<string, Record<string, boolean>>);
+        setUserAccessProfile(profileName || null);
+        
+      } catch (queryError) {
+        clearTimeout(timeoutId);
+        
+        // Se falhou consulta complexa, tentar consulta simples
+        console.log(`🔄 AuthProvider - Trying fallback simple query due to error:`, queryError);
+        
+        // Consulta mais simples para status básico
+        const { data: simpleProfile, error: simpleError } = await supabase
+          .from('profiles')
+          .select('approval_status, profile_id')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (simpleError || !simpleProfile) {
+          console.error(`❌ AuthProvider - Simple query also failed:`, simpleError);
+          throw simpleError || new Error('No profile found');
+        }
+
+        console.log(`📋 AuthProvider - Simple profile result:`, simpleProfile);
+
+        // Se tem perfil ativo, buscar dados separadamente
+        if (simpleProfile.approval_status === 'ativo' && simpleProfile.profile_id) {
+          console.log(`🔍 AuthProvider - Fetching access profile separately:`, simpleProfile.profile_id);
+          
+          const { data: accessProfileData, error: accessError } = await supabase
+            .from('access_profiles')
+            .select('name, permissions, is_active')
+            .eq('id', simpleProfile.profile_id)
+            .eq('is_active', true)
+            .maybeSingle();
+
+          if (!accessError && accessProfileData) {
+            console.log('✅ AuthProvider - Fallback query successful:', {
+              profileName: accessProfileData.name,
+              hasPermissions: !!accessProfileData.permissions
+            });
+            
+            setUserPermissions(accessProfileData.permissions as Record<string, Record<string, boolean>> || {});
+            setUserAccessProfile(accessProfileData.name || null);
+          } else {
+            console.log('⚠️ AuthProvider - No access profile data from fallback');
+            setUserPermissions({});
+            setUserAccessProfile(null);
+          }
+        } else {
+          console.log(`⚠️ AuthProvider - User not active in simple query: ${simpleProfile.approval_status}`);
+          setUserPermissions({});
+          setUserAccessProfile(null);
+        }
       }
-
-      // Handle access_profiles data (can be array or single object)
-      let accessProfile = profile.access_profiles;
-      if (Array.isArray(accessProfile)) {
-        accessProfile = accessProfile[0];
-      }
-
-      console.log('🔍 AuthProvider - Access profile data:', {
-        accessProfile,
-        isActive: accessProfile?.is_active,
-        name: accessProfile?.name,
-        hasPermissions: !!accessProfile?.permissions
-      });
-
-      if (!accessProfile || !accessProfile.is_active) {
-        console.log('⚠️ AuthProvider - No active access profile found');
-        setUserPermissions({});
-        setUserAccessProfile(null);
-        return;
-      }
-
-      const permissions = accessProfile.permissions || {};
-      const profileName = accessProfile.name;
-
-      console.log('✅ AuthProvider - User permissions loaded successfully:', { 
-        profileName, 
-        hasPermissions: Object.keys(permissions).length > 0,
-        permissionKeys: Object.keys(permissions),
-        permissions: permissions 
-      });
-
-      setUserPermissions(permissions as Record<string, Record<string, boolean>>);
-      setUserAccessProfile(profileName || null);
       
     } catch (error) {
       console.error(`💥 AuthProvider - Exception loading permissions (attempt ${retryCount + 1}):`, error);

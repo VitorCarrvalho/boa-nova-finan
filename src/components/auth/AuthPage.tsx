@@ -66,11 +66,14 @@ const AuthPage = () => {
           variant: "destructive",
         });
       } else {
+        console.log('Login bem-sucedido, redirecionando imediatamente...');
         toast({
           title: "Login realizado com sucesso!",
           description: "Bem-vindo ao sistema",
         });
-        // O redirecionamento será feito pelo useEffect quando o user state for atualizado
+        
+        // Redirecionar imediatamente após login bem-sucedido
+        navigate('/dashboard');
       }
     } catch (err) {
       console.log('Erro inesperado:', err);

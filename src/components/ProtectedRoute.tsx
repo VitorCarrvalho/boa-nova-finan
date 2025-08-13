@@ -45,8 +45,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/auth" replace />;
   }
 
-  // Só mostrar "em análise" se realmente não há perfil de acesso
-  if (!loading && !userAccessProfile) {
+  // Aguardar carregamento das permissões por mais tempo após o login
+  if (!loading && user && userAccessProfile === undefined) {
+    console.log('ProtectedRoute - Aguardando carregamento das permissões...');
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Carregando permissões...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Só mostrar "em análise" se realmente não há perfil de acesso E não está carregando
+  if (!loading && user && userAccessProfile === null) {
     console.log('ProtectedRoute - User sem perfil de acesso, mostrando tela de análise');
     
     return (
