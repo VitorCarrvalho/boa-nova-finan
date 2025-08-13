@@ -70,6 +70,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userPermissions, setUserPermissions] = useState<Record<string, Record<string, boolean>> | null>(null);
   const [userAccessProfile, setUserAccessProfile] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Flag para evitar race conditions
+  const [isProcessingAuth, setIsProcessingAuth] = useState(false);
 
   const fetchUserPermissions = async (userId: string): Promise<void> => {
     try {
@@ -167,139 +170,125 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Função centralizada para processar autenticação
+  const processUserAuthentication = async (currentSession: Session | null, source: string) => {
+    const timestamp = new Date().toISOString();
+    console.log(`🔄 [${timestamp}] AuthProvider - Processing auth from ${source}`, {
+      hasSession: !!currentSession,
+      userEmail: currentSession?.user?.email,
+      isProcessing: isProcessingAuth
+    });
+
+    // Evitar processamento simultâneo
+    if (isProcessingAuth) {
+      console.log(`⚠️ [${timestamp}] AuthProvider - Already processing, skipping ${source}`);
+      return;
+    }
+
+    setIsProcessingAuth(true);
+    
+    try {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      
+      if (currentSession?.user) {
+        console.log(`👤 [${timestamp}] AuthProvider - User found from ${source}, loading permissions...`);
+        await fetchUserPermissions(currentSession.user.id);
+      } else {
+        console.log(`🚪 [${timestamp}] AuthProvider - No user from ${source}, clearing state`);
+        setUserPermissions({});
+        setUserAccessProfile(null);
+      }
+    } catch (error) {
+      console.error(`💥 [${timestamp}] AuthProvider - Error processing ${source}:`, error);
+      setUserPermissions({});
+      setUserAccessProfile(null);
+    } finally {
+      setIsProcessingAuth(false);
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     console.log('🚀 AuthProvider - Setting up AuthProvider...');
     let isMounted = true;
     let timeoutId: NodeJS.Timeout;
 
-    // Set a maximum loading time of 8 seconds
+    // Set a maximum loading time of 10 seconds
     timeoutId = setTimeout(() => {
       if (isMounted && loading) {
         console.warn('⏰ AuthProvider - Loading timeout - forcing completion');
         setLoading(false);
+        setIsProcessingAuth(false);
       }
-    }, 8000);
+    }, 10000);
     
     // Configurar listener de mudanças de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔐 AuthProvider - Auth state change:', event, session?.user?.email);
+        const timestamp = new Date().toISOString();
+        console.log(`🔐 [${timestamp}] AuthProvider - Auth state change:`, {
+          event,
+          userEmail: session?.user?.email,
+          isProcessing: isProcessingAuth
+        });
         
         if (!isMounted) return;
         
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          console.log('👤 AuthProvider - User authenticated, checking approval status...');
-          
-          try {
-            const { data: profile, error } = await supabase
-              .from('profiles')
-              .select('approval_status')
-              .eq('id', session.user.id)
-              .maybeSingle();
-            
-            console.log('📊 AuthProvider - Profile data:', profile);
-            
-            if (error) {
-              console.error('❌ AuthProvider - Error fetching profile:', error);
-              setUserPermissions(null);
-              setUserAccessProfile(null);
-              if (isMounted) setLoading(false);
-              clearTimeout(timeoutId);
-              return;
-            }
-
-            if (profile?.approval_status === 'ativo') {
-              console.log('✅ AuthProvider - User approved, loading permissions...');
-              await fetchUserPermissions(session.user.id);
-              if (isMounted) setLoading(false);
-            } else {
-              console.log('⚠️ AuthProvider - User not approved, status:', profile?.approval_status);
-              setUserPermissions(null);
-              setUserAccessProfile(null);
-              if (isMounted) setLoading(false);
-            }
-          } catch (err) {
-            console.error('💥 AuthProvider - Exception checking profile:', err);
-            setUserPermissions(null);
-            setUserAccessProfile(null);
-            if (isMounted) setLoading(false);
-          }
-        } else {
-          console.log('🚪 AuthProvider - No user, clearing permissions');
-          setUserPermissions(null);
-          setUserAccessProfile(null);
-          if (isMounted) setLoading(false);
-        }
-        
+        // Usar a função centralizada
+        await processUserAuthentication(session, `onAuthStateChange(${event})`);
         clearTimeout(timeoutId);
       }
     );
 
-    // Verificar sessão existente
+    // Verificar sessão existente apenas uma vez na inicialização
     const checkSession = async () => {
       try {
-        console.log('🔍 AuthProvider - Checking existing session...');
+        const timestamp = new Date().toISOString();
+        console.log(`🔍 [${timestamp}] AuthProvider - Checking existing session...`);
+        
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('❌ AuthProvider - Error checking session:', error);
+          console.error(`❌ [${timestamp}] AuthProvider - Error checking session:`, error);
           cleanupAuthState();
-          if (isMounted) setLoading(false);
+          if (isMounted) {
+            setLoading(false);
+            setIsProcessingAuth(false);
+          }
           clearTimeout(timeoutId);
           return;
         }
 
-        console.log('📋 AuthProvider - Existing session:', session?.user?.email);
+        console.log(`📋 [${timestamp}] AuthProvider - Existing session:`, {
+          hasSession: !!session,
+          userEmail: session?.user?.email
+        });
+        
         if (!isMounted) return;
         
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          console.log('👤 AuthProvider - Existing user found, checking status...');
-          
-          try {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('approval_status')
-              .eq('id', session.user.id)
-              .maybeSingle();
-            
-            console.log('📊 AuthProvider - Initial profile data:', profile);
-            
-            if (profile?.approval_status === 'ativo') {
-              console.log('✅ AuthProvider - Initial user approved, loading permissions...');
-              await fetchUserPermissions(session.user.id);
-              if (isMounted) setLoading(false);
-            } else {
-              console.log('⚠️ AuthProvider - Initial user not approved, status:', profile?.approval_status);
-              setUserPermissions(null);
-              setUserAccessProfile(null);
-              if (isMounted) setLoading(false);
-            }
-          } catch (err) {
-            console.error('💥 AuthProvider - Exception checking initial profile:', err);
-            setUserPermissions(null);
-            setUserAccessProfile(null);
-            if (isMounted) setLoading(false);
-          }
-        } else {
-          if (isMounted) setLoading(false);
-        }
-        
+        // Usar a função centralizada
+        await processUserAuthentication(session, 'checkSession');
         clearTimeout(timeoutId);
+        
       } catch (err) {
-        console.error('💥 AuthProvider - General exception checking session:', err);
+        const timestamp = new Date().toISOString();
+        console.error(`💥 [${timestamp}] AuthProvider - General exception checking session:`, err);
         cleanupAuthState();
-        if (isMounted) setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+          setIsProcessingAuth(false);
+        }
         clearTimeout(timeoutId);
       }
     };
 
-    checkSession();
+    // Aguardar um pouco antes de verificar a sessão para evitar race condition
+    setTimeout(() => {
+      if (isMounted) {
+        checkSession();
+      }
+    }, 100);
 
     return () => {
       isMounted = false;
