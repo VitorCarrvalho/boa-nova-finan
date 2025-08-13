@@ -275,23 +275,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Cache para debounce de verificações
   const lastProcessTimestamp = React.useRef<number>(0);
+  const lastEventType = React.useRef<string>('');
   
   // Função centralizada para processar autenticação
   const processUserAuthentication = async (currentSession: Session | null, source: string) => {
     const timestamp = new Date().toISOString();
     const now = Date.now();
+    const eventType = source.includes('SIGNED_IN') ? 'SIGNED_IN' : source.includes('SIGNED_OUT') ? 'SIGNED_OUT' : 'OTHER';
     
     console.log(`🔄 [${timestamp}] AuthProvider - Processing auth from ${source}`, {
       hasSession: !!currentSession,
       userEmail: currentSession?.user?.email,
       isProcessing: isProcessingAuth,
-      timeSinceLastProcess: now - lastProcessTimestamp.current
+      timeSinceLastProcess: now - lastProcessTimestamp.current,
+      eventType,
+      lastEventType: lastEventType.current
     });
 
-    // Debounce: evitar processamentos múltiplos em menos de 2 segundos
-    if (now - lastProcessTimestamp.current < 2000 && source.includes('onAuthStateChange')) {
-      console.log(`⚠️ [${timestamp}] AuthProvider - Debouncing ${source} (too recent)`);
+    // Debounce inteligente: 
+    // - Sempre processar SIGNED_IN após SIGNED_OUT (transição crítica)
+    // - Debounce apenas eventos duplicados do mesmo tipo
+    const timeSinceLastProcess = now - lastProcessTimestamp.current;
+    const shouldDebounce = timeSinceLastProcess < 2000 && 
+                          source.includes('onAuthStateChange') && 
+                          eventType === lastEventType.current && 
+                          eventType !== 'SIGNED_IN'; // Nunca fazer debounce de SIGNED_IN
+    
+    if (shouldDebounce) {
+      console.log(`⚠️ [${timestamp}] AuthProvider - Debouncing ${source} (duplicate ${eventType})`);
       return;
+    }
+    
+    // Permitir sempre transições críticas SIGNED_OUT -> SIGNED_IN
+    if (lastEventType.current === 'SIGNED_OUT' && eventType === 'SIGNED_IN') {
+      console.log(`🔄 [${timestamp}] AuthProvider - Critical transition: SIGNED_OUT -> SIGNED_IN, processing immediately`);
     }
 
     // Evitar processamento simultâneo
@@ -301,6 +318,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     lastProcessTimestamp.current = now;
+    lastEventType.current = eventType;
     setIsProcessingAuth(true);
     
     try {

@@ -18,17 +18,18 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
-  const { signIn, signUp, resetPassword, user } = useAuth();
+  const { signIn, signUp, resetPassword, user, loading: authLoading } = useAuth();
   const { data: congregations } = useCongregations();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
+    // Só redirecionar se não estiver carregando e tem usuário
+    if (!authLoading && user) {
       console.log('Usuário autenticado, redirecionando...');
       navigate('/dashboard');
     }
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,14 +67,14 @@ const AuthPage = () => {
           variant: "destructive",
         });
       } else {
-        console.log('Login bem-sucedido, redirecionando imediatamente...');
+        console.log('Login bem-sucedido, aguardando sincronização...');
         toast({
           title: "Login realizado com sucesso!",
           description: "Bem-vindo ao sistema",
         });
         
-        // Redirecionar imediatamente após login bem-sucedido
-        navigate('/dashboard');
+        // Não redirecionar imediatamente - deixar o useEffect lidar com isso
+        // quando o estado do usuário estiver sincronizado
       }
     } catch (err) {
       console.log('Erro inesperado:', err);
