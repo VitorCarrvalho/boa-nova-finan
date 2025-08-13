@@ -152,10 +152,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Flag para evitar race conditions
   const [isProcessingAuth, setIsProcessingAuth] = useState(false);
 
-  // Auto-healing: Corrige inconsistências entre profiles.profile_id e user_profile_assignments
-  const ensureProfileAssignmentConsistency = async (userId: string, profileId: string): Promise<boolean> => {
+  // Verificar consistência sem criar desnecessariamente
+  const verifyProfileAssignmentConsistency = async (userId: string, profileId: string): Promise<boolean> => {
     try {
-      console.log(`🔧 AuthProvider - Checking assignment consistency for user: ${userId}, profile: ${profileId}`);
+      console.log(`🔧 AuthProvider - Verifying assignment consistency for user: ${userId}, profile: ${profileId}`);
       
       // Verificar se existe entrada ativa em user_profile_assignments
       const { data: existingAssignment, error: assignmentError } = await supabase
@@ -171,36 +171,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      if (!existingAssignment) {
-        console.log('🔧 AuthProvider - Creating missing user_profile_assignment');
-        
-        // Desativar assignments antigos
-        await supabase
-          .from('user_profile_assignments')
-          .update({ is_active: false })
-          .eq('user_id', userId);
-
-        // Criar nova atribuição
-        const { error: insertError } = await supabase
-          .from('user_profile_assignments')
-          .insert({
-            user_id: userId,
-            profile_id: profileId,
-            assigned_by: userId, // Self-assigned para consistência
-            is_active: true
-          });
-
-        if (insertError) {
-          console.log('❌ AuthProvider - Failed to create assignment:', insertError);
-          return false;
-        }
-
-        console.log('✅ AuthProvider - Successfully created missing assignment');
+      if (existingAssignment) {
+        console.log('✅ AuthProvider - Assignment already exists and is active, skipping creation');
         return true;
       }
 
-      console.log('✅ AuthProvider - Assignment consistency verified');
-      return true;
+      console.log('⚠️ AuthProvider - No active assignment found, but not creating to avoid RLS issues');
+      console.log('ℹ️ AuthProvider - This should be handled by admin approval process');
+      return false; // Don't try to create, let admin process handle it
     } catch (error) {
       console.log('❌ AuthProvider - Error in consistency check:', error);
       return false;
@@ -279,67 +257,87 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      // Step 4: Auto-healing - garantir consistência
-      console.log(`🔍 AuthProvider - Step 4: Ensuring assignment consistency`);
-      const isConsistent = await ensureProfileAssignmentConsistency(userId, basicProfile.profile_id);
-      
-      if (!isConsistent) {
-        console.log('⚠️ AuthProvider - Failed to ensure consistency, but continuing...');
+      // Step 4: Verificar consistência das atribuições (sem criar desnecessariamente)
+      console.log(`🔍 AuthProvider - Step 4: Verifying assignment consistency`);
+      try {
+        await verifyProfileAssignmentConsistency(userId, basicProfile.profile_id);
+      } catch (error) {
+        console.warn('⚠️ AuthProvider - Failed to verify consistency, but continuing...', error);
       }
 
-      // Step 5: Buscar dados do access profile com timeout
+      // Step 5: Buscar dados do perfil de acesso com retry e fallback
       console.log(`🔍 AuthProvider - Step 5: Fetching access profile data (${basicProfile.profile_id})`);
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        console.log(`⏰ AuthProvider - Query timeout (${currentTimeout}ms) - aborting`);
-        controller.abort();
-      }, currentTimeout);
-      
-      try {
-        const { data: accessProfile, error: accessError } = await supabase
-          .from('access_profiles')
-          .select('id, name, permissions, is_active')
-          .eq('id', basicProfile.profile_id)
-          .eq('is_active', true)
-          .abortSignal(controller.signal)
-          .maybeSingle();
+      let accessProfileData = null;
+      let attempts = 0;
+      const maxAttempts = 2;
 
-        clearTimeout(timeoutId);
+      while (!accessProfileData && attempts < maxAttempts) {
+        attempts++;
+        console.log(`🔄 AuthProvider - Access profile query attempt ${attempts}/${maxAttempts}`);
 
-        if (accessError) {
-          console.log(`❌ AuthProvider - Access profile query failed:`, accessError);
-          throw accessError;
+        try {
+          const { data, error } = await supabase
+            .from('access_profiles')
+            .select('name, permissions')
+            .eq('id', basicProfile.profile_id)
+            .eq('is_active', true)
+            .single();
+
+          if (data && !error) {
+            accessProfileData = data;
+            console.log('✅ AuthProvider - Access profile found:', data.name);
+          } else if (attempts === maxAttempts) {
+            console.warn('⚠️ AuthProvider - All attempts failed, trying fallback query');
+            
+            // Fallback: buscar usando user_profile_assignments
+            const { data: assignmentData, error: assignmentError } = await supabase
+              .from('user_profile_assignments')
+              .select(`
+                access_profiles!profile_id (
+                  name,
+                  permissions
+                )
+              `)
+              .eq('user_id', userId)
+              .eq('is_active', true)
+              .single();
+
+            if (assignmentData && !assignmentError && assignmentData.access_profiles) {
+              accessProfileData = assignmentData.access_profiles;
+              console.log('✅ AuthProvider - Access profile found via fallback:', accessProfileData.name);
+            }
+          }
+        } catch (error) {
+          console.warn(`⚠️ AuthProvider - Access profile query attempt ${attempts} failed:`, error);
+          if (attempts === maxAttempts) break;
+          await new Promise(resolve => setTimeout(resolve, 200)); // Wait 200ms before retry
         }
-
-        if (!accessProfile) {
-          console.log(`⚠️ AuthProvider - No active access profile found for ID: ${basicProfile.profile_id}`);
-          setUserPermissions({});
-          setUserAccessProfile(null);
-          return;
-        }
-
-        console.log('✅ AuthProvider - Access profile loaded successfully:', {
-          profileName: accessProfile.name,
-          hasPermissions: !!accessProfile.permissions,
-          permissionKeys: Object.keys(accessProfile.permissions || {})
-        });
-
-        const permissions = accessProfile.permissions || {};
-        setUserPermissions(permissions as Record<string, Record<string, boolean>>);
-        setUserAccessProfile(accessProfile.name || null);
-        
-        // Save successful data to cache
-        saveUserDataToCache(
-          { id: userId, email: user?.email }, 
-          permissions, 
-          accessProfile.name
-        );
-        
-      } catch (queryError) {
-        clearTimeout(timeoutId);
-        throw queryError; // Vai para o catch principal para retry
       }
+
+      if (!accessProfileData) {
+        console.warn('⚠️ AuthProvider - No access profile found after all attempts');
+        setUserPermissions({});
+        setUserAccessProfile(null);
+        return;
+      }
+
+      console.log('✅ AuthProvider - Access profile loaded successfully:', {
+        profileName: accessProfileData.name,
+        hasPermissions: !!accessProfileData.permissions,
+        permissionKeys: Object.keys(accessProfileData.permissions || {})
+      });
+
+      const permissions = accessProfileData.permissions || {};
+      setUserPermissions(permissions as Record<string, Record<string, boolean>>);
+      setUserAccessProfile(accessProfileData.name || null);
+      
+      // Save successful data to cache
+      saveUserDataToCache(
+        { id: userId, email: user?.email }, 
+        permissions, 
+        accessProfileData.name
+      );
       
     } catch (error) {
       console.error(`💥 AuthProvider - Exception loading permissions (attempt ${retryCount + 1}):`, error);
