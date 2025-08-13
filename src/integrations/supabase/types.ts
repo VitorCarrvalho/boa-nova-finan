@@ -58,13 +58,18 @@ export type Database = {
           created_at: string
           description: string
           due_date: string
+          future_scheduled_date: string | null
           id: string
           invoice_number: string | null
+          is_future_scheduled: boolean | null
           is_recurring: boolean
+          next_occurrence_date: string | null
           observations: string | null
           paid_at: string | null
           payee_name: string
           payment_method: string
+          recurrence_day_of_month: number | null
+          recurrence_day_of_week: number | null
           recurrence_frequency: string | null
           rejected_at: string | null
           rejection_reason: string | null
@@ -88,13 +93,18 @@ export type Database = {
           created_at?: string
           description: string
           due_date: string
+          future_scheduled_date?: string | null
           id?: string
           invoice_number?: string | null
+          is_future_scheduled?: boolean | null
           is_recurring?: boolean
+          next_occurrence_date?: string | null
           observations?: string | null
           paid_at?: string | null
           payee_name: string
           payment_method: string
+          recurrence_day_of_month?: number | null
+          recurrence_day_of_week?: number | null
           recurrence_frequency?: string | null
           rejected_at?: string | null
           rejection_reason?: string | null
@@ -118,13 +128,18 @@ export type Database = {
           created_at?: string
           description?: string
           due_date?: string
+          future_scheduled_date?: string | null
           id?: string
           invoice_number?: string | null
+          is_future_scheduled?: boolean | null
           is_recurring?: boolean
+          next_occurrence_date?: string | null
           observations?: string | null
           paid_at?: string | null
           payee_name?: string
           payment_method?: string
+          recurrence_day_of_month?: number | null
+          recurrence_day_of_week?: number | null
           recurrence_frequency?: string | null
           rejected_at?: string | null
           rejection_reason?: string | null
@@ -1234,6 +1249,7 @@ export type Database = {
         | "approved"
         | "paid"
         | "rejected"
+        | "future_scheduled"
       delivery_type: "unico" | "agendado" | "recorrente"
       event_type: "culto" | "conferencia" | "reuniao" | "evento_especial"
       financial_category:
@@ -1406,6 +1422,7 @@ export const Constants = {
         "approved",
         "paid",
         "rejected",
+        "future_scheduled",
       ],
       delivery_type: ["unico", "agendado", "recorrente"],
       event_type: ["culto", "conferencia", "reuniao", "evento_especial"],

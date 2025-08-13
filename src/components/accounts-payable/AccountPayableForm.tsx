@@ -14,6 +14,7 @@ import { useCreateAccountPayable, CreateAccountPayableData } from '@/hooks/useAc
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { useCongregations } from '@/hooks/useCongregationData';
 import { useNavigate } from 'react-router-dom';
+import RecurrenceFields from './RecurrenceFields';
 
 const accountPayableSchema = z.object({
   description: z.string().min(1, 'Descrição é obrigatória'),
@@ -30,8 +31,52 @@ const accountPayableSchema = z.object({
   invoice_number: z.string().optional(),
   is_recurring: z.boolean().default(false),
   recurrence_frequency: z.string().optional(),
+  recurrence_day_of_week: z.number().optional(),
+  recurrence_day_of_month: z.number().optional(),
+  next_occurrence_date: z.string().optional(),
+  is_future_scheduled: z.boolean().default(false),
+  future_scheduled_date: z.string().optional(),
   urgency_level: z.enum(['normal', 'urgent']).default('normal'),
   urgency_description: z.string().optional(),
+}).refine((data) => {
+  // Não pode ser recorrente e agendado ao mesmo tempo
+  if (data.is_recurring && data.is_future_scheduled) {
+    return false;
+  }
+  
+  // Se é recorrente, precisa de frequência
+  if (data.is_recurring && !data.recurrence_frequency) {
+    return false;
+  }
+  
+  // Se é semanal ou quinzenal, precisa do dia da semana
+  if (data.is_recurring && 
+      (data.recurrence_frequency === 'weekly' || data.recurrence_frequency === 'biweekly') && 
+      data.recurrence_day_of_week === undefined) {
+    return false;
+  }
+  
+  // Se é mensal, trimestral ou anual, precisa do dia do mês
+  if (data.is_recurring && 
+      ['monthly', 'quarterly', 'yearly'].includes(data.recurrence_frequency || '') && 
+      !data.recurrence_day_of_month) {
+    return false;
+  }
+  
+  // Se é recorrente, precisa da data da primeira ocorrência
+  if (data.is_recurring && !data.next_occurrence_date) {
+    return false;
+  }
+  
+  // Se é agendado para o futuro, precisa da data
+  if (data.is_future_scheduled && !data.future_scheduled_date) {
+    return false;
+  }
+  
+  return true;
+}, {
+  message: "Configuração de recorrência/agendamento inválida",
+  path: ["is_recurring"]
 });
 
 type AccountPayableFormData = z.infer<typeof accountPayableSchema>;
@@ -46,6 +91,7 @@ const AccountPayableForm = () => {
     resolver: zodResolver(accountPayableSchema),
     defaultValues: {
       is_recurring: false,
+      is_future_scheduled: false,
       urgency_level: 'normal',
       recurrence_frequency: 'monthly',
     },
@@ -341,55 +387,11 @@ const AccountPayableForm = () => {
                 </FormItem>
               )}
             />
-
-            <div className="flex items-center space-x-2">
-              <FormField
-                control={form.control}
-                name="is_recurring"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        É recorrente?
-                      </FormLabel>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {form.watch('is_recurring') && (
-              <FormField
-                control={form.control}
-                name="recurrence_frequency"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Frequência</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="w-[200px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="monthly">Mensal</SelectItem>
-                        <SelectItem value="quarterly">Trimestral</SelectItem>
-                        <SelectItem value="yearly">Anual</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
           </CardContent>
         </Card>
+
+        {/* Recorrência e Agendamento */}
+        <RecurrenceFields control={form.control} watch={form.watch} />
 
         <div className="flex justify-end space-x-4">
           <Button

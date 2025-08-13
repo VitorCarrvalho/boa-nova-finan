@@ -63,6 +63,11 @@ export interface CreateAccountPayableData {
   invoice_number?: string;
   is_recurring?: boolean;
   recurrence_frequency?: string;
+  recurrence_day_of_week?: number;
+  recurrence_day_of_month?: number;
+  next_occurrence_date?: string;
+  is_future_scheduled?: boolean;
+  future_scheduled_date?: string;
   urgency_level?: 'normal' | 'urgent';
   urgency_description?: string;
 }
@@ -160,7 +165,7 @@ export const useAccountPayableApprovals = (accountId: string) => {
         .from('accounts_payable_approvals')
         .select(`
           *,
-          approver:profiles!accounts_payable_approvals_approved_by_fkey(name)
+          approver:profiles(name)
         `)
         .eq('account_payable_id', accountId)
         .order('created_at', { ascending: true });

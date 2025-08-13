@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAccountsPayable } from '@/hooks/useAccountsPayable';
 import { usePermissions } from '@/hooks/usePermissions';
 import AccountPayableList from '@/components/accounts-payable/AccountPayableList';
+import BatchApprovalActions from '@/components/accounts-payable/BatchApprovalActions';
 
 const AuthorizeAccounts = () => {
   const { canViewAuthorizeAccounts } = usePermissions();
@@ -77,11 +78,14 @@ const AuthorizeAccounts = () => {
             </CardContent>
           </Card>
         ) : (
-          <AccountPayableList 
-            accounts={pendingAccounts} 
-            isLoading={isLoading}
-            showApprovalActions={true}
-          />
+          <div className="space-y-6">
+            <BatchApprovalActions accounts={pendingAccounts} />
+            <AccountPayableList 
+              accounts={pendingAccounts} 
+              isLoading={isLoading}
+              showApprovalActions={true}
+            />
+          </div>
         )}
       </div>
     </Layout>

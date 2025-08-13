@@ -37,21 +37,22 @@ const AccountPayableDetails: React.FC<AccountPayableDetailsProps> = ({ accountId
         });
       }
 
-      // Agora que o bucket é público, usar URL pública
-      const { data: publicUrlData } = supabase.storage
+      // Download direto usando o caminho do storage
+      const { data, error } = await supabase.storage
         .from('accounts-payable-attachments')
-        .getPublicUrl(account.attachment_url);
+        .download(account.attachment_url);
 
-      console.log('URL pública gerada:', publicUrlData.publicUrl);
+      if (error) {
+        console.error('Erro no download do storage:', error);
+        throw error;
+      }
 
-      // Fazer download direto via fetch
-      const response = await fetch(publicUrlData.publicUrl);
-      if (!response.ok) throw new Error('Falha ao baixar arquivo');
-      
-      const blob = await response.blob();
-      
+      if (!data) {
+        throw new Error('Dados do arquivo não encontrados');
+      }
+
       // Create download link
-      const url = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(data);
       const link = document.createElement('a');
       link.href = url;
       link.download = account.attachment_filename || 'comprovante.pdf';
