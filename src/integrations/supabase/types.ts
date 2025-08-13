@@ -1201,6 +1201,10 @@ export type Database = {
         Args: { _user_id: string; _profile_id: string; _assigned_by?: string }
         Returns: boolean
       }
+      get_authenticated_user_permissions: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_current_user_permissions: {
         Args: Record<PropertyKey, never>
         Returns: Json

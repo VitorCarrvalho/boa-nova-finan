@@ -265,18 +265,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn('⚠️ AuthProvider - Failed to verify consistency, but continuing...', error);
       }
 
-      // Step 5: Buscar dados do perfil de acesso com retry e fallback
-      console.log(`🔍 AuthProvider - Step 5: Fetching access profile data (${basicProfile.profile_id})`);
+      // Step 5: Fetch access profile data using secure function to bypass RLS
+      console.log(`🔍 AuthProvider - Step 5: Fetching access profile data using secure function`);
       
       let accessProfileData = null;
-      let attempts = 0;
-      const maxAttempts = 2;
+      
+      try {
+        // Use the new security definer function to bypass RLS deadlock
+        const { data: functionResult, error: functionError } = await supabase
+          .rpc('get_authenticated_user_permissions');
 
-      while (!accessProfileData && attempts < maxAttempts) {
-        attempts++;
-        console.log(`🔄 AuthProvider - Access profile query attempt ${attempts}/${maxAttempts}`);
-
-        try {
+        if (!functionError && functionResult && typeof functionResult === 'object' && functionResult !== null) {
+          const result = functionResult as { profile_name?: string; permissions?: Record<string, any> };
+          if (result.profile_name) {
+            accessProfileData = {
+              name: result.profile_name,
+              permissions: result.permissions || {}
+            };
+            console.log(`✅ AuthProvider - Secure function successful: ${accessProfileData.name}`);
+          } else {
+            console.log('⚠️ AuthProvider - Secure function returned no profile name');
+          }
+        } else {
+          console.log('⚠️ AuthProvider - Secure function failed or no profile:', functionError);
+          
+          // Fallback: try direct access_profiles query (now should work with new RLS policy)
+          console.log('🔄 AuthProvider - Trying direct access_profiles query as fallback');
           const { data, error } = await supabase
             .from('access_profiles')
             .select('name, permissions')
@@ -284,35 +298,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .eq('is_active', true)
             .single();
 
-          if (data && !error) {
+          if (!error && data) {
             accessProfileData = data;
-            console.log('✅ AuthProvider - Access profile found:', data.name);
-          } else if (attempts === maxAttempts) {
-            console.warn('⚠️ AuthProvider - All attempts failed, trying fallback query');
-            
-            // Fallback: buscar usando user_profile_assignments
-            const { data: assignmentData, error: assignmentError } = await supabase
-              .from('user_profile_assignments')
-              .select(`
-                access_profiles!profile_id (
-                  name,
-                  permissions
-                )
-              `)
-              .eq('user_id', userId)
-              .eq('is_active', true)
-              .single();
-
-            if (assignmentData && !assignmentError && assignmentData.access_profiles) {
-              accessProfileData = assignmentData.access_profiles;
-              console.log('✅ AuthProvider - Access profile found via fallback:', accessProfileData.name);
-            }
+            console.log(`✅ AuthProvider - Direct query fallback successful: ${accessProfileData.name}`);
+          } else {
+            console.log('❌ AuthProvider - Direct query fallback also failed:', error);
           }
-        } catch (error) {
-          console.warn(`⚠️ AuthProvider - Access profile query attempt ${attempts} failed:`, error);
-          if (attempts === maxAttempts) break;
-          await new Promise(resolve => setTimeout(resolve, 200)); // Wait 200ms before retry
         }
+      } catch (error) {
+        console.log('❌ AuthProvider - All query attempts failed:', error);
       }
 
       if (!accessProfileData) {
