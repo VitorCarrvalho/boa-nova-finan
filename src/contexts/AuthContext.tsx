@@ -74,193 +74,198 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Flag para evitar race conditions
   const [isProcessingAuth, setIsProcessingAuth] = useState(false);
 
+  // Auto-healing: Corrige inconsistências entre profiles.profile_id e user_profile_assignments
+  const ensureProfileAssignmentConsistency = async (userId: string, profileId: string): Promise<boolean> => {
+    try {
+      console.log(`🔧 AuthProvider - Checking assignment consistency for user: ${userId}, profile: ${profileId}`);
+      
+      // Verificar se existe entrada ativa em user_profile_assignments
+      const { data: existingAssignment, error: assignmentError } = await supabase
+        .from('user_profile_assignments')
+        .select('id, is_active')
+        .eq('user_id', userId)
+        .eq('profile_id', profileId)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (assignmentError) {
+        console.log('⚠️ AuthProvider - Error checking assignment:', assignmentError);
+        return false;
+      }
+
+      if (!existingAssignment) {
+        console.log('🔧 AuthProvider - Creating missing user_profile_assignment');
+        
+        // Desativar assignments antigos
+        await supabase
+          .from('user_profile_assignments')
+          .update({ is_active: false })
+          .eq('user_id', userId);
+
+        // Criar nova atribuição
+        const { error: insertError } = await supabase
+          .from('user_profile_assignments')
+          .insert({
+            user_id: userId,
+            profile_id: profileId,
+            assigned_by: userId, // Self-assigned para consistência
+            is_active: true
+          });
+
+        if (insertError) {
+          console.log('❌ AuthProvider - Failed to create assignment:', insertError);
+          return false;
+        }
+
+        console.log('✅ AuthProvider - Successfully created missing assignment');
+        return true;
+      }
+
+      console.log('✅ AuthProvider - Assignment consistency verified');
+      return true;
+    } catch (error) {
+      console.log('❌ AuthProvider - Error in consistency check:', error);
+      return false;
+    }
+  };
+
+  // Buscar permissões do usuário - versão robusta com auto-healing
   const fetchUserPermissions = async (userId: string, retryCount: number = 0): Promise<void> => {
-    const maxRetries = 5;
+    const maxRetries = 3;
+    const timeouts = [8000, 15000, 25000]; // Progressive timeouts: 8s, 15s, 25s
+    const currentTimeout = timeouts[Math.min(retryCount, timeouts.length - 1)];
+    
+    console.log(`📋 AuthProvider - Fetching user permissions for: ${userId} (attempt ${retryCount + 1}, timeout: ${currentTimeout}ms)`);
+    
+    if (!userId) {
+      console.log('⚠️ AuthProvider - No userId provided');
+      setUserPermissions({});
+      setUserAccessProfile(null);
+      return;
+    }
     
     try {
-      console.log(`📋 AuthProvider - Fetching user permissions for: ${userId} (attempt ${retryCount + 1})`);
-      
       // Exponential backoff para retries
       if (retryCount > 0) {
-        const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000); // Max 10s delay
+        const delay = Math.min(1000 * Math.pow(1.5, retryCount - 1), 5000); // Max 5s delay
         console.log(`⏳ AuthProvider - Waiting ${delay}ms before retry ${retryCount}`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
       
-      // Force clear any potential cache before fetching
-      await supabase.auth.getSession();
+      // Step 1: Verificar dados básicos do usuário
+      console.log(`🔍 AuthProvider - Step 1: Checking basic profile data`);
       
-      // Primeiro, tentar consulta completa com timeout de 30s
+      const { data: basicProfile, error: basicError } = await supabase
+        .from('profiles')
+        .select('id, approval_status, profile_id')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (basicError || !basicProfile) {
+        console.log(`❌ AuthProvider - Failed to get basic profile:`, basicError);
+        throw basicError || new Error('No basic profile found');
+      }
+
+      console.log(`📋 AuthProvider - Basic profile:`, {
+        userId: basicProfile.id,
+        status: basicProfile.approval_status,
+        profileId: basicProfile.profile_id
+      });
+
+      // Step 2: Verificar status de aprovação
+      if (basicProfile.approval_status !== 'ativo') {
+        console.log('⚠️ AuthProvider - User not active, status:', basicProfile.approval_status);
+        
+        if (basicProfile.approval_status === 'rejeitado') {
+          console.log('🚪 AuthProvider - Status rejected, signing out');
+          await supabase.auth.signOut();
+          return;
+        }
+        
+        // Para 'em_analise', preservar estado atual se já tinha permissões
+        if (basicProfile.approval_status === 'em_analise' && !userAccessProfile) {
+          console.log('⚠️ AuthProvider - User em_analise, clearing permissions');
+          setUserPermissions({});
+          setUserAccessProfile(null);
+        } else if (basicProfile.approval_status === 'em_analise') {
+          console.log('⚠️ AuthProvider - User em_analise but preserving current state for stability');
+        }
+        return;
+      }
+
+      // Step 3: Verificar se tem profile_id
+      if (!basicProfile.profile_id) {
+        console.log('⚠️ AuthProvider - User has no profile_id assigned');
+        setUserPermissions({});
+        setUserAccessProfile(null);
+        return;
+      }
+
+      // Step 4: Auto-healing - garantir consistência
+      console.log(`🔍 AuthProvider - Step 4: Ensuring assignment consistency`);
+      const isConsistent = await ensureProfileAssignmentConsistency(userId, basicProfile.profile_id);
+      
+      if (!isConsistent) {
+        console.log('⚠️ AuthProvider - Failed to ensure consistency, but continuing...');
+      }
+
+      // Step 5: Buscar dados do access profile com timeout
+      console.log(`🔍 AuthProvider - Step 5: Fetching access profile data (${basicProfile.profile_id})`);
+      
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const timeoutId = setTimeout(() => {
+        console.log(`⏰ AuthProvider - Query timeout (${currentTimeout}ms) - aborting`);
+        controller.abort();
+      }, currentTimeout);
       
       try {
-        console.log(`🔍 AuthProvider - Trying complete query (attempt ${retryCount + 1})`);
-        
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select(`
-            id, 
-            approval_status,
-            profile_id,
-            access_profiles!left (
-              name,
-              permissions,
-              is_active
-            )
-          `)
-          .eq('id', userId)
+        const { data: accessProfile, error: accessError } = await supabase
+          .from('access_profiles')
+          .select('id, name, permissions, is_active')
+          .eq('id', basicProfile.profile_id)
+          .eq('is_active', true)
           .abortSignal(controller.signal)
           .maybeSingle();
 
         clearTimeout(timeoutId);
 
-        // Se a consulta complexa falhar, tentar uma simples
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.log(`⚠️ AuthProvider - Complex query failed, trying simple approach:`, profileError);
-          throw profileError; // Vai para o catch que tenta consulta simples
+        if (accessError) {
+          console.log(`❌ AuthProvider - Access profile query failed:`, accessError);
+          throw accessError;
         }
 
-        console.log('🔍 AuthProvider - Complete query result:', { 
-          profile, 
-          profileError,
-          userId,
-          profileExists: !!profile,
-          approvalStatus: profile?.approval_status,
-          profileId: profile?.profile_id,
-          accessProfilesData: profile?.access_profiles
-        });
-
-        if (!profile) {
-          console.log(`⚠️ AuthProvider - No profile found for user: ${userId} (attempt ${retryCount + 1})`);
-          
-          // Retry se não encontrou o perfil, pode ser race condition
-          if (retryCount < maxRetries) {
-            console.log(`🔄 AuthProvider - Retrying fetchUserPermissions for missing profile (${retryCount + 1}/${maxRetries})`);
-            return await fetchUserPermissions(userId, retryCount + 1);
-          }
-          
+        if (!accessProfile) {
+          console.log(`⚠️ AuthProvider - No active access profile found for ID: ${basicProfile.profile_id}`);
           setUserPermissions({});
           setUserAccessProfile(null);
           return;
         }
 
-        // Check approval status first
-        if (profile.approval_status !== 'ativo') {
-          console.log('⚠️ AuthProvider - User not active, status:', profile.approval_status);
-          
-          // Só forçar logout se for uma mudança definitiva de status
-          if (profile.approval_status === 'rejeitado') {
-            console.log('🚪 AuthProvider - Status rejected, signing out');
-            await supabase.auth.signOut();
-            return;
-          }
-          
-          // Para 'em_analise', preservar estado atual se já tinha permissões
-          if (profile.approval_status === 'em_analise' && !userAccessProfile) {
-            console.log('⚠️ AuthProvider - User em_analise, clearing permissions');
-            setUserPermissions({});
-            setUserAccessProfile(null);
-          } else if (profile.approval_status === 'em_analise') {
-            console.log('⚠️ AuthProvider - User em_analise but preserving current state for stability');
-          }
-          return;
-        }
-
-        // Handle access_profiles data (can be array or single object)
-        let accessProfile = profile.access_profiles;
-        if (Array.isArray(accessProfile)) {
-          accessProfile = accessProfile[0];
-        }
-
-        console.log('🔍 AuthProvider - Access profile data:', {
-          accessProfile,
-          isActive: accessProfile?.is_active,
-          name: accessProfile?.name,
-          hasPermissions: !!accessProfile?.permissions
+        console.log('✅ AuthProvider - Access profile loaded successfully:', {
+          profileName: accessProfile.name,
+          hasPermissions: !!accessProfile.permissions,
+          permissionKeys: Object.keys(accessProfile.permissions || {})
         });
-
-        if (!accessProfile || !accessProfile.is_active) {
-          console.log('⚠️ AuthProvider - No active access profile found');
-          setUserPermissions({});
-          setUserAccessProfile(null);
-          return;
-        }
 
         const permissions = accessProfile.permissions || {};
-        const profileName = accessProfile.name;
-
-        console.log('✅ AuthProvider - User permissions loaded successfully:', { 
-          profileName, 
-          hasPermissions: Object.keys(permissions).length > 0,
-          permissionKeys: Object.keys(permissions),
-          permissions: permissions 
-        });
-
         setUserPermissions(permissions as Record<string, Record<string, boolean>>);
-        setUserAccessProfile(profileName || null);
+        setUserAccessProfile(accessProfile.name || null);
         
       } catch (queryError) {
         clearTimeout(timeoutId);
-        
-        // Se falhou consulta complexa, tentar consulta simples
-        console.log(`🔄 AuthProvider - Trying fallback simple query due to error:`, queryError);
-        
-        // Consulta mais simples para status básico
-        const { data: simpleProfile, error: simpleError } = await supabase
-          .from('profiles')
-          .select('approval_status, profile_id')
-          .eq('id', userId)
-          .maybeSingle();
-
-        if (simpleError || !simpleProfile) {
-          console.error(`❌ AuthProvider - Simple query also failed:`, simpleError);
-          throw simpleError || new Error('No profile found');
-        }
-
-        console.log(`📋 AuthProvider - Simple profile result:`, simpleProfile);
-
-        // Se tem perfil ativo, buscar dados separadamente
-        if (simpleProfile.approval_status === 'ativo' && simpleProfile.profile_id) {
-          console.log(`🔍 AuthProvider - Fetching access profile separately:`, simpleProfile.profile_id);
-          
-          const { data: accessProfileData, error: accessError } = await supabase
-            .from('access_profiles')
-            .select('name, permissions, is_active')
-            .eq('id', simpleProfile.profile_id)
-            .eq('is_active', true)
-            .maybeSingle();
-
-          if (!accessError && accessProfileData) {
-            console.log('✅ AuthProvider - Fallback query successful:', {
-              profileName: accessProfileData.name,
-              hasPermissions: !!accessProfileData.permissions
-            });
-            
-            setUserPermissions(accessProfileData.permissions as Record<string, Record<string, boolean>> || {});
-            setUserAccessProfile(accessProfileData.name || null);
-          } else {
-            console.log('⚠️ AuthProvider - No access profile data from fallback');
-            setUserPermissions({});
-            setUserAccessProfile(null);
-          }
-        } else {
-          console.log(`⚠️ AuthProvider - User not active in simple query: ${simpleProfile.approval_status}`);
-          setUserPermissions({});
-          setUserAccessProfile(null);
-        }
+        throw queryError; // Vai para o catch principal para retry
       }
       
     } catch (error) {
       console.error(`💥 AuthProvider - Exception loading permissions (attempt ${retryCount + 1}):`, error);
       
-      // Retry em caso de exceção, mas preservar estado anterior se possível
+      // Retry em caso de exceção
       if (retryCount < maxRetries) {
         console.log(`🔄 AuthProvider - Retrying fetchUserPermissions after exception (${retryCount + 1}/${maxRetries})`);
         return await fetchUserPermissions(userId, retryCount + 1);
       }
       
-      console.error('💥 Stack:', error);
+      console.error('💥 AuthProvider - All retry attempts failed:', error);
       
       // Só limpar estado se não temos estado anterior válido
       if (!userAccessProfile) {
@@ -268,7 +273,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserPermissions({});
         setUserAccessProfile(null);
       } else {
-        console.log('🛡️ AuthProvider - Preserving previous valid state due to network error');
+        console.log('🛡️ AuthProvider - Preserving previous valid state due to persistent errors');
       }
     }
   };
