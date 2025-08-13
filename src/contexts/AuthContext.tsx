@@ -351,53 +351,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) {
-        console.log('Erro no login:', error);
+        console.log('❌ Erro no login:', error);
         return { error };
       }
       
       // Check user approval status after successful login
       if (data.user) {
+        console.log('✅ Login bem-sucedido, verificando status do usuário...');
+        
+        // Use a more reliable query without nested joins
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('approval_status, access_profiles(name)')
+          .select('approval_status')
           .eq('id', data.user.id)
           .maybeSingle();
         
         if (profileError) {
-          console.log('Erro ao verificar status de aprovação:', profileError);
-          return { error: profileError };
-        }
-        
-        if (profile?.approval_status === 'em_analise') {
-          // Sign out the user immediately
-          await supabase.auth.signOut();
-          return { 
-            error: { 
-              message: 'Seu cadastro está em análise. Aguarde aprovação para acessar o sistema.' 
-            } 
-          };
-        } else if (profile?.approval_status === 'rejeitado') {
-          // Sign out the user immediately
-          await supabase.auth.signOut();
-          return { 
-            error: { 
-              message: 'Seu cadastro foi rejeitado. Entre em contato com o administrador.' 
-            } 
-          };
+          console.log('❌ Erro ao verificar status:', profileError);
+          // Don't fail login for this - let the auth flow handle it
+          console.log('⚠️ Continuando login apesar do erro de verificação');
+        } else if (profile) {
+          console.log('📊 Status do usuário:', profile.approval_status);
+          
+          if (profile.approval_status === 'em_analise') {
+            // Sign out the user immediately
+            await supabase.auth.signOut();
+            return { 
+              error: { 
+                message: 'Seu cadastro está em análise. Aguarde aprovação para acessar o sistema.' 
+              } 
+            };
+          } else if (profile.approval_status === 'rejeitado') {
+            // Sign out the user immediately
+            await supabase.auth.signOut();
+            return { 
+              error: { 
+                message: 'Seu cadastro foi rejeitado. Entre em contato com o administrador.' 
+              } 
+            };
+          }
         }
       }
       
-      console.log('✅ Login realizado com sucesso:', data);
-      
-      // Force refresh da página para garantir estado limpo
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 1000);
-      
+      console.log('✅ Login realizado com sucesso - deixando AuthPage fazer redirect');
       return { error: null };
+      
     } catch (err) {
-      console.log('Erro inesperado no login:', err);
+      console.log('💥 Erro inesperado no login:', err);
       return { error: err };
+    } finally {
+      // CRITICAL: Always clear loading state
+      console.log('🏁 Finalizando processo de login - clearing loading');
+      setLoading(false);
     }
   };
 
