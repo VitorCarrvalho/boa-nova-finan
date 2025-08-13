@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { useCongregations } from '@/hooks/useCongregationData';
+import { useCongregationsPublic } from '@/hooks/useCongregationsPublic';
 
 const AuthPage = () => {
   const [email, setEmail] = useState('');
@@ -19,7 +19,7 @@ const AuthPage = () => {
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const { signIn, signUp, resetPassword, user, loading: authLoading } = useAuth();
-  const { data: congregations } = useCongregations();
+  const { data: congregations } = useCongregationsPublic();
   const { toast } = useToast();
   const navigate = useNavigate();
 
