@@ -75,14 +75,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isProcessingAuth, setIsProcessingAuth] = useState(false);
 
   const fetchUserPermissions = async (userId: string, retryCount: number = 0): Promise<void> => {
-    const maxRetries = 3;
+    const maxRetries = 5;
     
     try {
       console.log(`📋 AuthProvider - Fetching user permissions for: ${userId} (attempt ${retryCount + 1})`);
       
-      // Aguardar um pouco em retries para evitar race conditions
+      // Exponential backoff para retries
       if (retryCount > 0) {
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000); // Max 10s delay
+        console.log(`⏳ AuthProvider - Waiting ${delay}ms before retry ${retryCount}`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
       
       // Force clear any potential cache before fetching
@@ -146,15 +148,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (profile.approval_status !== 'ativo') {
         console.log('⚠️ AuthProvider - User not active, status:', profile.approval_status);
         
-        // Se o status mudou durante uso, forçar logout
-        if (profile.approval_status === 'em_analise') {
-          console.log('🚪 AuthProvider - Status changed to em_analise, signing out');
+        // Só forçar logout se for uma mudança definitiva de status
+        // Não fazer logout durante operações que podem causar race conditions
+        if (profile.approval_status === 'rejeitado') {
+          console.log('🚪 AuthProvider - Status rejected, signing out');
           await supabase.auth.signOut();
           return;
         }
         
-        setUserPermissions({});
-        setUserAccessProfile(null);
+        // Para 'em_analise', preservar estado atual se já tinha permissões
+        if (profile.approval_status === 'em_analise' && !userAccessProfile) {
+          console.log('⚠️ AuthProvider - User em_analise, clearing permissions');
+          setUserPermissions({});
+          setUserAccessProfile(null);
+        } else if (profile.approval_status === 'em_analise') {
+          console.log('⚠️ AuthProvider - User em_analise but preserving current state for stability');
+        }
         return;
       }
 
@@ -194,26 +203,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error(`💥 AuthProvider - Exception loading permissions (attempt ${retryCount + 1}):`, error);
       
-      // Retry em caso de exceção
+      // Retry em caso de exceção, mas preservar estado anterior se possível
       if (retryCount < maxRetries) {
         console.log(`🔄 AuthProvider - Retrying fetchUserPermissions after exception (${retryCount + 1}/${maxRetries})`);
         return await fetchUserPermissions(userId, retryCount + 1);
       }
       
       console.error('💥 Stack:', error);
-      setUserPermissions({});
-      setUserAccessProfile(null);
+      
+      // Só limpar estado se não temos estado anterior válido
+      if (!userAccessProfile) {
+        console.log('🧹 AuthProvider - No previous valid state, clearing permissions');
+        setUserPermissions({});
+        setUserAccessProfile(null);
+      } else {
+        console.log('🛡️ AuthProvider - Preserving previous valid state due to network error');
+      }
     }
   };
 
+  // Cache para debounce de verificações
+  const lastProcessTimestamp = React.useRef<number>(0);
+  
   // Função centralizada para processar autenticação
   const processUserAuthentication = async (currentSession: Session | null, source: string) => {
     const timestamp = new Date().toISOString();
+    const now = Date.now();
+    
     console.log(`🔄 [${timestamp}] AuthProvider - Processing auth from ${source}`, {
       hasSession: !!currentSession,
       userEmail: currentSession?.user?.email,
-      isProcessing: isProcessingAuth
+      isProcessing: isProcessingAuth,
+      timeSinceLastProcess: now - lastProcessTimestamp.current
     });
+
+    // Debounce: evitar processamentos múltiplos em menos de 2 segundos
+    if (now - lastProcessTimestamp.current < 2000 && source.includes('onAuthStateChange')) {
+      console.log(`⚠️ [${timestamp}] AuthProvider - Debouncing ${source} (too recent)`);
+      return;
+    }
 
     // Evitar processamento simultâneo
     if (isProcessingAuth) {
@@ -221,6 +249,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
+    lastProcessTimestamp.current = now;
     setIsProcessingAuth(true);
     
     try {
@@ -250,14 +279,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let isMounted = true;
     let timeoutId: NodeJS.Timeout;
 
-    // Set a maximum loading time of 10 seconds
+    // Set a maximum loading time of 30 seconds for better stability during batch operations
     timeoutId = setTimeout(() => {
       if (isMounted && loading) {
-        console.warn('⏰ AuthProvider - Loading timeout - forcing completion');
+        console.warn('⏰ AuthProvider - Loading timeout (30s) - forcing completion');
         setLoading(false);
         setIsProcessingAuth(false);
       }
-    }, 10000);
+    }, 30000);
     
     // Configurar listener de mudanças de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
