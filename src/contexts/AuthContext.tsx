@@ -63,20 +63,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('📋 AuthProvider - Fetching user permissions for:', userId);
       
+      // Simplify query using standard JOIN syntax
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select(`
           id, 
           approval_status,
-          access_profiles!inner(
+          profile_id,
+          access_profiles (
             name,
-            permissions
+            permissions,
+            is_active
           )
         `)
         .eq('id', userId)
         .eq('approval_status', 'ativo')
-        .eq('access_profiles.is_active', true)
         .maybeSingle();
+
+      console.log('🔍 AuthProvider - Profile query result:', { profile, profileError });
 
       if (profileError) {
         console.error('❌ AuthProvider - Error fetching profile:', profileError);
@@ -92,12 +96,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      const permissions = profile?.access_profiles?.permissions || {};
-      const profileName = profile?.access_profiles?.name;
+      // Check if access_profiles exists and is active
+      const accessProfile = profile.access_profiles;
+      if (!accessProfile || !accessProfile.is_active) {
+        console.log('⚠️ AuthProvider - No active access profile found for user:', userId);
+        setUserPermissions({});
+        setUserAccessProfile(null);
+        return;
+      }
+
+      const permissions = accessProfile.permissions || {};
+      const profileName = accessProfile.name;
 
       console.log('✅ AuthProvider - User permissions loaded:', { 
         profileName, 
-        hasPermissions: Object.keys(permissions).length > 0 
+        hasPermissions: Object.keys(permissions).length > 0,
+        permissions: permissions 
       });
 
       setUserPermissions(permissions as Record<string, Record<string, boolean>>);
