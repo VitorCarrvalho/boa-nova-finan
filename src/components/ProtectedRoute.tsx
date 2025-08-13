@@ -60,7 +60,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Só mostrar "em análise" se realmente não há perfil de acesso E não está carregando
   if (!loading && user && userAccessProfile === null) {
-    console.log('ProtectedRoute - User sem perfil de acesso, mostrando tela de análise');
+    console.log(`🚨 ProtectedRoute - User ${user.email || user.id} sem perfil de acesso válido, mostrando tela de análise`);
+    
+    const handleReload = () => {
+      console.log('🔄 ProtectedRoute - Forçando recarregamento completo...');
+      // Clear all auth caches and reload
+      localStorage.removeItem('lovable_user_data');
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('supabase') || key.includes('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+      window.location.reload();
+    };
     
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -69,12 +81,20 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           <p className="text-muted-foreground mb-4">
             Aguarde aprovação para acessar o sistema.
           </p>
-          <Button 
-            onClick={() => window.location.href = '/auth'}
-            variant="outline"
-          >
-            Voltar ao Login
-          </Button>
+          <div className="flex gap-2 justify-center">
+            <Button 
+              onClick={handleReload}
+              variant="default"
+            >
+              Recarregar
+            </Button>
+            <Button 
+              onClick={() => window.location.href = '/auth'}
+              variant="outline"
+            >
+              Voltar ao Login
+            </Button>
+          </div>
         </div>
       </div>
     );

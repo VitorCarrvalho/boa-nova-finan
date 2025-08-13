@@ -33,37 +33,66 @@ export const useAuth = () => {
 
 // Cache utility functions
 const CACHE_KEY = 'lovable_user_data';
+const CACHE_VERSION = '1.0';
 
 const saveUserDataToCache = (user: any, permissions: any, accessProfile: any) => {
   try {
     const cacheData = {
+      version: CACHE_VERSION,
       user,
       permissions,
       accessProfile,
       timestamp: Date.now(),
-      userId: user?.id
+      userId: user?.id,
+      sessionId: user?.id + '_' + Date.now() // unique session identifier
     };
     localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-    console.log('💾 AuthProvider - User data saved to cache');
+    console.log(`💾 AuthProvider - User data saved to cache for ${user?.email || user?.id}`);
   } catch (error) {
     console.error('❌ AuthProvider - Failed to save cache:', error);
   }
 };
 
-const getUserDataFromCache = () => {
+const getUserDataFromCache = (expectedUserId?: string) => {
   try {
     const cached = localStorage.getItem(CACHE_KEY);
-    if (!cached) return null;
+    if (!cached) {
+      console.log('📭 AuthProvider - No cache data found');
+      return null;
+    }
     
     const data = JSON.parse(cached);
-    const isExpired = Date.now() - data.timestamp > 24 * 60 * 60 * 1000; // 24 hours
     
-    if (isExpired) {
+    // Version check
+    if (data.version !== CACHE_VERSION) {
+      console.log('🔄 AuthProvider - Cache version mismatch, clearing old cache');
       localStorage.removeItem(CACHE_KEY);
       return null;
     }
     
-    console.log('🔄 AuthProvider - User data loaded from cache');
+    // Expiry check (24 hours)
+    const isExpired = Date.now() - data.timestamp > 24 * 60 * 60 * 1000;
+    if (isExpired) {
+      console.log('⏰ AuthProvider - Cache expired, clearing');
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    
+    // User ID consistency check
+    if (expectedUserId && data.userId !== expectedUserId) {
+      console.log(`🔄 AuthProvider - Cache user mismatch (expected: ${expectedUserId}, cached: ${data.userId}), clearing`);
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    
+    // Integrity check
+    if (!data.user || !data.accessProfile) {
+      console.log('⚠️ AuthProvider - Cache data incomplete, clearing');
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    
+    console.log(`✅ AuthProvider - Valid cache found for ${data.user?.email || data.userId}`);
     return data;
   } catch (error) {
     console.error('❌ AuthProvider - Failed to load cache:', error);
@@ -387,17 +416,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(currentSession?.user ?? null);
       
       if (currentSession?.user) {
-        console.log(`👤 [${timestamp}] AuthProvider - User found from ${source}, checking cache first...`);
+        console.log(`👤 [${timestamp}] AuthProvider - User found from ${source} (${currentSession.user.email}), checking cache first...`);
         
         // Check cache first to avoid unnecessary database calls
-        const cachedData = getUserDataFromCache();
+        const cachedData = getUserDataFromCache(currentSession.user.id);
         if (cachedData && cachedData.userId === currentSession.user.id) {
-          console.log(`✅ [${timestamp}] AuthProvider - Using cached data for instant load`);
+          console.log(`⚡ [${timestamp}] AuthProvider - Using valid cached data for instant load`);
           setUserPermissions(cachedData.permissions);
           setUserAccessProfile(cachedData.accessProfile);
         } else {
-          console.log(`📋 [${timestamp}] AuthProvider - No valid cache found, fetching from database`);
-          await fetchUserPermissions(currentSession.user.id);
+          console.log(`🔍 [${timestamp}] AuthProvider - No valid cache found, fetching fresh data from database`);
+          try {
+            await fetchUserPermissions(currentSession.user.id);
+          } catch (error) {
+            console.error(`❌ [${timestamp}] AuthProvider - Failed to fetch permissions, trying cache as fallback:`, error);
+            
+            // Try to use any cached data as fallback, even if slightly stale
+            const fallbackCache = localStorage.getItem(CACHE_KEY);
+            if (fallbackCache) {
+              try {
+                const fallbackData = JSON.parse(fallbackCache);
+                if (fallbackData.userId === currentSession.user.id && fallbackData.accessProfile) {
+                  console.log(`🆘 [${timestamp}] AuthProvider - Using fallback cache data`);
+                  setUserPermissions(fallbackData.permissions || {});
+                  setUserAccessProfile(fallbackData.accessProfile);
+                  return;
+                }
+              } catch (fallbackError) {
+                console.error('❌ AuthProvider - Fallback cache also failed:', fallbackError);
+              }
+            }
+            
+            // If all else fails, clear state
+            console.log(`🚨 [${timestamp}] AuthProvider - All fallbacks failed, clearing state`);
+            setUserPermissions({});
+            setUserAccessProfile(null);
+          }
         }
       } else {
         console.log(`🚪 [${timestamp}] AuthProvider - No user from ${source}, clearing state`);
