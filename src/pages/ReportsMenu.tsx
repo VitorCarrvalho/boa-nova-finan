@@ -15,7 +15,7 @@ export default function ReportsMenu() {
       icon: DollarSign,
       link: "/relatorios/financeiro",
       color: "text-green-600",
-      permission: "reports"
+      permission: "relatorios"
     },
     {
       title: "Relatórios de Membros", 
@@ -23,7 +23,7 @@ export default function ReportsMenu() {
       icon: Users,
       link: "/relatorios/membros",
       color: "text-blue-600",
-      permission: "reports"
+      permission: "relatorios"
     },
     {
       title: "Relatórios de Eventos",
@@ -31,7 +31,7 @@ export default function ReportsMenu() {
       icon: Calendar,
       link: "/relatorios/eventos", 
       color: "text-purple-600",
-      permission: "reports"
+      permission: "relatorios"
     },
     {
       title: "Relatórios de Reconciliações",
@@ -39,7 +39,7 @@ export default function ReportsMenu() {
       icon: FileText,
       link: "/relatorios/conciliacoes",
       color: "text-orange-600", 
-      permission: "reports"
+      permission: "relatorios"
     },
     {
       title: "Relatórios de Fornecedores",
@@ -47,7 +47,7 @@ export default function ReportsMenu() {
       icon: Truck,
       link: "/relatorios/fornecedores",
       color: "text-red-600",
-      permission: "reports"
+      permission: "relatorios"
     }
   ];
 
