@@ -7,7 +7,8 @@ import autoTable from 'jspdf-autotable';
 export const useReconciliationExports = (
   reconciliations: any[], 
   congregations: any[], 
-  user: any
+  user: any,
+  filters: any
 ) => {
   const generatePDF = () => {
     const doc = new jsPDF();
@@ -20,7 +21,12 @@ export const useReconciliationExports = (
     doc.setFontSize(10);
     doc.text(`Usuário: ${user?.name || user?.email || 'N/A'}`, 20, 35);
     doc.text(`Data/Hora: ${format(currentDate, 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 20, 42);
-    doc.text('Período: Últimos 6 meses', 20, 49);
+    // Show the actual period based on filters
+    const periodText = filters.period === 'all' ? 'Todos os períodos' : 
+                      filters.period === 'last-3-months' ? 'Últimos 3 meses' :
+                      filters.period === 'last-6-months' ? 'Últimos 6 meses' :
+                      filters.period === 'last-12-months' ? 'Últimos 12 meses' : 'Período personalizado';
+    doc.text(`Período: ${periodText}`, 20, 49);
 
     // Generate table data for last 6 months
     if (!reconciliations || !congregations || congregations.length === 0) {
@@ -47,13 +53,17 @@ export const useReconciliationExports = (
       let previousValue = null;
 
       months.forEach((month, index) => {
-        const reconciliation = reconciliations.find(rec => 
+        // Get ALL reconciliations for this congregation/month and sum them
+        const monthReconciliations = reconciliations.filter(rec => 
           rec.congregation_id === congregation.id &&
           format(new Date(rec.month), 'yyyy-MM') === month.key &&
           rec.status === 'approved'
         );
 
-        const currentValue = reconciliation ? Number(reconciliation.total_income) || 0 : null;
+        const currentValue = monthReconciliations.length > 0 ? 
+          monthReconciliations.reduce((sum, rec) => sum + (Number(rec.total_income) || 0), 0) : null;
+        
+        console.log(`[PDF Export] ${congregation.name} - ${month.key}: Found ${monthReconciliations.length} reconciliations, total: ${currentValue}`);
         
         if (currentValue !== null) {
           const valueStr = `R$ ${currentValue.toFixed(2).replace('.', ',')}`;
