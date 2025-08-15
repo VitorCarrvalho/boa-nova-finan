@@ -17,7 +17,7 @@ const ReconciliationSubmissions = () => {
   
   const { filters, setFilters } = useReconciliationFilters();
   const filteredReconciliations = useFilteredReconciliations(reconciliations, filters);
-  const chartData = useChartData(reconciliations, congregations);
+  const chartData = useChartData(filteredReconciliations, congregations);
   const { generatePDF, exportToCSV } = useReconciliationExports(reconciliations, congregations, user);
 
   const canDownloadPDF = useAuth().userAccessProfile === 'Admin';
