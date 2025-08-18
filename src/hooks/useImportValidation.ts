@@ -3,6 +3,7 @@ import { ImportedAccount } from '@/components/accounts-payable/ImportAccountsCon
 import { supabase } from '@/integrations/supabase/client';
 import { checkForDuplicates } from '@/utils/duplicateChecker';
 import { validateAccountData } from '@/utils/importValidators';
+import { parseBrazilianCurrency } from '@/utils/currencyUtils';
 
 export interface ValidationSummary {
   total: number;
@@ -41,10 +42,11 @@ export const useImportValidation = () => {
         description: String(row.description || '').trim(),
         category_id: String(row.category_name || '').trim(),
         category_name: undefined,
-        amount: parseFloat(String(row.amount || '0').replace(',', '.')),
+        amount: parseBrazilianCurrency(String(row.amount || '0')),
         due_date: formatDate(row.due_date || row.vencimento),
         payment_method: normalizePaymentMethod(row.payment_method || row.pagamento),
         payee_name: String(row.payee_name || '').trim(),
+        pix_key: String(row.pix_key || row.chave_pix || '').trim() || undefined,
         bank_name: String(row.bank_name || '').trim() || undefined,
         bank_agency: String(row.bank_agency || '').trim() || undefined,
         bank_account: String(row.bank_account || '').trim() || undefined,

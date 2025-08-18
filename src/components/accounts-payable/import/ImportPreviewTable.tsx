@@ -1,15 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, AlertTriangle, Copy } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Copy, Edit } from 'lucide-react';
 import { ImportedAccount } from '../ImportAccountsContent';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { EditableCell } from './EditableCell';
+import { formatBrazilianCurrency } from '@/utils/currencyUtils';
+import { useExpenseCategories } from '@/hooks/useExpenseCategories';
+import { useCongregations } from '@/hooks/useCongregationData';
+import { validateAccountData } from '@/utils/importValidators';
 
 interface ImportPreviewTableProps {
   data: ImportedAccount[];
+  onDataChange?: (updatedData: ImportedAccount[]) => void;
 }
 
-export const ImportPreviewTable: React.FC<ImportPreviewTableProps> = ({ data }) => {
+export const ImportPreviewTable: React.FC<ImportPreviewTableProps> = ({ data, onDataChange }) => {
+  const [editingCell, setEditingCell] = useState<{ rowIndex: number; field: string } | null>(null);
+  
+  const { data: categories = [] } = useExpenseCategories();
+  const { data: congregations = [] } = useCongregations();
+
+  const updateAccount = (rowIndex: number, field: string, value: any) => {
+    if (!onDataChange) return;
+    
+    const updatedData = [...data];
+    (updatedData[rowIndex] as any)[field] = value;
+    
+    // Re-validate the account after update
+    const validation = validateAccountData(updatedData[rowIndex], categories, congregations);
+    updatedData[rowIndex].errors = validation.errors;
+    updatedData[rowIndex].warnings = validation.warnings;
+    updatedData[rowIndex].isValid = validation.isValid;
+    
+    onDataChange(updatedData);
+  };
   const getStatusIcon = (account: ImportedAccount) => {
     if (account.isDuplicate) {
       return <Copy className="w-4 h-4 text-yellow-500" />;
@@ -37,11 +62,20 @@ export const ImportPreviewTable: React.FC<ImportPreviewTableProps> = ({ data }) 
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
+    return formatBrazilianCurrency(value);
   };
+
+  const paymentMethodOptions = [
+    { value: 'pix', label: 'PIX' },
+    { value: 'transferencia', label: 'Transferência Bancária' },
+    { value: 'boleto', label: 'Boleto' },
+    { value: 'dinheiro', label: 'Dinheiro' },
+    { value: 'cartao', label: 'Cartão' },
+    { value: 'cheque', label: 'Cheque' }
+  ];
+
+  const categoryOptions = categories.map(cat => ({ value: cat.name, label: cat.name }));
+  const congregationOptions = congregations.map(cong => ({ value: cong.name, label: cong.name }));
 
   const formatDate = (dateString: string) => {
     try {
@@ -49,6 +83,25 @@ export const ImportPreviewTable: React.FC<ImportPreviewTableProps> = ({ data }) 
     } catch {
       return dateString;
     }
+  };
+
+  const renderEditableCell = (account: ImportedAccount, rowIndex: number, field: string, type: 'text' | 'currency' | 'date' | 'select', options?: Array<{ value: string; label: string }>) => {
+    const isEditing = editingCell?.rowIndex === rowIndex && editingCell?.field === field;
+    const value = (account as any)[field];
+    const hasError = account.errors.some(error => error.toLowerCase().includes(field.toLowerCase()));
+    
+    return (
+      <EditableCell
+        value={value}
+        onChange={(newValue) => updateAccount(rowIndex, field, newValue)}
+        type={type}
+        options={options}
+        isEditing={isEditing}
+        onStartEdit={() => setEditingCell({ rowIndex, field })}
+        onStopEdit={() => setEditingCell(null)}
+        hasError={hasError}
+      />
+    );
   };
 
   return (
@@ -62,7 +115,7 @@ export const ImportPreviewTable: React.FC<ImportPreviewTableProps> = ({ data }) 
               <TableHead>Categoria</TableHead>
               <TableHead>Valor</TableHead>
               <TableHead>Vencimento</TableHead>
-              <TableHead>Favorecido</TableHead>
+              <TableHead>Favorecido/PIX</TableHead>
               <TableHead>Congregação</TableHead>
               <TableHead>Pagamento</TableHead>
               <TableHead>Recorrência</TableHead>
@@ -82,44 +135,48 @@ export const ImportPreviewTable: React.FC<ImportPreviewTableProps> = ({ data }) 
                 </TableCell>
                 <TableCell>
                   <div className="space-y-1">
-                    <div className="font-medium text-sm">{account.description}</div>
+                    <div className="font-medium text-sm">
+                      {renderEditableCell(account, index, 'description', 'text')}
+                    </div>
                     {getStatusBadge(account)}
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="text-sm">
-                    {account.category_name || account.category_id}
-                    {!account.category_name && account.category_id && (
-                      <div className="text-xs text-muted-foreground">(Nova categoria)</div>
-                    )}
-                  </div>
+                  {renderEditableCell(account, index, 'category_id', 'select', categoryOptions)}
+                  {!account.category_name && account.category_id && (
+                    <div className="text-xs text-muted-foreground">(Nova categoria)</div>
+                  )}
                 </TableCell>
                 <TableCell className="font-medium">
-                  {formatCurrency(account.amount)}
+                  {renderEditableCell(account, index, 'amount', 'currency')}
                 </TableCell>
-                <TableCell>{formatDate(account.due_date)}</TableCell>
                 <TableCell>
-                  <div className="text-sm">
-                    <div>{account.payee_name}</div>
-                    {account.bank_name && (
+                  {renderEditableCell(account, index, 'due_date', 'date')}
+                </TableCell>
+                <TableCell>
+                  <div className="space-y-1">
+                    <div className="text-sm">
+                      {renderEditableCell(account, index, 'payee_name', 'text')}
+                    </div>
+                    {account.payment_method === 'pix' ? (
                       <div className="text-xs text-muted-foreground">
-                        {account.bank_name}
+                        PIX: {renderEditableCell(account, index, 'pix_key', 'text')}
+                      </div>
+                    ) : account.bank_name && (
+                      <div className="text-xs text-muted-foreground">
+                        {renderEditableCell(account, index, 'bank_name', 'text')}
                       </div>
                     )}
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="text-sm">
-                    {account.congregation_name || account.congregation_id}
-                    {!account.congregation_name && account.congregation_id && (
-                      <div className="text-xs text-muted-foreground">(Nova congregação)</div>
-                    )}
-                  </div>
+                  {renderEditableCell(account, index, 'congregation_id', 'select', congregationOptions)}
+                  {!account.congregation_name && account.congregation_id && (
+                    <div className="text-xs text-muted-foreground">(Nova congregação)</div>
+                  )}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="text-xs">
-                    {account.payment_method}
-                  </Badge>
+                  {renderEditableCell(account, index, 'payment_method', 'select', paymentMethodOptions)}
                 </TableCell>
                 <TableCell>
                   {account.is_recurring ? (

@@ -155,6 +155,11 @@ export const validateAccountData = (
     warnings.push('Nome do banco é recomendado para transferências');
   }
 
+  // PIX validation
+  if (account.payment_method === 'pix' && !account.pix_key?.trim()) {
+    errors.push('Chave PIX é obrigatória para pagamentos via PIX');
+  }
+
   return {
     isValid: errors.length === 0,
     errors,

@@ -15,6 +15,8 @@ import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { useCongregations } from '@/hooks/useCongregationData';
 import { useNavigate } from 'react-router-dom';
 import RecurrenceFields from './RecurrenceFields';
+import { PaymentFields } from './PaymentFields';
+import { CurrencyInput } from '@/components/ui/currency-input';
 
 const accountPayableSchema = z.object({
   description: z.string().min(1, 'Descrição é obrigatória'),
@@ -23,6 +25,7 @@ const accountPayableSchema = z.object({
   due_date: z.string().min(1, 'Data de vencimento é obrigatória'),
   payment_method: z.string().min(1, 'Forma de pagamento é obrigatória'),
   payee_name: z.string().min(1, 'Nome do favorecido é obrigatório'),
+  pix_key: z.string().optional(),
   bank_name: z.string().optional(),
   bank_agency: z.string().optional(),
   bank_account: z.string().optional(),
@@ -39,6 +42,11 @@ const accountPayableSchema = z.object({
   urgency_level: z.enum(['normal', 'urgent']).default('normal'),
   urgency_description: z.string().optional(),
 }).refine((data) => {
+  // PIX validation - if payment method is PIX, pix_key is required
+  if (data.payment_method === 'pix' && !data.pix_key?.trim()) {
+    return false;
+  }
+  
   // Não pode ser recorrente e agendado ao mesmo tempo
   if (data.is_recurring && data.is_future_scheduled) {
     return false;
@@ -75,8 +83,8 @@ const accountPayableSchema = z.object({
   
   return true;
 }, {
-  message: "Configuração de recorrência/agendamento inválida",
-  path: ["is_recurring"]
+  message: "PIX requer chave PIX ou configuração de recorrência/agendamento inválida",
+  path: ["pix_key"]
 });
 
 type AccountPayableFormData = z.infer<typeof accountPayableSchema>;
@@ -106,6 +114,7 @@ const AccountPayableForm = () => {
   };
 
   const isUrgent = form.watch('urgency_level') === 'urgent';
+  const paymentMethod = form.watch('payment_method');
 
   return (
     <Form {...form}>
@@ -158,25 +167,23 @@ const AccountPayableForm = () => {
               />
 
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="amount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Valor *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="0,00"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor *</FormLabel>
+                    <FormControl>
+                      <CurrencyInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="0,00"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
                 <FormField
                   control={form.control}
@@ -253,63 +260,10 @@ const AccountPayableForm = () => {
               <CardDescription>Informações sobre quem receberá o pagamento</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="payee_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome/Razão Social *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nome do favorecido" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <PaymentFields 
+                control={form.control} 
+                paymentMethod={paymentMethod} 
               />
-
-              <FormField
-                control={form.control}
-                name="bank_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Banco</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nome do banco" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="bank_agency"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Agência</FormLabel>
-                      <FormControl>
-                        <Input placeholder="0000" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="bank_account"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Conta</FormLabel>
-                      <FormControl>
-                        <Input placeholder="00000-0" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
             </CardContent>
           </Card>
         </div>

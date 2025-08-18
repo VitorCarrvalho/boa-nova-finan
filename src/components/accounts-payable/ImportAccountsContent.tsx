@@ -21,6 +21,7 @@ export interface ImportedAccount {
   due_date: string;
   payment_method: string;
   payee_name: string;
+  pix_key?: string;
   bank_name?: string;
   bank_agency?: string;
   bank_account?: string;
@@ -198,7 +199,10 @@ const ImportAccountsContent = () => {
             </div>
           </div>
 
-          <ImportPreviewTable data={validatedData} />
+            <ImportPreviewTable 
+              data={validatedData} 
+              onDataChange={setValidatedData}
+            />
           
           {(validationSummary.invalid > 0 || validationSummary.duplicates > 0) && (
             <ImportValidationMessages data={validatedData} />

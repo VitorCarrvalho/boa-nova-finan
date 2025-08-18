@@ -68,6 +68,7 @@ export type Database = {
           paid_at: string | null
           payee_name: string
           payment_method: string
+          pix_key: string | null
           recurrence_day_of_month: number | null
           recurrence_day_of_week: number | null
           recurrence_frequency: string | null
@@ -103,6 +104,7 @@ export type Database = {
           paid_at?: string | null
           payee_name: string
           payment_method: string
+          pix_key?: string | null
           recurrence_day_of_month?: number | null
           recurrence_day_of_week?: number | null
           recurrence_frequency?: string | null
@@ -138,6 +140,7 @@ export type Database = {
           paid_at?: string | null
           payee_name?: string
           payment_method?: string
+          pix_key?: string | null
           recurrence_day_of_month?: number | null
           recurrence_day_of_week?: number | null
           recurrence_frequency?: string | null
