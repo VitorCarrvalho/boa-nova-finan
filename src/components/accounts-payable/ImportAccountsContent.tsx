@@ -8,6 +8,7 @@ import { Download, Upload, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useCSVImport } from '@/hooks/useCSVImport';
 import { useAccountsImport } from '@/hooks/useAccountsImport';
+import { useCongregations } from '@/hooks/useCongregationData';
 import { generateCSVTemplate } from '@/utils/templateGenerator';
 import { Progress } from '@/components/ui/progress';
 
@@ -46,6 +47,9 @@ export interface ImportedAccount {
 const ImportAccountsContent = () => {
   const [step, setStep] = useState<'upload' | 'preview' | 'importing' | 'results'>('upload');
   const [file, setFile] = useState<File | null>(null);
+  
+  const { data: congregations = [] } = useCongregations();
+  
   const {
     parsedData,
     validatedData,
@@ -72,7 +76,13 @@ const ImportAccountsContent = () => {
   };
 
   const handleDownloadTemplate = () => {
-    generateCSVTemplate();
+    const congregationsList = congregations.map(cong => ({
+      id: cong.id,
+      name: cong.name,
+      city: cong.city,
+      state: cong.state
+    }));
+    generateCSVTemplate(congregationsList);
   };
 
   const handleStartImport = async () => {
@@ -135,7 +145,8 @@ const ImportAccountsContent = () => {
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Use o template CSV para garantir que os dados estejam no formato correto. 
+              Use o template {congregations.length > 0 ? 'Excel' : 'CSV'} para garantir que os dados estejam no formato correto. 
+              {congregations.length > 0 && 'O template Excel inclui uma aba com todas as congregações disponíveis. '}
               Formatos aceitos: .csv, .xlsx, .xls
             </AlertDescription>
           </Alert>
