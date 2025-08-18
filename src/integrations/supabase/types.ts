@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -1189,16 +1189,16 @@ export type Database = {
     Functions: {
       approve_user: {
         Args: {
-          _user_id: string
-          _profile_id: string
+          _approved_by?: string
           _congregation_id?: string
           _ministries?: string[]
-          _approved_by?: string
+          _profile_id: string
+          _user_id: string
         }
         Returns: boolean
       }
       assign_unique_profile: {
-        Args: { _user_id: string; _profile_id: string; _assigned_by?: string }
+        Args: { _assigned_by?: string; _profile_id: string; _user_id: string }
         Returns: boolean
       }
       get_authenticated_user_permissions: {
@@ -1220,15 +1220,15 @@ export type Database = {
       reject_user: {
         Args:
           | {
-              _user_id: string
-              _rejection_reason?: string
+              _allow_reapply?: boolean
               _rejected_by?: string
+              _rejection_reason?: string
+              _user_id: string
             }
           | {
-              _user_id: string
-              _rejection_reason?: string
               _rejected_by?: string
-              _allow_reapply?: boolean
+              _rejection_reason?: string
+              _user_id: string
             }
         Returns: boolean
       }
@@ -1241,7 +1241,7 @@ export type Database = {
         Returns: boolean
       }
       user_has_permission: {
-        Args: { _module: string; _action?: string }
+        Args: { _action?: string; _module: string }
         Returns: boolean
       }
     }
