@@ -202,6 +202,7 @@ export const useCSVImport = () => {
   return {
     parsedData,
     validatedData,
+    setValidatedData,
     validationSummary,
     parseFile,
     isProcessing,

@@ -54,6 +54,7 @@ const ImportAccountsContent = () => {
   const {
     parsedData,
     validatedData,
+    setValidatedData,
     validationSummary,
     parseFile,
     isProcessing,
