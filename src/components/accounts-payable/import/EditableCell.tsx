@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 interface EditableCellProps {
   value: any;
   onChange: (value: any) => void;
-  type: 'text' | 'currency' | 'date' | 'select';
+  type: 'text' | 'currency' | 'date' | 'select' | 'number';
   options?: Array<{ value: string; label: string }>;
   placeholder?: string;
   className?: string;
@@ -93,6 +93,21 @@ export const EditableCell: React.FC<EditableCellProps> = ({
             onKeyDown={handleKeyDown}
             autoFocus
             className="h-8"
+          />
+        );
+      
+      case 'number':
+        return (
+          <Input
+            type="number"
+            value={internalValue}
+            onChange={(e) => setInternalValue(e.target.value ? Number(e.target.value) : '')}
+            onBlur={handleSave}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            autoFocus
+            className="h-8"
+            min="0"
           />
         );
       

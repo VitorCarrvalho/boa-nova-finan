@@ -74,6 +74,19 @@ export const ImportPreviewTable: React.FC<ImportPreviewTableProps> = ({ data, on
     { value: 'cheque', label: 'Cheque' }
   ];
 
+  const recurrenceFrequencyOptions = [
+    { value: 'weekly', label: 'Semanal' },
+    { value: 'biweekly', label: 'Quinzenal' },
+    { value: 'monthly', label: 'Mensal' },
+    { value: 'quarterly', label: 'Trimestral' },
+    { value: 'yearly', label: 'Anual' }
+  ];
+
+  const urgencyLevelOptions = [
+    { value: 'normal', label: 'Normal' },
+    { value: 'urgent', label: 'Urgente' }
+  ];
+
   const categoryOptions = categories.map(cat => ({ value: cat.name, label: cat.name }));
   const congregationOptions = congregations.map(cong => ({ value: cong.name, label: cong.name }));
 
@@ -85,7 +98,7 @@ export const ImportPreviewTable: React.FC<ImportPreviewTableProps> = ({ data, on
     }
   };
 
-  const renderEditableCell = (account: ImportedAccount, rowIndex: number, field: string, type: 'text' | 'currency' | 'date' | 'select', options?: Array<{ value: string; label: string }>) => {
+  const renderEditableCell = (account: ImportedAccount, rowIndex: number, field: string, type: 'text' | 'currency' | 'date' | 'select' | 'number', options?: Array<{ value: string; label: string }>) => {
     const isEditing = editingCell?.rowIndex === rowIndex && editingCell?.field === field;
     const value = (account as any)[field];
     const hasError = account.errors.some(error => error.toLowerCase().includes(field.toLowerCase()));
@@ -115,10 +128,12 @@ export const ImportPreviewTable: React.FC<ImportPreviewTableProps> = ({ data, on
               <TableHead>Categoria</TableHead>
               <TableHead>Valor</TableHead>
               <TableHead>Vencimento</TableHead>
-              <TableHead>Favorecido/PIX</TableHead>
+              <TableHead>Favorecido</TableHead>
               <TableHead>Congregação</TableHead>
               <TableHead>Pagamento</TableHead>
               <TableHead>Recorrência</TableHead>
+              <TableHead>Detalhes Recorrência</TableHead>
+              <TableHead>Outros</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -159,12 +174,12 @@ export const ImportPreviewTable: React.FC<ImportPreviewTableProps> = ({ data, on
                       {renderEditableCell(account, index, 'payee_name', 'text')}
                     </div>
                     {account.payment_method === 'pix' ? (
-                      <div className="text-xs text-muted-foreground">
-                        PIX: {renderEditableCell(account, index, 'pix_key', 'text')}
+                      <div className="text-xs">
+                        <strong>PIX:</strong> {renderEditableCell(account, index, 'pix_key', 'text')}
                       </div>
                     ) : account.bank_name && (
-                      <div className="text-xs text-muted-foreground">
-                        {renderEditableCell(account, index, 'bank_name', 'text')}
+                      <div className="text-xs">
+                        <strong>Banco:</strong> {renderEditableCell(account, index, 'bank_name', 'text')}
                       </div>
                     )}
                   </div>
@@ -179,17 +194,67 @@ export const ImportPreviewTable: React.FC<ImportPreviewTableProps> = ({ data, on
                   {renderEditableCell(account, index, 'payment_method', 'select', paymentMethodOptions)}
                 </TableCell>
                 <TableCell>
-                  {account.is_recurring ? (
-                    <Badge variant="secondary" className="text-xs">
-                      {account.recurrence_frequency}
-                    </Badge>
-                  ) : account.is_future_scheduled ? (
-                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
-                      Agendada
-                    </Badge>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">-</span>
+                  <div className="space-y-1">
+                    <div>
+                      {account.is_recurring ? (
+                        <Badge variant="secondary" className="text-xs">
+                          {renderEditableCell(account, index, 'recurrence_frequency', 'select', recurrenceFrequencyOptions)}
+                        </Badge>
+                      ) : account.is_future_scheduled ? (
+                        <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+                          Agendada
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {account.is_recurring && (
+                    <div className="space-y-1 text-xs">
+                      {(account.recurrence_frequency === 'weekly' || account.recurrence_frequency === 'biweekly') && (
+                        <div>
+                          <strong>Dia semana:</strong> {renderEditableCell(account, index, 'recurrence_day_of_week', 'number')}
+                          <div className="text-muted-foreground">(0=Dom, 6=Sab)</div>
+                        </div>
+                      )}
+                      {account.recurrence_frequency === 'monthly' && (
+                        <div>
+                          <strong>Dia mês:</strong> {renderEditableCell(account, index, 'recurrence_day_of_month', 'number')}
+                        </div>
+                      )}
+                      {account.next_occurrence_date && (
+                        <div>
+                          <strong>Próxima:</strong> {renderEditableCell(account, index, 'next_occurrence_date', 'date')}
+                        </div>
+                      )}
+                    </div>
                   )}
+                </TableCell>
+                <TableCell>
+                  <div className="space-y-1 text-xs">
+                    {account.urgency_level && (
+                      <div>
+                        <strong>Urgência:</strong> {renderEditableCell(account, index, 'urgency_level', 'select', urgencyLevelOptions)}
+                      </div>
+                    )}
+                    {account.urgency_level === 'urgent' && (
+                      <div>
+                        <strong>Desc. Urgência:</strong> {renderEditableCell(account, index, 'urgency_description', 'text')}
+                      </div>
+                    )}
+                    {account.invoice_number && (
+                      <div>
+                        <strong>NF:</strong> {renderEditableCell(account, index, 'invoice_number', 'text')}
+                      </div>
+                    )}
+                    {account.observations && (
+                      <div>
+                        <strong>Obs:</strong> {renderEditableCell(account, index, 'observations', 'text')}
+                      </div>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
