@@ -46,6 +46,7 @@ import SuppliersReports from "@/pages/reports/SuppliersReports";
 
 // Import accounts payable pages
 import NewAccount from "@/pages/accounts-payable/NewAccount";
+import ImportAccounts from "@/pages/accounts-payable/ImportAccounts";
 import PendingApproval from "@/pages/accounts-payable/PendingApproval";
 import AuthorizeAccounts from "@/pages/accounts-payable/AuthorizeAccounts";
 import ApprovedAccounts from "@/pages/accounts-payable/ApprovedAccounts";
@@ -236,6 +237,12 @@ const App = () => (
               <Route path="/contas-pagar/nova" element={
                 <ProtectedRoute>
                   <NewAccount />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/contas-pagar/importar" element={
+                <ProtectedRoute>
+                  <ImportAccounts />
                 </ProtectedRoute>
               } />
               

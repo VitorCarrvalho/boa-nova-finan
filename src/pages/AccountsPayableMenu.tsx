@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Layout from "@/components/layout/Layout";
-import { DollarSign, Plus, Clock, CheckCircle, CheckCircle2, CreditCard } from "lucide-react";
+import { DollarSign, Plus, Upload, Clock, CheckCircle, CheckCircle2, CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -21,6 +21,14 @@ export default function AccountsPayableMenu() {
       icon: Plus,
       link: "/contas-pagar/nova",
       color: "text-blue-600",
+      permission: canViewNewAccount
+    },
+    {
+      title: "Importar Contas",
+      description: "Importar múltiplas contas via planilha",
+      icon: Upload,
+      link: "/contas-pagar/importar",
+      color: "text-indigo-600",
       permission: canViewNewAccount
     },
     {
