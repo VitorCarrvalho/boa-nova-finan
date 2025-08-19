@@ -50,6 +50,20 @@ export const EditableCell: React.FC<EditableCellProps> = ({
   };
 
   if (!isEditing) {
+    const getDisplayValue = () => {
+      if (type === 'currency' && typeof value === 'number') {
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+      }
+      if (type === 'date' && value) {
+        return new Date(value).toLocaleDateString('pt-BR');
+      }
+      if (type === 'select' && options && value) {
+        const option = options.find(opt => opt.value === value);
+        return option ? option.label : value;
+      }
+      return value || placeholder || '-';
+    };
+
     return (
       <div
         className={cn(
@@ -60,12 +74,7 @@ export const EditableCell: React.FC<EditableCellProps> = ({
         onClick={onStartEdit}
         title="Clique para editar"
       >
-        {type === 'currency' && typeof value === 'number' 
-          ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
-          : type === 'date' && value 
-          ? new Date(value).toLocaleDateString('pt-BR')
-          : value || placeholder || '-'
-        }
+        {getDisplayValue()}
       </div>
     );
   }

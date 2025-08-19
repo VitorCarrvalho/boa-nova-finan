@@ -185,7 +185,7 @@ export const ImportPreviewTable: React.FC<ImportPreviewTableProps> = ({ data, on
                   </div>
                 </TableCell>
                 <TableCell>
-                  {renderEditableCell(account, index, 'congregation_id', 'select', congregationOptions)}
+                  {renderEditableCell(account, index, 'congregation_name', 'select', congregationOptions)}
                   {!account.congregation_name && account.congregation_id && (
                     <div className="text-xs text-muted-foreground">(Nova congregação)</div>
                   )}
