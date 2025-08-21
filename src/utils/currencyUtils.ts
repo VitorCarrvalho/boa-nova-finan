@@ -15,46 +15,13 @@ export const formatBrazilianCurrency = (value: number): string => {
 };
 
 /**
- * Formats currency as user types with calculator-like behavior
- * Always treats input as centavos initially
- * Examples: "15" -> "0,15", "1500" -> "15,00", "150000" -> "1.500,00"
- * @param input - Digits only string
- * @returns Formatted display string
- */
-export const formatAsUserTypes = (input: string): string => {
-  if (!input || input === '0') return '';
-  
-  // Remove any non-digit characters
-  const digits = input.replace(/\D/g, '');
-  if (!digits) return '';
-  
-  // Convert to number (always treat as centavos)
-  const centavos = parseInt(digits, 10);
-  const reais = centavos / 100;
-  
-  // Format using Brazilian locale
-  return new Intl.NumberFormat('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(reais);
-};
-
-/**
- * Parses calculator-style input to number
+ * Parses Brazilian currency string with proper format handling
+ * Handles both user input and imported values consistently
  * @param input - Formatted input string
  * @returns Number value
  */
-export const parseCalculatorInput = (input: string): number => {
-  if (!input) return 0;
-  
-  // Remove formatting and convert back to number
-  const cleanValue = input
-    .replace(/[R$\s]/g, '')
-    .replace(/\./g, '') // Remove thousand separators
-    .replace(',', '.'); // Convert comma to dot for parsing
-  
-  const parsed = parseFloat(cleanValue);
-  return isNaN(parsed) ? 0 : parsed;
+export const parseUserCurrencyInput = (input: string): number => {
+  return parseBrazilianCurrency(input);
 };
 
 /**
@@ -123,10 +90,10 @@ export const validateCurrencyInput = (value: string): boolean => {
 };
 
 /**
- * Formats currency input as user types (for input masks)
- * @param value - Current input value
+ * Formats currency input for display using Brazilian standards
+ * @param value - Number to format
  * @returns Formatted value for display
  */
-export const formatCurrencyInput = (value: string): string => {
-  return formatAsUserTypes(value);
+export const formatCurrencyInput = (value: number): string => {
+  return formatBrazilianCurrency(value);
 };
