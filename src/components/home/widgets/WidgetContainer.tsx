@@ -7,7 +7,7 @@ interface WidgetContainerProps {
   className?: string;
   size?: 'small' | 'medium' | 'large';
   onClick?: () => void;
-  variant?: 'pastores' | 'eventos' | 'calendario' | 'versiculo' | 'mapa' | 'instagram' | 'oracao' | 'default';
+  variant?: 'pastores' | 'eventos' | 'calendario' | 'versiculo' | 'mapa' | 'instagram' | 'oracao' | 'glass' | 'default';
 }
 
 const WidgetContainer = ({ 
@@ -15,7 +15,7 @@ const WidgetContainer = ({
   className, 
   size = 'medium', 
   onClick, 
-  variant = 'default' 
+  variant = 'glass' 
 }: WidgetContainerProps) => {
   
   const variantClasses = {
@@ -26,6 +26,7 @@ const WidgetContainer = ({
     mapa: 'widget-mapa text-white',
     instagram: 'widget-instagram text-white',
     oracao: 'widget-oracao text-white',
+    glass: 'widget-glass text-slate-700',
     default: 'bg-background/80 backdrop-blur-sm'
   };
 
@@ -46,7 +47,7 @@ const WidgetContainer = ({
       }}
     >
       {/* Overlay para melhor contraste de texto quando necessário */}
-      {variant !== 'default' && (
+      {variant !== 'default' && variant !== 'glass' && (
         <div className="absolute inset-0 bg-black/10 rounded-2xl pointer-events-none" />
       )}
       

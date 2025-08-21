@@ -49,13 +49,13 @@ const PedidoOracaoWidget = () => {
   };
 
   return (
-    <WidgetContainer variant="oracao" className="flex flex-col min-h-[300px]">
+    <WidgetContainer variant="glass" className="flex flex-col min-h-[300px]">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Heart className="w-6 h-6 text-white widget-icon" />
-          <h3 className="widget-title text-white text-lg">Pedido de Oração</h3>
+          <Heart className="w-6 h-6 text-pink-600 widget-icon" />
+          <h3 className="widget-title text-slate-700 text-lg">Pedido de Oração</h3>
         </div>
-        <HandHeart className="w-5 h-5 text-blue-200 animate-pulse" />
+        <HandHeart className="w-5 h-5 text-pink-500 animate-pulse" />
       </div>
       
       <Form {...form}>
@@ -65,15 +65,15 @@ const PedidoOracaoWidget = () => {
             name="nome"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm text-blue-100">Nome (opcional)</FormLabel>
+                <FormLabel className="text-sm text-slate-600">Nome (opcional)</FormLabel>
                 <FormControl>
                   <Input 
                     placeholder="Seu nome" 
                     {...field} 
-                    className="h-9 bg-white/10 border-white/20 text-white placeholder:text-blue-200"
+                    className="h-9 bg-slate-100/60 border-slate-300/50 text-slate-800 placeholder:text-slate-500"
                   />
                 </FormControl>
-                <FormMessage className="text-blue-200" />
+                <FormMessage className="text-slate-600" />
               </FormItem>
             )}
           />
@@ -83,16 +83,16 @@ const PedidoOracaoWidget = () => {
             name="texto"
             render={({ field }) => (
               <FormItem className="flex-1 flex flex-col">
-                <FormLabel className="text-sm text-blue-100">Pedido de Oração</FormLabel>
+                <FormLabel className="text-sm text-slate-600">Pedido de Oração</FormLabel>
                 <FormControl>
                   <Textarea 
                     placeholder="Compartilhe seu pedido. Estaremos orando por você!"
-                    className="flex-1 resize-none min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-blue-200"
+                    className="flex-1 resize-none min-h-[100px] bg-slate-100/60 border-slate-300/50 text-slate-800 placeholder:text-slate-500"
                     {...field}
                   />
                 </FormControl>
-                <FormMessage className="text-blue-200" />
-                <div className="text-xs text-blue-200 text-right bg-white/10 px-2 py-1 rounded-full w-fit ml-auto">
+                <FormMessage className="text-slate-600" />
+                <div className="text-xs text-slate-500 text-right bg-slate-200/50 px-2 py-1 rounded-full w-fit ml-auto">
                   {field.value?.length || 0}/1000
                 </div>
               </FormItem>
@@ -102,7 +102,7 @@ const PedidoOracaoWidget = () => {
           <Button 
             type="submit" 
             disabled={createPedido.isPending}
-            className="w-full bg-white/20 hover:bg-white/30 text-white border border-white/30"
+            className="w-full bg-slate-600 hover:bg-slate-700 text-white border border-slate-500"
           >
             {createPedido.isPending ? (
               'Enviando...'

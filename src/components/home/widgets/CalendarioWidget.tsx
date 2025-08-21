@@ -17,20 +17,20 @@ const CalendarioWidget = () => {
   }, []);
 
   return (
-    <WidgetContainer variant="calendario" className="flex flex-col items-center justify-center text-center min-h-[140px]">
+    <WidgetContainer variant="glass" className="flex flex-col items-center justify-center text-center min-h-[140px]">
       <div className="flex flex-col items-center">
-        <CalendarIcon className="w-8 h-8 text-white mb-3 widget-icon" />
+        <CalendarIcon className="w-8 h-8 text-slate-600 mb-3 widget-icon" />
         <div className="space-y-1">
-        <h3 className="widget-title text-white text-lg font-bold">
+        <h3 className="widget-title text-slate-700 text-lg font-bold">
           {format(currentDate, 'EEEE', { locale: ptBR })}
         </h3>
-        <p className="text-3xl font-bold text-white drop-shadow-lg">
+        <p className="text-3xl font-bold text-slate-800 drop-shadow-sm">
           {format(currentDate, 'dd', { locale: ptBR })}
         </p>
-        <p className="text-sm text-green-100">
+        <p className="text-sm text-slate-600">
           {format(currentDate, 'MMMM yyyy', { locale: ptBR })}
         </p>
-        <p className="text-xs text-green-200 font-mono bg-white/20 px-2 py-1 rounded-full">
+        <p className="text-xs text-slate-500 font-mono bg-slate-200/50 px-2 py-1 rounded-full">
           {format(currentDate, 'HH:mm', { locale: ptBR })}
         </p>
         </div>

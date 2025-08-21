@@ -32,31 +32,31 @@ const VersiculoWidget = () => {
 
   if (isLoading) {
     return (
-      <WidgetContainer variant="versiculo" className="flex flex-col min-h-[140px]">
+      <WidgetContainer variant="glass" className="flex flex-col min-h-[140px]">
         <div className="flex items-center gap-2 mb-4">
-          <BookOpen className="w-6 h-6 text-white widget-icon" />
-          <h3 className="widget-title text-white text-lg">Versículo do Dia</h3>
+          <BookOpen className="w-6 h-6 text-purple-600 widget-icon" />
+          <h3 className="widget-title text-slate-700 text-lg">Versículo do Dia</h3>
         </div>
         <div className="space-y-3">
-          <div className="bg-white/20 rounded p-3 h-20" />
-          <div className="bg-white/10 rounded h-4 w-32" />
+          <div className="bg-slate-200/60 rounded p-3 h-20" />
+          <div className="bg-slate-200/40 rounded h-4 w-32" />
         </div>
       </WidgetContainer>
     );
   }
 
   return (
-    <WidgetContainer variant="versiculo" className="flex flex-col min-h-[140px]">
+    <WidgetContainer variant="glass" className="flex flex-col min-h-[140px]">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <BookOpen className="w-6 h-6 text-white widget-icon" />
-          <h3 className="widget-title text-white text-lg">Versículo</h3>
+          <BookOpen className="w-6 h-6 text-purple-600 widget-icon" />
+          <h3 className="widget-title text-slate-700 text-lg">Versículo</h3>
         </div>
         <Button 
           size="sm" 
           variant="ghost" 
           onClick={handleRefresh}
-          className="text-purple-200 hover:text-white hover:bg-white/20"
+          className="text-purple-600 hover:text-purple-700 hover:bg-slate-200/50"
         >
           <RefreshCw className="w-4 h-4" />
         </Button>
@@ -64,18 +64,18 @@ const VersiculoWidget = () => {
       
       {versiculo ? (
         <div className="flex-1 flex flex-col justify-center">
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 mb-3">
-            <blockquote className="text-white leading-relaxed italic text-sm">
+          <div className="bg-slate-100/60 backdrop-blur-sm rounded-lg p-3 mb-3">
+            <blockquote className="text-slate-700 leading-relaxed italic text-sm">
               "{versiculo.text}"
             </blockquote>
           </div>
-          <cite className="text-sm font-medium text-purple-200 text-right flex items-center justify-end gap-1">
+          <cite className="text-sm font-medium text-purple-600 text-right flex items-center justify-end gap-1">
             <Heart className="w-3 h-3" />
             {versiculo.reference}
           </cite>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center text-purple-200">
+        <div className="flex-1 flex items-center justify-center text-slate-600">
           <p className="text-sm">Não foi possível carregar o versículo</p>
         </div>
       )}
