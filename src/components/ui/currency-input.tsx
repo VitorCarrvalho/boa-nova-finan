@@ -48,7 +48,6 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
         thousandSeparator="."
         decimalSeparator=","
         decimalScale={2}
-        fixedDecimalScale={true}
         allowNegative={false}
         allowLeadingZeros={false}
       />
