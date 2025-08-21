@@ -93,7 +93,12 @@ const CongregationForm: React.FC<CongregationFormProps> = ({ congregation, onClo
 
       <AddressFields register={register} />
 
-      <PropertyFields register={register} hasOwnProperty={hasOwnProperty} />
+      <PropertyFields 
+        register={register} 
+        watch={watch}
+        setValue={setValue}
+        hasOwnProperty={hasOwnProperty} 
+      />
 
       <div className="flex justify-end space-x-2 pt-4">
         <Button type="button" variant="outline" onClick={onClose}>

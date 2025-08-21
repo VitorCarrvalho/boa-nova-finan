@@ -15,6 +15,49 @@ export const formatBrazilianCurrency = (value: number): string => {
 };
 
 /**
+ * Formats currency as user types with calculator-like behavior
+ * Always treats input as centavos initially
+ * Examples: "15" -> "0,15", "1500" -> "15,00", "150000" -> "1.500,00"
+ * @param input - Digits only string
+ * @returns Formatted display string
+ */
+export const formatAsUserTypes = (input: string): string => {
+  if (!input || input === '0') return '';
+  
+  // Remove any non-digit characters
+  const digits = input.replace(/\D/g, '');
+  if (!digits) return '';
+  
+  // Convert to number (always treat as centavos)
+  const centavos = parseInt(digits, 10);
+  const reais = centavos / 100;
+  
+  // Format using Brazilian locale
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(reais);
+};
+
+/**
+ * Parses calculator-style input to number
+ * @param input - Formatted input string
+ * @returns Number value
+ */
+export const parseCalculatorInput = (input: string): number => {
+  if (!input) return 0;
+  
+  // Remove formatting and convert back to number
+  const cleanValue = input
+    .replace(/[R$\s]/g, '')
+    .replace(/\./g, '') // Remove thousand separators
+    .replace(',', '.'); // Convert comma to dot for parsing
+  
+  const parsed = parseFloat(cleanValue);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
+/**
  * Parses a Brazilian currency string to number
  * Accepts formats like: "1.500,00", "1500,50", "1.500", "1500"
  * @param value - String to parse
@@ -85,12 +128,5 @@ export const validateCurrencyInput = (value: string): boolean => {
  * @returns Formatted value for display
  */
 export const formatCurrencyInput = (value: string): string => {
-  const numericValue = parseBrazilianCurrency(value);
-  if (numericValue === 0 && !value) return '';
-  
-  // Format without currency symbol for input display
-  return new Intl.NumberFormat('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(numericValue);
+  return formatAsUserTypes(value);
 };

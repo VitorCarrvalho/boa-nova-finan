@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Input } from './input';
-import { parseBrazilianCurrency, formatCurrencyInput } from '@/utils/currencyUtils';
+import { formatAsUserTypes, parseCalculatorInput } from '@/utils/currencyUtils';
 
 interface CurrencyInputProps {
   value?: number;
@@ -25,36 +25,58 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
   onBlur,
   autoFocus
 }) => {
-  const [displayValue, setDisplayValue] = useState('');
+  const [internalDigits, setInternalDigits] = useState('');
 
   useEffect(() => {
     if (value > 0) {
-      setDisplayValue(formatCurrencyInput(value.toString()));
+      // Convert back to centavos for internal representation
+      const centavos = Math.round(value * 100).toString();
+      setInternalDigits(centavos);
     } else {
-      setDisplayValue('');
+      setInternalDigits('');
     }
   }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     
-    // Allow only numbers, dots, and commas
-    const sanitized = inputValue.replace(/[^0-9.,]/g, '');
+    // Handle paste operations - if user pastes formatted currency, extract digits
+    if (inputValue.includes(',') || inputValue.includes('.')) {
+      const pastedNumber = parseCalculatorInput(inputValue);
+      const centavos = Math.round(pastedNumber * 100).toString();
+      setInternalDigits(centavos);
+      onChange(pastedNumber);
+      return;
+    }
     
-    setDisplayValue(sanitized);
+    // Allow only digits
+    const digits = inputValue.replace(/\D/g, '');
     
-    // Parse and notify parent component
-    const numericValue = parseBrazilianCurrency(sanitized);
+    // Limit to reasonable amount (10 digits = R$ 99.999.999,99)
+    if (digits.length > 10) return;
+    
+    setInternalDigits(digits);
+    
+    // Convert to number and notify parent
+    const numericValue = parseCalculatorInput(formatAsUserTypes(digits));
     onChange(numericValue);
   };
 
-  const handleBlur = () => {
-    // Format the value on blur for better UX
-    if (displayValue) {
-      const formatted = formatCurrencyInput(displayValue);
-      setDisplayValue(formatted);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Allow backspace to remove last digit
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      const newDigits = internalDigits.slice(0, -1);
+      setInternalDigits(newDigits);
+      const numericValue = parseCalculatorInput(formatAsUserTypes(newDigits));
+      onChange(numericValue);
+      return;
     }
-    onBlur?.();
+    
+    // Allow only digits and navigation keys
+    if (!/[\d]/.test(e.key) && !['ArrowLeft', 'ArrowRight', 'Delete', 'Tab', 'Enter', 'Escape'].includes(e.key)) {
+      e.preventDefault();
+    }
   };
 
   return (
@@ -66,9 +88,10 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
         id={id}
         name={name}
         type="text"
-        value={displayValue}
+        value={formatAsUserTypes(internalDigits)}
         onChange={handleChange}
-        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        onBlur={onBlur}
         placeholder={placeholder}
         className={`pl-10 ${className}`}
         disabled={disabled}

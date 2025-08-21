@@ -3,6 +3,7 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Database } from '@/integrations/supabase/types';
 import { FinancialFormData } from '../hooks/useFinancialForm';
 
@@ -107,14 +108,11 @@ export const BasicFinancialFields: React.FC<BasicFinancialFieldsProps> = ({
 
       <div className="space-y-2">
         <Label htmlFor="amount">Valor *</Label>
-        <Input
+        <CurrencyInput
           id="amount"
-          type="number"
-          step="0.01"
+          value={parseFloat(formData.amount) || 0}
+          onChange={(value) => setFormData({ ...formData, amount: value.toString() })}
           placeholder="0,00"
-          value={formData.amount}
-          onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-          required
         />
       </div>
 

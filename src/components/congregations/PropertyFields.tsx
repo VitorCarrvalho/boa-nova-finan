@@ -1,16 +1,19 @@
 
 import React from 'react';
-import { UseFormRegister } from 'react-hook-form';
+import { UseFormRegister, UseFormWatch, UseFormSetValue } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { CurrencyInput } from '@/components/ui/currency-input';
 
 interface PropertyFieldsProps {
   register: UseFormRegister<any>;
+  watch: UseFormWatch<any>;
+  setValue: UseFormSetValue<any>;
   hasOwnProperty: boolean;
 }
 
-const PropertyFields: React.FC<PropertyFieldsProps> = ({ register, hasOwnProperty }) => {
+const PropertyFields: React.FC<PropertyFieldsProps> = ({ register, watch, setValue, hasOwnProperty }) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-2">
@@ -23,13 +26,12 @@ const PropertyFields: React.FC<PropertyFieldsProps> = ({ register, hasOwnPropert
 
       {!hasOwnProperty && (
         <div>
-          <Label htmlFor="rent_value">Valor do Aluguel (R$)</Label>
-          <Input
+          <Label htmlFor="rent_value">Valor do Aluguel</Label>
+          <CurrencyInput
             id="rent_value"
-            type="number"
-            step="0.01"
-            {...register('rent_value', { valueAsNumber: true })}
-            placeholder="0.00"
+            value={watch('rent_value') || 0}
+            onChange={(value) => setValue('rent_value', value)}
+            placeholder="0,00"
           />
         </div>
       )}

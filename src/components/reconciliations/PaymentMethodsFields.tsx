@@ -1,15 +1,17 @@
 
 import React from 'react';
-import { UseFormRegister, UseFormWatch } from 'react-hook-form';
+import { UseFormRegister, UseFormWatch, UseFormSetValue } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { CurrencyInput } from '@/components/ui/currency-input';
 
 interface PaymentMethodsFieldsProps {
   register: UseFormRegister<any>;
   watch: UseFormWatch<any>;
+  setValue: UseFormSetValue<any>;
 }
 
-const PaymentMethodsFields: React.FC<PaymentMethodsFieldsProps> = ({ register, watch }) => {
+const PaymentMethodsFields: React.FC<PaymentMethodsFieldsProps> = ({ register, watch, setValue }) => {
   const watchedValues = watch(['pix', 'online_pix', 'debit', 'credit', 'cash']);
   const totalIncome = watchedValues.reduce((sum, value) => sum + (Number(value) || 0), 0);
 
@@ -19,70 +21,63 @@ const PaymentMethodsFields: React.FC<PaymentMethodsFieldsProps> = ({ register, w
       
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="pix">PIX (R$)</Label>
-          <Input
+          <Label htmlFor="pix">PIX</Label>
+          <CurrencyInput
             id="pix"
-            type="number"
-            step="0.01"
-            {...register('pix', { valueAsNumber: true })}
-            placeholder="0.00"
+            value={watch('pix') || 0}
+            onChange={(value) => setValue('pix', value)}
+            placeholder="0,00"
           />
         </div>
 
         <div>
-          <Label htmlFor="online_pix">PIX Online (R$)</Label>
-          <Input
+          <Label htmlFor="online_pix">PIX Online</Label>
+          <CurrencyInput
             id="online_pix"
-            type="number"
-            step="0.01"
-            {...register('online_pix', { valueAsNumber: true })}
-            placeholder="0.00"
+            value={watch('online_pix') || 0}
+            onChange={(value) => setValue('online_pix', value)}
+            placeholder="0,00"
           />
         </div>
 
         <div>
-          <Label htmlFor="debit">Débito (R$)</Label>
-          <Input
+          <Label htmlFor="debit">Débito</Label>
+          <CurrencyInput
             id="debit"
-            type="number"
-            step="0.01"
-            {...register('debit', { valueAsNumber: true })}
-            placeholder="0.00"
+            value={watch('debit') || 0}
+            onChange={(value) => setValue('debit', value)}
+            placeholder="0,00"
           />
         </div>
 
         <div>
-          <Label htmlFor="credit">Crédito (R$)</Label>
-          <Input
+          <Label htmlFor="credit">Crédito</Label>
+          <CurrencyInput
             id="credit"
-            type="number"
-            step="0.01"
-            {...register('credit', { valueAsNumber: true })}
-            placeholder="0.00"
+            value={watch('credit') || 0}
+            onChange={(value) => setValue('credit', value)}
+            placeholder="0,00"
           />
         </div>
 
         <div>
-          <Label htmlFor="cash">Dinheiro (R$)</Label>
-          <Input
+          <Label htmlFor="cash">Dinheiro</Label>
+          <CurrencyInput
             id="cash"
-            type="number"
-            step="0.01"
-            {...register('cash', { valueAsNumber: true })}
-            placeholder="0.00"
+            value={watch('cash') || 0}
+            onChange={(value) => setValue('cash', value)}
+            placeholder="0,00"
           />
         </div>
 
         <div>
-          <Label htmlFor="total_income">Total Arrecadado (R$)</Label>
-          <Input
+          <Label htmlFor="total_income">Total Arrecadado</Label>
+          <CurrencyInput
             id="total_income"
-            type="number"
-            step="0.01"
-            {...register('total_income', { valueAsNumber: true })}
             value={totalIncome}
-            readOnly
-            className="bg-gray-100"
+            onChange={() => {}} // Read-only
+            disabled
+            className="bg-muted"
           />
         </div>
       </div>

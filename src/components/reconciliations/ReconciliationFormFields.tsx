@@ -60,7 +60,7 @@ const ReconciliationFormFields: React.FC<ReconciliationFormFieldsProps> = ({
         </div>
       </div>
 
-      <PaymentMethodsFields register={register} watch={watch} />
+      <PaymentMethodsFields register={register} watch={watch} setValue={setValue} />
 
       <ReconciliationSummary totalIncome={totalIncome} />
 
