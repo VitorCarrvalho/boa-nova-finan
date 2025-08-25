@@ -1041,6 +1041,223 @@ export type Database = {
           },
         ]
       }
+      service_categories: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      service_contact_clicks: {
+        Row: {
+          channel: Database["public"]["Enums"]["contact_click_channel"]
+          clicked_at: string
+          id: string
+          provider_id: string
+        }
+        Insert: {
+          channel: Database["public"]["Enums"]["contact_click_channel"]
+          clicked_at?: string
+          id?: string
+          provider_id: string
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["contact_click_channel"]
+          clicked_at?: string
+          id?: string
+          provider_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_contact_clicks_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "service_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_providers: {
+        Row: {
+          category_id: string
+          city: string
+          congregation_id: string | null
+          congregation_name: string | null
+          created_at: string
+          description: string
+          email: string
+          experience_years: number
+          id: string
+          instagram: string | null
+          linkedin: string | null
+          name: string
+          photo_url: string
+          rejection_reason: string | null
+          slug: string
+          state: string
+          status: Database["public"]["Enums"]["service_provider_status"]
+          terms_accepted: boolean
+          updated_at: string
+          website: string | null
+          whatsapp: string
+        }
+        Insert: {
+          category_id: string
+          city: string
+          congregation_id?: string | null
+          congregation_name?: string | null
+          created_at?: string
+          description: string
+          email: string
+          experience_years: number
+          id?: string
+          instagram?: string | null
+          linkedin?: string | null
+          name: string
+          photo_url: string
+          rejection_reason?: string | null
+          slug: string
+          state: string
+          status?: Database["public"]["Enums"]["service_provider_status"]
+          terms_accepted?: boolean
+          updated_at?: string
+          website?: string | null
+          whatsapp: string
+        }
+        Update: {
+          category_id?: string
+          city?: string
+          congregation_id?: string | null
+          congregation_name?: string | null
+          created_at?: string
+          description?: string
+          email?: string
+          experience_years?: number
+          id?: string
+          instagram?: string | null
+          linkedin?: string | null
+          name?: string
+          photo_url?: string
+          rejection_reason?: string | null
+          slug?: string
+          state?: string
+          status?: Database["public"]["Enums"]["service_provider_status"]
+          terms_accepted?: boolean
+          updated_at?: string
+          website?: string | null
+          whatsapp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_providers_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_providers_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_providers_congregation_id_fkey"
+            columns: ["congregation_id"]
+            isOneToOne: false
+            referencedRelation: "congregations_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_reports: {
+        Row: {
+          created_at: string
+          id: string
+          provider_id: string
+          reason: string
+          reporter_email: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          provider_id: string
+          reason: string
+          reporter_email?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          provider_id?: string
+          reason?: string
+          reporter_email?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_reports_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "service_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          provider_id: string
+          rating: number
+          reviewer_email: string | null
+          status: Database["public"]["Enums"]["service_review_status"]
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          provider_id: string
+          rating: number
+          reviewer_email?: string | null
+          status?: Database["public"]["Enums"]["service_review_status"]
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          provider_id?: string
+          rating?: number
+          reviewer_email?: string | null
+          status?: Database["public"]["Enums"]["service_review_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_reviews_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "service_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           address: string | null
@@ -1204,6 +1421,10 @@ export type Database = {
         Args: { _assigned_by?: string; _profile_id: string; _user_id: string }
         Returns: boolean
       }
+      generate_provider_slug: {
+        Args: { provider_name: string }
+        Returns: string
+      }
       get_authenticated_user_permissions: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -1215,6 +1436,26 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
+      }
+      gtrgm_compress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_decompress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_in: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_options: {
+        Args: { "": unknown }
+        Returns: undefined
+      }
+      gtrgm_out: {
+        Args: { "": unknown }
+        Returns: unknown
       }
       module_requires_congregation_access: {
         Args: { _module: string }
@@ -1234,6 +1475,18 @@ export type Database = {
               _user_id: string
             }
         Returns: boolean
+      }
+      set_limit: {
+        Args: { "": number }
+        Returns: number
+      }
+      show_limit: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      show_trgm: {
+        Args: { "": string }
+        Returns: string[]
       }
       user_has_congregation_access: {
         Args: Record<PropertyKey, never>
@@ -1257,6 +1510,12 @@ export type Database = {
         | "paid"
         | "rejected"
         | "future_scheduled"
+      contact_click_channel:
+        | "whatsapp"
+        | "email"
+        | "instagram"
+        | "linkedin"
+        | "reveal_contact"
       delivery_type: "unico" | "agendado" | "recorrente"
       event_type: "culto" | "conferencia" | "reuniao" | "evento_especial"
       financial_category:
@@ -1281,6 +1540,8 @@ export type Database = {
       notification_type: "texto" | "texto_com_video" | "video"
       payment_method: "cash" | "coin" | "pix" | "debit" | "credit"
       recipient_profile: "pastores" | "financeiro" | "membros" | "todos"
+      service_provider_status: "pending" | "approved" | "rejected" | "inactive"
+      service_review_status: "pending" | "approved" | "rejected"
       transaction_type: "income" | "expense"
       urgency_level: "normal" | "urgent"
       user_role:
@@ -1431,6 +1692,13 @@ export const Constants = {
         "rejected",
         "future_scheduled",
       ],
+      contact_click_channel: [
+        "whatsapp",
+        "email",
+        "instagram",
+        "linkedin",
+        "reveal_contact",
+      ],
       delivery_type: ["unico", "agendado", "recorrente"],
       event_type: ["culto", "conferencia", "reuniao", "evento_especial"],
       financial_category: [
@@ -1457,6 +1725,8 @@ export const Constants = {
       notification_type: ["texto", "texto_com_video", "video"],
       payment_method: ["cash", "coin", "pix", "debit", "credit"],
       recipient_profile: ["pastores", "financeiro", "membros", "todos"],
+      service_provider_status: ["pending", "approved", "rejected", "inactive"],
+      service_review_status: ["pending", "approved", "rejected"],
       transaction_type: ["income", "expense"],
       urgency_level: ["normal", "urgent"],
       user_role: [
