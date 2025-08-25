@@ -24,26 +24,8 @@ const Home = () => {
       <div className="container mx-auto px-4 py-8 relative z-10">
         {/* Título da Igreja com efeito Black Piano */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bodoni font-normal mb-3 tracking-tight">
-            <span className="text-black font-bold relative inline-block"
-                  style={{
-                    background: 'linear-gradient(145deg, #1a1a1a 0%, #000000 50%, #1a1a1a 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    textShadow: `
-                      0 1px 0 #333,
-                      0 2px 0 #222,
-                      0 3px 0 #111,
-                      0 4px 8px rgba(0,0,0,0.8),
-                      0 8px 16px rgba(0,0,0,0.6),
-                      inset 0 1px 0 rgba(255,255,255,0.1)
-                    `,
-                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))',
-                    position: 'relative'
-                  }}>
-              IPTM Global
-            </span>
+          <h1 className="text-4xl md:text-5xl widget-title text-slate-700 font-bold mb-3 tracking-tight">
+            IPTM Global
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground italic font-medium">
             "Deus não é religião, é relacionamento."
