@@ -591,7 +591,7 @@ const Sidebar = () => {
         <Button
           variant="ghost"
           className="w-full justify-start text-red-600 hover:bg-red-50"
-          onClick={signOut}
+          onClick={() => { signOut(); }}
         >
           <LogOut className="mr-3 h-4 w-4" />
           Sair

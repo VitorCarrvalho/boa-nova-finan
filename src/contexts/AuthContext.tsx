@@ -671,11 +671,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await supabase.auth.signOut({ scope: 'global' });
       
       // Forçar refresh da página para garantir limpeza completa
-      window.location.href = '/auth';
+      window.location.href = '/';
     } catch (error) {
       console.log('Erro no logout:', error);
       // Mesmo com erro, forçar refresh
-      window.location.href = '/auth';
+      window.location.href = '/';
     }
   };
 

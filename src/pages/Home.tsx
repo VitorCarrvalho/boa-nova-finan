@@ -15,17 +15,8 @@ const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Redirecionar usuários logados para o dashboard
-  useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
-    }
-  }, [user, navigate]);
-
-  // Se usuário está logado, não renderizar nada (vai redirecionar)
-  if (user) {
-    return null;
-  }
+  // Permitir visualização dos widgets mesmo após logout
+  // Usuários logados podem acessar via dashboard, mas podem ver widgets se navegarem diretamente
 
   return (
     <div className="min-h-screen home-background relative">

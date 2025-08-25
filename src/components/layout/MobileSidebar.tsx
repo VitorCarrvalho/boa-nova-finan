@@ -499,7 +499,7 @@ const MobileSidebar = () => {
               )}
                 
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={signOut} className="text-destructive hover:text-destructive">
+                <SidebarMenuButton onClick={() => { signOut(); }} className="text-destructive hover:text-destructive">
                   <LogOut className="h-4 w-4" />
                   <span>Sair</span>
                 </SidebarMenuButton>

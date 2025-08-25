@@ -123,7 +123,7 @@ const DesktopSidebar = () => {
   const handleLogout = async () => {
     try {
       await signOut();
-      navigate('/auth');
+      navigate('/');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }
