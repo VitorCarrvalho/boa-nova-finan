@@ -9,6 +9,7 @@ import VersiculoWidget from '@/components/home/widgets/VersiculoWidget';
 import MapaWidget from '@/components/home/widgets/MapaWidget';
 import InstagramWidget from '@/components/home/widgets/InstagramWidget';
 import PedidoOracaoWidget from '@/components/home/widgets/PedidoOracaoWidget';
+import ConectaWidget from '@/components/home/widgets/ConectaWidget';
 import FloatingLoginButton from '@/components/home/FloatingLoginButton';
 
 const Home = () => {
@@ -64,6 +65,11 @@ const Home = () => {
             <div className="md:col-span-1">
               <PedidoOracaoWidget />
             </div>
+          </div>
+          
+          {/* Linha 5: Conecta IPTM - 1 widget grande */}
+          <div className="w-full">
+            <ConectaWidget />
           </div>
           
         </div>

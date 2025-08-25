@@ -53,6 +53,10 @@ import ApprovedAccounts from "@/pages/accounts-payable/ApprovedAccounts";
 import PaidAccounts from "@/pages/accounts-payable/PaidAccounts";
 import TestDropdowns from "@/pages/TestDropdowns";
 
+// Import Conecta IPTM pages
+import ConectaIPTM from "@/pages/ConectaIPTM";
+import ConectaProviderProfile from "@/pages/ConectaProviderProfile";
+
 import NotFound from "@/pages/NotFound";
 import VerifyRedirect from "@/components/VerifyRedirect";
 
@@ -74,6 +78,11 @@ const App = () => (
             <ReportsProvider>
               <Routes>
                 <Route path="/" element={<Home />} />
+                
+                {/* Conecta IPTM - Public Routes */}
+                <Route path="/conecta" element={<ConectaIPTM />} />
+                <Route path="/conecta/perfil/:slug" element={<ConectaProviderProfile />} />
+                
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/verify" element={<VerifyRedirect />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
