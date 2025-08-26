@@ -28,11 +28,20 @@ const ConectaIPTM = () => {
     sortBy: searchParams.get('ordenar') || 'relevance'
   });
 
-  const { data: providers, isLoading, error } = useConectaProviders({
+  const { data: providers, isLoading, error, refetch } = useConectaProviders({
     search: searchTerm,
     filters,
     page: 1,
     limit: 15
+  });
+
+  console.log('ConectaIPTM - Component state:', {
+    isLoading,
+    error: error?.message,
+    providersCount: providers?.data?.length,
+    hasProviders: !!providers?.data?.length,
+    searchTerm,
+    filters
   });
 
   const handleSearch = (e: React.FormEvent) => {
@@ -144,8 +153,22 @@ const ConectaIPTM = () => {
                 <p className="text-slate-600 mt-4">Carregando prestadores...</p>
               </div>
             ) : error ? (
-              <div className="text-center py-12">
-                <p className="text-red-600">Erro ao carregar prestadores. Tente novamente.</p>
+              <div className="text-center py-12 bg-red-50 rounded-lg border border-red-200">
+                <div className="space-y-4">
+                  <div className="text-red-600 font-semibold">
+                    Erro ao carregar prestadores
+                  </div>
+                  <p className="text-sm text-red-500">
+                    {error.message || 'Ocorreu um erro inesperado. Tente novamente.'}
+                  </p>
+                  <Button
+                    onClick={() => refetch()}
+                    variant="outline"
+                    className="border-red-200 text-red-700 hover:bg-red-50"
+                  >
+                    Tentar Novamente
+                  </Button>
+                </div>
               </div>
             ) : !providers?.data?.length ? (
               <div className="text-center py-12">
