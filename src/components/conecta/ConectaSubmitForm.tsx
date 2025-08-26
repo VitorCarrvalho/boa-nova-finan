@@ -12,7 +12,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useConectaCategories, useConectaCongregations } from '@/hooks/useConectaProviders';
-import { Upload, Check } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Upload, Check, AlertTriangle } from 'lucide-react';
 
 const submitFormSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
@@ -40,6 +41,7 @@ interface ConectaSubmitFormProps {
 
 const ConectaSubmitForm: React.FC<ConectaSubmitFormProps> = ({ isOpen, onClose }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const { data: categories } = useConectaCategories();
@@ -68,17 +70,26 @@ const ConectaSubmitForm: React.FC<ConectaSubmitFormProps> = ({ isOpen, onClose }
     try {
       setIsSubmitting(true);
 
+      // Check authentication
+      if (!user) {
+        throw new Error('Você precisa estar logado para cadastrar um prestador de serviço');
+      }
+
       // Upload photo first
       const photoFile = data.photoFile[0];
       const photoExtension = photoFile.name.split('.').pop();
-      const photoPath = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${photoExtension}`;
+      const photoPath = `${user.id}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${photoExtension}`;
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('profile-pictures')
         .upload(photoPath, photoFile);
 
       if (uploadError) {
-        throw new Error('Erro ao fazer upload da foto');
+        console.error('Upload error:', uploadError);
+        if (uploadError.message.includes('violates row-level security')) {
+          throw new Error('Erro de autenticação. Faça login e tente novamente.');
+        }
+        throw new Error('Erro ao fazer upload da foto: ' + uploadError.message);
       }
 
       // Get public URL
@@ -123,9 +134,18 @@ const ConectaSubmitForm: React.FC<ConectaSubmitFormProps> = ({ isOpen, onClose }
 
     } catch (error: any) {
       console.error('Error submitting provider:', error);
+      
+      let errorMessage = "Ocorreu um erro ao enviar seu cadastro. Tente novamente.";
+      
+      if (error.message.includes('autenticação') || error.message.includes('logado')) {
+        errorMessage = error.message;
+      } else if (error.message.includes('upload')) {
+        errorMessage = "Erro no upload da foto. Verifique o formato e tamanho do arquivo.";
+      }
+      
       toast({
         title: "Erro no Cadastro",
-        description: error.message || "Ocorreu um erro ao enviar seu cadastro. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -158,6 +178,35 @@ const ConectaSubmitForm: React.FC<ConectaSubmitFormProps> = ({ isOpen, onClose }
             <Button onClick={handleClose} className="w-full">
               Fechar
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Authentication check warning
+  if (!user) {
+    return (
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="max-w-md">
+          <div className="text-center py-6">
+            <div className="mx-auto w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+              <AlertTriangle className="h-8 w-8 text-amber-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-800 mb-2">
+              Login Necessário
+            </h3>
+            <p className="text-slate-600 mb-6">
+              Para cadastrar um prestador de serviço, você precisa estar logado no sistema.
+            </p>
+            <div className="space-y-3">
+              <Button onClick={() => window.location.href = '/auth'} className="w-full">
+                Fazer Login
+              </Button>
+              <Button variant="outline" onClick={handleClose} className="w-full">
+                Fechar
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
