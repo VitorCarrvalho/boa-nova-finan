@@ -60,14 +60,14 @@ export const useConectaProviders = ({
   return useQuery({
     queryKey: ['conecta-providers', search, filters, page, limit],
     queryFn: async (): Promise<ConectaProvidersResponse> => {
-      let query = supabase
-        .from('service_providers')
-        .select(`
-          *,
-          category:service_categories(name),
-          congregation:congregations(name)
-        `)
-        .eq('status', 'approved');
+      try {
+        let query = supabase
+          .from('service_providers')
+          .select(`
+            *,
+            category:service_categories(name)
+          `)
+          .eq('status', 'approved');
 
       // Apply search
       if (search.trim()) {
@@ -118,19 +118,32 @@ export const useConectaProviders = ({
       const offset = (page - 1) * limit;
       query = query.range(offset, offset + limit - 1);
 
-      const { data, error, count } = await query;
+        const { data, error, count } = await query;
 
-      if (error) {
+        if (error) {
+          console.error('Error fetching service providers:', error);
+          throw new Error(`Erro ao buscar prestadores: ${error.message}`);
+        }
+
+        // Process congregation names - use existing congregation_name field
+        const processedData = (data || []).map(provider => ({
+          ...provider,
+          congregation_name: provider.congregation_name || ''
+        }));
+
+        return {
+          data: processedData,
+          count: count || 0,
+          hasMore: (data?.length || 0) === limit
+        };
+      } catch (error) {
+        console.error('Service providers query failed:', error);
         throw error;
       }
-
-      return {
-        data: data || [],
-        count: count || 0,
-        hasMore: (data?.length || 0) === limit
-      };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 3,
+    retryDelay: 1000,
   });
 };
 
