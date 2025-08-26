@@ -9,6 +9,8 @@ import ConectaProviderCard from '@/components/conecta/ConectaProviderCard';
 import ConectaFilters from '@/components/conecta/ConectaFilters';
 import ConectaSubmitForm from '@/components/conecta/ConectaSubmitForm';
 import ConectaFeatured from '@/components/conecta/ConectaFeatured';
+import ErrorBoundary from '@/components/ui/error-boundary';
+import LoadingSkeleton from '@/components/ui/loading-skeleton';
 import { useConectaProviders } from '@/hooks/useConectaProviders';
 
 const ConectaIPTM = () => {
@@ -134,25 +136,36 @@ const ConectaIPTM = () => {
               </div>
               
               {showFilters && (
-                <ConectaFilters 
-                  filters={filters} 
-                  onFiltersChange={setFilters}
-                />
+                <ErrorBoundary>
+                  <ConectaFilters 
+                    filters={filters} 
+                    onFiltersChange={setFilters}
+                  />
+                </ErrorBoundary>
               )}
             </form>
           </div>
 
           {/* Featured Providers */}
-          <ConectaFeatured />
+          <ErrorBoundary>
+            {isLoading ? (
+              <LoadingSkeleton type="featured" />
+            ) : (
+              <ConectaFeatured />
+            )}
+          </ErrorBoundary>
 
           {/* Results */}
           <div className="space-y-6">
-            {isLoading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                <p className="text-slate-600 mt-4">Carregando prestadores...</p>
-              </div>
-            ) : error ? (
+            <ErrorBoundary>
+              {isLoading ? (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="animate-pulse bg-slate-200 h-6 w-48 rounded"></div>
+                  </div>
+                  <LoadingSkeleton type="cards" count={8} />
+                </div>
+              ) : error ? (
               <div className="text-center py-12 bg-red-50 rounded-lg border border-red-200">
                 <div className="space-y-4">
                   <div className="text-red-600 font-semibold">
@@ -218,6 +231,7 @@ const ConectaIPTM = () => {
                 )}
               </>
             )}
+            </ErrorBoundary>
           </div>
         </div>
       </div>

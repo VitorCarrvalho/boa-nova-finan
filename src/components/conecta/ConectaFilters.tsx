@@ -1,5 +1,6 @@
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useConectaCategories, useConectaCongregations } from '@/hooks/useConectaProviders';
 
 interface ConectaFilters {
@@ -17,8 +18,8 @@ interface ConectaFiltersProps {
 }
 
 const ConectaFilters: React.FC<ConectaFiltersProps> = ({ filters, onFiltersChange }) => {
-  const { data: categories } = useConectaCategories();
-  const { data: congregations } = useConectaCongregations();
+  const { data: categories, isLoading: categoriesLoading, error: categoriesError } = useConectaCategories();
+  const { data: congregations, isLoading: congregationsLoading, error: congregationsError } = useConectaCongregations();
 
   const updateFilter = (key: keyof ConectaFilters, value: string) => {
     onFiltersChange({
@@ -60,22 +61,30 @@ const ConectaFilters: React.FC<ConectaFiltersProps> = ({ filters, onFiltersChang
           <label className="block text-sm font-medium text-slate-600 mb-1">
             Categoria
           </label>
-          <Select
-            value={filters.category}
-            onValueChange={(value) => updateFilter('category', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Todas as categorias" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Todas as categorias</SelectItem>
-              {categories?.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {categoriesLoading ? (
+            <Skeleton className="h-10 w-full" />
+          ) : categoriesError ? (
+            <div className="h-10 px-3 py-2 border rounded-md bg-red-50 border-red-200 text-red-600 text-sm">
+              Erro ao carregar categorias
+            </div>
+          ) : (
+            <Select
+              value={filters.category}
+              onValueChange={(value) => updateFilter('category', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Todas as categorias" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todas as categorias</SelectItem>
+                {(categories || []).map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         {/* City Filter */}
@@ -111,22 +120,30 @@ const ConectaFilters: React.FC<ConectaFiltersProps> = ({ filters, onFiltersChang
           <label className="block text-sm font-medium text-slate-600 mb-1">
             Congregação
           </label>
-          <Select
-            value={filters.congregation}
-            onValueChange={(value) => updateFilter('congregation', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Todas as congregações" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Todas as congregações</SelectItem>
-              {congregations?.map((congregation) => (
-                <SelectItem key={congregation.id} value={congregation.id}>
-                  {congregation.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {congregationsLoading ? (
+            <Skeleton className="h-10 w-full" />
+          ) : congregationsError ? (
+            <div className="h-10 px-3 py-2 border rounded-md bg-red-50 border-red-200 text-red-600 text-sm">
+              Erro ao carregar congregações
+            </div>
+          ) : (
+            <Select
+              value={filters.congregation}
+              onValueChange={(value) => updateFilter('congregation', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Todas as congregações" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todas as congregações</SelectItem>
+                {(congregations || []).map((congregation) => (
+                  <SelectItem key={congregation.id} value={congregation.id}>
+                    {congregation.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         {/* Experience Filter */}

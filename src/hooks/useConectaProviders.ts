@@ -151,16 +151,26 @@ export const useConectaCategories = () => {
   return useQuery({
     queryKey: ['conecta-categories'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('service_categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('name');
+      try {
+        const { data, error } = await supabase
+          .from('service_categories')
+          .select('*')
+          .eq('is_active', true)
+          .order('name');
 
-      if (error) throw error;
-      return data || [];
+        if (error) {
+          console.error('Error fetching categories:', error);
+          throw new Error(`Erro ao buscar categorias: ${error.message}`);
+        }
+        return data || [];
+      } catch (error) {
+        console.error('Categories query failed:', error);
+        throw error;
+      }
     },
     staleTime: 30 * 60 * 1000, // 30 minutes
+    retry: 2,
+    retryDelay: 1000,
   });
 };
 
@@ -168,15 +178,25 @@ export const useConectaCongregations = () => {
   return useQuery({
     queryKey: ['conecta-congregations'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('congregations')
-        .select('id, name, city, state')
-        .eq('is_active', true)
-        .order('name');
+      try {
+        const { data, error } = await supabase
+          .from('congregations')
+          .select('id, name, city, state')
+          .eq('is_active', true)
+          .order('name');
 
-      if (error) throw error;
-      return data || [];
+        if (error) {
+          console.error('Error fetching congregations:', error);
+          throw new Error(`Erro ao buscar congregações: ${error.message}`);
+        }
+        return data || [];
+      } catch (error) {
+        console.error('Congregations query failed:', error);
+        throw error;
+      }
     },
     staleTime: 30 * 60 * 1000, // 30 minutes
+    retry: 2,
+    retryDelay: 1000,
   });
 };
