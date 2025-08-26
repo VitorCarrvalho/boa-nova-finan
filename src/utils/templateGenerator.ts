@@ -15,6 +15,7 @@ export const generateCSVTemplate = (congregations?: Congregation[]) => {
     'due_date', // Data de vencimento YYYY-MM-DD (obrigatório)
     'payment_method', // Forma de pagamento: pix, transferencia, boleto, dinheiro, cartao, cheque (obrigatório)
     'payee_name', // Nome do favorecido (obrigatório)
+    'pix_key', // Chave PIX (obrigatório para pagamentos PIX)
     'bank_name', // Nome do banco (opcional)
     'bank_agency', // Agência (opcional)
     'bank_account', // Conta (opcional)
@@ -44,6 +45,7 @@ export const generateCSVTemplate = (congregations?: Congregation[]) => {
       '2024-02-15',
       'pix',
       'Companhia de Energia',
+      'companhia@energia.com.br',
       'Banco do Brasil',
       '1234',
       '12345-6',
@@ -67,6 +69,7 @@ export const generateCSVTemplate = (congregations?: Congregation[]) => {
       '2024-02-20',
       'boleto',
       'Casa de Materiais XYZ',
+      '',
       '',
       '',
       '',
@@ -161,6 +164,7 @@ const generateExcelTemplate = (headers: string[], sampleData: string[][], congre
     ['congregation_name', 'Use um nome da aba "Congregações"'],
     [''],
     ['CAMPOS OPCIONAIS:'],
+    ['pix_key', 'Chave PIX (obrigatório para pagamentos PIX)'],
     ['bank_name', 'Nome do banco (recomendado para transferências)'],
     ['bank_agency', 'Número da agência'],
     ['bank_account', 'Número da conta'],
@@ -216,6 +220,7 @@ export const getTemplateInstructions = (): string => {
 - **congregation_name**: Nome da congregação (será criada se não existir)
 
 ### Campos Opcionais:
+- **pix_key**: Chave PIX (obrigatório para pagamentos PIX)
 - **bank_name**: Nome do banco (recomendado para transferências)
 - **bank_agency**: Número da agência
 - **bank_account**: Número da conta
