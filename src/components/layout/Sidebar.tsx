@@ -27,7 +27,8 @@ import {
   Send,
   Video,
   Shield,
-  Book
+  Book,
+  Network
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -568,6 +569,22 @@ const Sidebar = () => {
             >
               <Shield className="mr-3 h-4 w-4" />
               Gestão de Acessos
+            </Button>
+          </Link>
+        )}
+
+        {canAccessAccessManagement && (
+          <Link to="/conecta-gestao">
+            <Button
+              variant="ghost"
+              className={`w-full justify-start ${
+                location.pathname.startsWith('/conecta-gestao') 
+                  ? 'bg-red-600 text-white hover:bg-red-700' 
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <Network className="mr-3 h-4 w-4" />
+              Conecta Gestão
             </Button>
           </Link>
         )}

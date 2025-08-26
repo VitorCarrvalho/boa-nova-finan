@@ -57,6 +57,7 @@ import TestDropdowns from "@/pages/TestDropdowns";
 // Import Conecta IPTM pages
 import ConectaIPTM from "@/pages/ConectaIPTM";
 import ConectaProviderProfile from "@/pages/ConectaProviderProfile";
+import ConectaManagement from "@/pages/ConectaManagement";
 
 import NotFound from "@/pages/NotFound";
 import VerifyRedirect from "@/components/VerifyRedirect";
@@ -229,6 +230,12 @@ const App = () => (
               <Route path="/gestao-acessos" element={
                 <ProtectedRoute>
                   <AccessManagement />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/conecta-gestao" element={
+                <ProtectedRoute>
+                  <ConectaManagement />
                 </ProtectedRoute>
               } />
               
