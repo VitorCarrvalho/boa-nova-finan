@@ -17,9 +17,6 @@ const ConectaWidget = () => {
       onClick={handleClick}
     >
       <div className="relative h-full">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-xl" />
-        
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between h-full">
           {/* Header */}
@@ -66,8 +63,8 @@ const ConectaWidget = () => {
         </div>
 
         {/* Decorative Elements */}
-        <div className="absolute top-4 right-4 w-16 h-16 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-xl" />
-        <div className="absolute bottom-4 left-4 w-8 h-8 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-lg" />
+        <div className="absolute top-4 right-4 w-16 h-16 bg-slate-200/30 rounded-full blur-xl" />
+        <div className="absolute bottom-4 left-4 w-8 h-8 bg-slate-300/40 rounded-full blur-lg" />
       </div>
     </WidgetContainer>
   );
