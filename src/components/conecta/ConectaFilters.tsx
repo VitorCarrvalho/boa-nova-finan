@@ -30,16 +30,16 @@ const ConectaFilters: React.FC<ConectaFiltersProps> = ({ filters, onFiltersChang
 
   const clearFilters = () => {
     onFiltersChange({
-      category: '',
-      city: '',
-      state: '',
-      congregation: '',
-      experience: '',
+      category: 'all',
+      city: 'all',
+      state: 'all',
+      congregation: 'all',
+      experience: 'all',
       sortBy: 'relevance'
     });
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => value && value !== 'relevance');
+  const hasActiveFilters = Object.values(filters).some(value => value && value !== 'relevance' && value !== 'all');
 
   return (
     <div className="bg-slate-50 rounded-lg p-4 space-y-4">
@@ -76,8 +76,8 @@ const ConectaFilters: React.FC<ConectaFiltersProps> = ({ filters, onFiltersChang
                 <SelectValue placeholder="Todas as categorias" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as categorias</SelectItem>
-                {(categories || []).map((category) => (
+                <SelectItem value="all">Todas as categorias</SelectItem>
+                {(categories || []).filter(category => category?.id && category?.name).map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
                   </SelectItem>
@@ -100,7 +100,7 @@ const ConectaFilters: React.FC<ConectaFiltersProps> = ({ filters, onFiltersChang
               <SelectValue placeholder="Todas as cidades" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas as cidades</SelectItem>
+              <SelectItem value="all">Todas as cidades</SelectItem>
               <SelectItem value="São Paulo">São Paulo</SelectItem>
               <SelectItem value="Rio de Janeiro">Rio de Janeiro</SelectItem>
               <SelectItem value="Belo Horizonte">Belo Horizonte</SelectItem>
@@ -135,8 +135,8 @@ const ConectaFilters: React.FC<ConectaFiltersProps> = ({ filters, onFiltersChang
                 <SelectValue placeholder="Todas as congregações" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as congregações</SelectItem>
-                {(congregations || []).map((congregation) => (
+                <SelectItem value="all">Todas as congregações</SelectItem>
+                {(congregations || []).filter(congregation => congregation?.id && congregation?.name).map((congregation) => (
                   <SelectItem key={congregation.id} value={congregation.id}>
                     {congregation.name}
                   </SelectItem>
@@ -159,7 +159,7 @@ const ConectaFilters: React.FC<ConectaFiltersProps> = ({ filters, onFiltersChang
               <SelectValue placeholder="Qualquer experiência" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Qualquer experiência</SelectItem>
+              <SelectItem value="all">Qualquer experiência</SelectItem>
               <SelectItem value="0-1">0-1 anos</SelectItem>
               <SelectItem value="2-5">2-5 anos</SelectItem>
               <SelectItem value="6-10">6-10 anos</SelectItem>

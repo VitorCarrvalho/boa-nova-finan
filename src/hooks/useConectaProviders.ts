@@ -75,23 +75,23 @@ export const useConectaProviders = ({
       }
 
       // Apply filters
-      if (filters.category) {
+      if (filters.category && filters.category !== 'all') {
         query = query.eq('category_id', filters.category);
       }
       
-      if (filters.city) {
+      if (filters.city && filters.city !== 'all') {
         query = query.ilike('city', `%${filters.city}%`);
       }
       
-      if (filters.state) {
+      if (filters.state && filters.state !== 'all') {
         query = query.ilike('state', `%${filters.state}%`);
       }
       
-      if (filters.congregation) {
+      if (filters.congregation && filters.congregation !== 'all') {
         query = query.eq('congregation_id', filters.congregation);
       }
       
-      if (filters.experience) {
+      if (filters.experience && filters.experience !== 'all') {
         const [min, max] = filters.experience.split('-').map(Number);
         if (max) {
           query = query.gte('experience_years', min).lte('experience_years', max);

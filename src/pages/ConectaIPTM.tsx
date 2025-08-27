@@ -22,11 +22,11 @@ const ConectaIPTM = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showSubmitForm, setShowSubmitForm] = useState(false);
   const [filters, setFilters] = useState({
-    category: searchParams.get('categoria') || '',
-    city: searchParams.get('cidade') || '',
-    state: searchParams.get('estado') || '',
-    congregation: searchParams.get('congregacao') || '',
-    experience: searchParams.get('experiencia') || '',
+    category: searchParams.get('categoria') || 'all',
+    city: searchParams.get('cidade') || 'all',
+    state: searchParams.get('estado') || 'all',
+    congregation: searchParams.get('congregacao') || 'all',
+    experience: searchParams.get('experiencia') || 'all',
     sortBy: searchParams.get('ordenar') || 'relevance'
   });
 
@@ -51,11 +51,11 @@ const ConectaIPTM = () => {
     // Update URL params
     const params = new URLSearchParams();
     if (searchTerm) params.set('q', searchTerm);
-    if (filters.category) params.set('categoria', filters.category);
-    if (filters.city) params.set('cidade', filters.city);
-    if (filters.state) params.set('estado', filters.state);
-    if (filters.congregation) params.set('congregacao', filters.congregation);
-    if (filters.experience) params.set('experiencia', filters.experience);
+    if (filters.category && filters.category !== 'all') params.set('categoria', filters.category);
+    if (filters.city && filters.city !== 'all') params.set('cidade', filters.city);
+    if (filters.state && filters.state !== 'all') params.set('estado', filters.state);
+    if (filters.congregation && filters.congregation !== 'all') params.set('congregacao', filters.congregation);
+    if (filters.experience && filters.experience !== 'all') params.set('experiencia', filters.experience);
     if (filters.sortBy !== 'relevance') params.set('ordenar', filters.sortBy);
     
     navigate(`/conecta?${params.toString()}`, { replace: true });
@@ -191,11 +191,11 @@ const ConectaIPTM = () => {
                   onClick={() => {
                     setSearchTerm('');
                     setFilters({
-                      category: '',
-                      city: '',
-                      state: '',
-                      congregation: '',
-                      experience: '',
+                      category: 'all',
+                      city: 'all',
+                      state: 'all',
+                      congregation: 'all',
+                      experience: 'all',
                       sortBy: 'relevance'
                     });
                   }}
