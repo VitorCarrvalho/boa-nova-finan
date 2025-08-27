@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Dialog, 
   DialogContent, 
@@ -23,12 +24,15 @@ import {
   Instagram, 
   Linkedin, 
   Globe,
-  MessageSquare
+  MessageSquare,
+  RotateCcw,
+  Pause
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
+import ReviewModerationTab from '@/components/conecta/ReviewModerationTab';
 
 interface ServiceProvider {
   id: string;
@@ -44,7 +48,7 @@ interface ServiceProvider {
   city: string;
   state: string;
   congregation_name?: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'inactive';
   created_at: string;
   category_id: string;
   congregation_id?: string;
@@ -61,9 +65,9 @@ const ConectaManagement = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch pending providers
-  const { data: providers, isLoading } = useQuery({
-    queryKey: ['pending-providers'],
+  // Fetch all providers
+  const { data: allProviders, isLoading } = useQuery({
+    queryKey: ['all-providers'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('service_providers')
@@ -71,7 +75,6 @@ const ConectaManagement = () => {
           *,
           service_categories(name)
         `)
-        .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -90,7 +93,7 @@ const ConectaManagement = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pending-providers'] });
+      queryClient.invalidateQueries({ queryKey: ['all-providers'] });
       toast({
         title: "Prestador aprovado",
         description: "O prestador foi aprovado com sucesso!",
@@ -120,7 +123,7 @@ const ConectaManagement = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pending-providers'] });
+      queryClient.invalidateQueries({ queryKey: ['all-providers'] });
       toast({
         title: "Prestador rejeitado",
         description: "O prestador foi rejeitado com sucesso!",
@@ -133,6 +136,58 @@ const ConectaManagement = () => {
       toast({
         title: "Erro",
         description: "Erro ao rejeitar prestador: " + error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Deactivate provider mutation
+  const deactivateMutation = useMutation({
+    mutationFn: async (providerId: string) => {
+      const { error } = await supabase
+        .from('service_providers')
+        .update({ status: 'inactive' })
+        .eq('id', providerId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-providers'] });
+      toast({
+        title: "Prestador desativado",
+        description: "O prestador foi desativado com sucesso!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Erro ao desativar prestador: " + error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Reactivate provider mutation
+  const reactivateMutation = useMutation({
+    mutationFn: async (providerId: string) => {
+      const { error } = await supabase
+        .from('service_providers')
+        .update({ status: 'approved' })
+        .eq('id', providerId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-providers'] });
+      toast({
+        title: "Prestador reativado",
+        description: "O prestador foi reativado com sucesso!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Erro ao reativar prestador: " + error.message,
         variant: "destructive",
       });
     }
@@ -203,100 +258,81 @@ const ConectaManagement = () => {
             Gestão Conecta IPTM
           </h1>
           <p className="text-muted-foreground">
-            Gerencie os cadastros de prestadores de serviço pendentes de aprovação
+            Gerencie os cadastros de prestadores de serviço e avaliações
           </p>
         </div>
 
-        {!providers || providers.length === 0 ? (
-          <Card>
-            <CardContent className="py-12">
-              <div className="text-center">
-                <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">
-                  Nenhum cadastro pendente
-                </h3>
-                <p className="text-muted-foreground">
-                  Não há prestadores de serviço aguardando aprovação no momento.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {providers.map((provider) => (
-              <Card key={provider.id} className="overflow-hidden">
-                <CardHeader className="pb-4">
-                  <div className="flex items-start gap-4">
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage src={provider.photo_url} alt={provider.name} />
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        {getInitials(provider.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg leading-tight mb-1">
-                        {provider.name}
-                      </CardTitle>
-                      <Badge variant="outline" className="mb-2">
-                        {provider.service_categories.name}
-                      </Badge>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {provider.city}, {provider.state}
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
+        <Tabs defaultValue="pending" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="pending">
+              Pendentes ({allProviders?.filter(p => p.status === 'pending').length || 0})
+            </TabsTrigger>
+            <TabsTrigger value="approved">
+              Aprovados ({allProviders?.filter(p => p.status === 'approved').length || 0})
+            </TabsTrigger>
+            <TabsTrigger value="inactive">
+              Inativos ({allProviders?.filter(p => p.status === 'inactive').length || 0})
+            </TabsTrigger>
+            <TabsTrigger value="reviews">
+              Avaliações
+            </TabsTrigger>
+          </TabsList>
 
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground line-clamp-3">
-                    {provider.description}
-                  </p>
+          <TabsContent value="pending" className="mt-6">
+            <ProvidersTab 
+              providers={allProviders?.filter(p => p.status === 'pending') || []}
+              status="pending"
+              onApprove={handleApprove}
+              onReject={openRejectDialog}
+              onDeactivate={() => {}}
+              onReactivate={() => {}}
+              setSelectedProvider={setSelectedProvider}
+              isLoading={isLoading}
+              approveMutation={approveMutation}
+              rejectMutation={rejectMutation}
+              deactivateMutation={deactivateMutation}
+              reactivateMutation={reactivateMutation}
+            />
+          </TabsContent>
 
-                  <div className="flex items-center text-sm">
-                    <User className="h-4 w-4 mr-2 text-primary" />
-                    <span>{provider.experience_years} anos de experiência</span>
-                  </div>
+          <TabsContent value="approved" className="mt-6">
+            <ProvidersTab 
+              providers={allProviders?.filter(p => p.status === 'approved') || []}
+              status="approved"
+              onApprove={() => {}}
+              onReject={() => {}}
+              onDeactivate={(id: string) => deactivateMutation.mutate(id)}
+              onReactivate={() => {}}
+              setSelectedProvider={setSelectedProvider}
+              isLoading={isLoading}
+              approveMutation={approveMutation}
+              rejectMutation={rejectMutation}
+              deactivateMutation={deactivateMutation}
+              reactivateMutation={reactivateMutation}
+            />
+          </TabsContent>
 
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setSelectedProvider(provider)}
-                      className="flex-1"
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Detalhes
-                    </Button>
-                  </div>
+          <TabsContent value="inactive" className="mt-6">
+            <ProvidersTab 
+              providers={allProviders?.filter(p => p.status === 'inactive') || []}
+              status="inactive"
+              onApprove={() => {}}
+              onReject={() => {}}
+              onDeactivate={() => {}}
+              onReactivate={(id: string) => reactivateMutation.mutate(id)}
+              setSelectedProvider={setSelectedProvider}
+              isLoading={isLoading}
+              approveMutation={approveMutation}
+              rejectMutation={rejectMutation}
+              deactivateMutation={deactivateMutation}
+              reactivateMutation={reactivateMutation}
+            />
+          </TabsContent>
 
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleApprove(provider.id)}
-                      disabled={approveMutation.isPending}
-                      className="flex-1"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Aprovar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => openRejectDialog(provider)}
-                      disabled={rejectMutation.isPending}
-                      className="flex-1"
-                    >
-                      <XCircle className="h-4 w-4 mr-2" />
-                      Rejeitar
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
+          <TabsContent value="reviews" className="mt-6">
+            <ReviewModerationTab />
+          </TabsContent>
+        </Tabs>
         {/* Provider Details Dialog */}
         <Dialog open={!!selectedProvider && !isRejectDialogOpen} onOpenChange={() => setSelectedProvider(null)}>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -488,6 +524,201 @@ const ConectaManagement = () => {
         </Dialog>
       </div>
     </Layout>
+  );
+};
+
+// ProvidersTab component
+interface ProvidersTabProps {
+  providers: ServiceProvider[];
+  status: 'pending' | 'approved' | 'inactive';
+  onApprove: (id: string) => void;
+  onReject: (provider: ServiceProvider) => void;
+  onDeactivate: (id: string) => void;
+  onReactivate: (id: string) => void;
+  setSelectedProvider: (provider: ServiceProvider) => void;
+  isLoading: boolean;
+  approveMutation: any;
+  rejectMutation: any;
+  deactivateMutation: any;
+  reactivateMutation: any;
+}
+
+const ProvidersTab = ({ 
+  providers, 
+  status, 
+  onApprove, 
+  onReject, 
+  onDeactivate, 
+  onReactivate,
+  setSelectedProvider,
+  isLoading,
+  approveMutation,
+  rejectMutation,
+  deactivateMutation,
+  reactivateMutation
+}: ProvidersTabProps) => {
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const getStatusBadge = (providerStatus: string) => {
+    switch(providerStatus) {
+      case 'pending':
+        return <Badge variant="secondary">Pendente</Badge>;
+      case 'approved':
+        return <Badge variant="default">Aprovado</Badge>;
+      case 'inactive':
+        return <Badge variant="outline">Inativo</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive">Rejeitado</Badge>;
+      default:
+        return <Badge variant="outline">{providerStatus}</Badge>;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!providers || providers.length === 0) {
+    const emptyMessage = {
+      pending: "Nenhum cadastro pendente no momento.",
+      approved: "Nenhum prestador aprovado ainda.",
+      inactive: "Nenhum prestador inativo."
+    };
+
+    return (
+      <Card>
+        <CardContent className="py-12">
+          <div className="text-center">
+            <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
+              {status === 'pending' ? 'Tudo em dia!' : 'Nenhum item encontrado'}
+            </h3>
+            <p className="text-muted-foreground">
+              {emptyMessage[status]}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {providers.map((provider) => (
+        <Card key={provider.id} className="overflow-hidden">
+          <CardHeader className="pb-4">
+            <div className="flex items-start gap-4">
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={provider.photo_url} alt={provider.name} />
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  {getInitials(provider.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-lg leading-tight mb-1">
+                  {provider.name}
+                </CardTitle>
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="outline">
+                    {provider.service_categories.name}
+                  </Badge>
+                  {getStatusBadge(provider.status)}
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <MapPin className="h-3 w-3 mr-1" />
+                  {provider.city}, {provider.state}
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground line-clamp-3">
+              {provider.description}
+            </p>
+
+            <div className="flex items-center text-sm">
+              <User className="h-4 w-4 mr-2 text-primary" />
+              <span>{provider.experience_years} anos de experiência</span>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setSelectedProvider(provider)}
+                className="flex-1"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Detalhes
+              </Button>
+            </div>
+
+            <div className="flex gap-2">
+              {status === 'pending' && (
+                <>
+                  <Button
+                    size="sm"
+                    onClick={() => onApprove(provider.id)}
+                    disabled={approveMutation.isPending}
+                    className="flex-1"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Aprovar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => onReject(provider)}
+                    disabled={rejectMutation.isPending}
+                    className="flex-1"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Rejeitar
+                  </Button>
+                </>
+              )}
+              
+              {status === 'approved' && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onDeactivate(provider.id)}
+                  disabled={deactivateMutation.isPending}
+                  className="flex-1"
+                >
+                  <Pause className="h-4 w-4 mr-2" />
+                  Desativar
+                </Button>
+              )}
+              
+              {status === 'inactive' && (
+                <Button
+                  size="sm"
+                  onClick={() => onReactivate(provider.id)}
+                  disabled={reactivateMutation.isPending}
+                  className="flex-1"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Reativar
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 };
 

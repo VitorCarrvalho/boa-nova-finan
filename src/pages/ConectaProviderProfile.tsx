@@ -26,8 +26,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import RatingComponent from '@/components/conecta/RatingComponent';
 
 const ConectaProviderProfile = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -39,6 +40,15 @@ const ConectaProviderProfile = () => {
   const [reportReason, setReportReason] = useState('');
   const [reporterEmail, setReporterEmail] = useState('');
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  
+  // Rating dialog states
+  const [showRatingDialog, setShowRatingDialog] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [reviewerEmail, setReviewerEmail] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  
+  const queryClient = useQueryClient();
 
   // Fetch provider data
   const { data: provider, isLoading, error } = useQuery({
@@ -196,23 +206,56 @@ const ConectaProviderProfile = () => {
     }
   };
 
-  const formatExperience = (years: number) => {
-    if (years === 1) return '1 ano';
-    if (years < 1) return 'Menos de 1 ano';
-    return `${years} anos`;
-  };
+  // Submit review mutation
+  const submitReviewMutation = useMutation({
+    mutationFn: async () => {
+      if (!provider || rating === 0) {
+        throw new Error('Dados incompletos');
+      }
 
-  const obfuscateContact = (contact: string, type: 'phone' | 'email') => {
-    if (type === 'phone') {
-      return contact.replace(/(\d{2})(\d{4,5})(\d{4})/, '($1) $2-••••');
-    } else {
-      const [local, domain] = contact.split('@');
-      return `${local.substring(0, 2)}••••@${domain}`;
+      const { error } = await supabase
+        .from('service_reviews')
+        .insert({
+          provider_id: provider.id,
+          rating,
+          comment: comment.trim() || null,
+          reviewer_email: reviewerEmail.trim() || null,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Avaliação Enviada",
+        description: "Sua avaliação foi enviada e será analisada antes de aparecer no perfil.",
+      });
+      setShowRatingDialog(false);
+      setRating(0);
+      setComment('');
+      setReviewerEmail('');
+      queryClient.invalidateQueries({ queryKey: ['provider-reviews', provider?.id] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Erro ao enviar avaliação: " + error.message,
+        variant: "destructive",
+      });
     }
-  };
+  });
 
-  const getCongregationName = () => {
-    return provider?.congregation?.name || provider?.congregation_name;
+  const handleSubmitReview = () => {
+    if (!provider || rating === 0) {
+      toast({
+        title: "Erro",
+        description: "Por favor, selecione uma nota para a avaliação.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    submitReviewMutation.mutate();
   };
 
   const calculateAverageRating = () => {
@@ -325,10 +368,10 @@ const ConectaProviderProfile = () => {
                             <MapPin className="h-4 w-4" />
                             <span>{provider.city}, {provider.state}</span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            <span>{formatExperience(provider.experience_years)} de experiência</span>
-                          </div>
+                           <div className="flex items-center gap-1">
+                             <Calendar className="h-4 w-4" />
+                             <span>{provider.experience_years} {provider.experience_years === 1 ? 'ano' : 'anos'} de experiência</span>
+                           </div>
                         </div>
                         
                         {/* Rating */}
@@ -361,15 +404,31 @@ const ConectaProviderProfile = () => {
                       </p>
                     </div>
 
-                    {/* Congregation */}
-                    {getCongregationName() && (
-                      <div>
-                        <h3 className="font-semibold text-slate-700 mb-2">Igreja</h3>
-                        <p className="text-slate-600">{getCongregationName()}</p>
-                      </div>
-                    )}
+                     {/* Congregation */}
+                     {(provider.congregation?.name || provider.congregation_name) && (
+                       <div>
+                         <h3 className="font-semibold text-slate-700 mb-2">Igreja</h3>
+                         <p className="text-slate-600">{provider.congregation?.name || provider.congregation_name}</p>
+                       </div>
+                     )}
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Rate Provider Button */}
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+              <CardContent className="p-6 text-center">
+                <h3 className="font-semibold text-slate-700 mb-4">
+                  Avalie este Prestador
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Já contratou este prestador? Compartilhe sua experiência para ajudar outros membros.
+                </p>
+                <Button onClick={() => setShowRatingDialog(true)} className="w-full">
+                  <Star className="h-4 w-4 mr-2" />
+                  Avaliar Prestador
+                </Button>
               </CardContent>
             </Card>
 
@@ -391,10 +450,10 @@ const ConectaProviderProfile = () => {
                           <p className="text-slate-600 mb-2">
                             Clique para revelar os dados de contato
                           </p>
-                          <div className="space-y-1 text-sm text-slate-500">
-                            <p>WhatsApp: {obfuscateContact(provider.whatsapp, 'phone')}</p>
-                            <p>Email: {obfuscateContact(provider.email, 'email')}</p>
-                          </div>
+                           <div className="space-y-1 text-sm text-slate-500">
+                             <p>WhatsApp: {provider.whatsapp.replace(/(\d{2})(\d{4,5})(\d{4})/, '($1) $2-••••')}</p>
+                             <p>Email: {provider.email.split('@')[0].substring(0, 2)}••••@{provider.email.split('@')[1]}</p>
+                           </div>
                         </div>
                         <Button onClick={handleRevealContact} className="w-full">
                           <Eye className="h-4 w-4 mr-2" />
@@ -558,6 +617,77 @@ const ConectaProviderProfile = () => {
             >
               {isSubmittingReport ? 'Enviando...' : 'Enviar Denúncia'}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rating Dialog */}
+      <Dialog open={showRatingDialog} onOpenChange={setShowRatingDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Avaliar {provider.name}</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-4">
+                Como você avalia este prestador?
+              </p>
+              <RatingComponent 
+                rating={rating} 
+                onRatingChange={setRating}
+                className="justify-center"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="review-comment">Comentário (opcional)</Label>
+              <Textarea
+                id="review-comment"
+                placeholder="Conte como foi sua experiência com este prestador..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                className="mt-2"
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="reviewer-email">Seu email (opcional)</Label>
+              <Input
+                id="reviewer-email"
+                type="email"
+                placeholder="seu@email.com"
+                value={reviewerEmail}
+                onChange={(e) => setReviewerEmail(e.target.value)}
+                className="mt-2"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Será usado apenas para moderação e não será exibido publicamente
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowRatingDialog(false);
+                  setRating(0);
+                  setComment('');
+                  setReviewerEmail('');
+                }}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSubmitReview}
+                disabled={rating === 0 || submitReviewMutation.isPending}
+                className="flex-1"
+              >
+                {submitReviewMutation.isPending ? 'Enviando...' : 'Enviar Avaliação'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

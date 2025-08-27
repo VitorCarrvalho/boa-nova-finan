@@ -43,6 +43,7 @@ import {
   HeartHandshake,
   Truck,
   Calculator,
+  Network,
 } from 'lucide-react';
 
 interface MenuItemType {
@@ -291,6 +292,17 @@ const DesktopSidebar = () => {
                     title: 'Gestão de Acessos',
                     icon: Shield,
                     route: '/gestao-acessos',
+                    module: 'gestao-acessos'
+                  }} />
+                </SidebarMenuItem>
+              )}
+
+              {canViewModule('gestao-acessos') && (
+                <SidebarMenuItem key="conecta-gestao">
+                  <MenuItemComponent item={{
+                    title: 'Conecta Gestão',
+                    icon: Network,
+                    route: '/conecta-gestao',
                     module: 'gestao-acessos'
                   }} />
                 </SidebarMenuItem>
