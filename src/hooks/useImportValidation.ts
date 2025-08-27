@@ -69,6 +69,11 @@ export const useImportValidation = () => {
         isDuplicate: false
       };
 
+      // Handle biweekly specific logic
+      if (account.recurrence_frequency === 'biweekly') {
+        account.recurrence_day_of_month = normalizeBiweeklyDay(row.recurrence_day_of_month || row.dia_quinzenal);
+      }
+
       // Validate the account
       const validation = validateAccountData(account, categories, congregations);
       account.errors = validation.errors;
@@ -161,6 +166,28 @@ const normalizePaymentMethod = (method: string): string => {
     'cheque': 'cheque'
   };
   return methodMap[normalized] || method;
+};
+
+const normalizeBiweeklyDay = (value: any): number | undefined => {
+  if (!value) return undefined;
+  
+  const str = String(value).toLowerCase().trim();
+  
+  // Mapear valores comuns para quinzenal
+  const biweeklyMap: { [key: string]: number } = {
+    '15': 15,
+    '30': 30,
+    'quinzena1': 15,
+    'quinzena2': 30,
+    'primeira': 15,
+    'segunda': 30,
+    'meio': 15,
+    'fim': 30,
+    'inicio': 15,
+    'final': 30
+  };
+  
+  return biweeklyMap[str] || (parseInt(str) === 15 || parseInt(str) === 30 ? parseInt(str) : undefined);
 };
 
 const normalizeUrgencyLevel = (level: any): 'normal' | 'urgent' => {

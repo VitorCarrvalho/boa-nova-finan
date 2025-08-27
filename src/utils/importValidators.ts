@@ -94,9 +94,15 @@ export const validateAccountData = (
       }
 
       // Validate day requirements based on frequency
-      if (['weekly', 'biweekly'].includes(account.recurrence_frequency)) {
+      if (account.recurrence_frequency === 'weekly') {
         if (account.recurrence_day_of_week === undefined || account.recurrence_day_of_week < 0 || account.recurrence_day_of_week > 6) {
-          errors.push('Dia da semana (0-6) é obrigatório para recorrência semanal/quinzenal');
+          errors.push('Dia da semana (0-6) é obrigatório para recorrência semanal');
+        }
+      }
+
+      if (account.recurrence_frequency === 'biweekly') {
+        if (!account.recurrence_day_of_month || ![15, 30].includes(account.recurrence_day_of_month)) {
+          errors.push('Para recorrência quinzenal, o dia do mês deve ser 15 ou 30');
         }
       }
 

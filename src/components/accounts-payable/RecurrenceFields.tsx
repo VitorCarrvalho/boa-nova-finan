@@ -132,7 +132,7 @@ const RecurrenceFields: React.FC<RecurrenceFieldsProps> = ({ control, watch }) =
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="weekly">Semanal</SelectItem>
-                        <SelectItem value="biweekly">Quinzenal (a cada 2 semanas)</SelectItem>
+                        <SelectItem value="biweekly">Quinzenal (dia 15 e 30)</SelectItem>
                         <SelectItem value="monthly">Mensal</SelectItem>
                         <SelectItem value="quarterly">Trimestral</SelectItem>
                         <SelectItem value="yearly">Anual</SelectItem>
@@ -144,7 +144,7 @@ const RecurrenceFields: React.FC<RecurrenceFieldsProps> = ({ control, watch }) =
               />
 
               {/* Configurações específicas por frequência */}
-              {recurrenceFrequency === 'weekly' || recurrenceFrequency === 'biweekly' ? (
+              {recurrenceFrequency === 'weekly' ? (
                 <FormField
                   control={control}
                   name="recurrence_day_of_week"
@@ -168,6 +168,34 @@ const RecurrenceFields: React.FC<RecurrenceFieldsProps> = ({ control, watch }) =
                           ))}
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : recurrenceFrequency === 'biweekly' ? (
+                <FormField
+                  control={control}
+                  name="recurrence_day_of_month"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dia do Mês (Quinzenal) *</FormLabel>
+                      <Select 
+                        value={field.value?.toString()} 
+                        onValueChange={(value) => field.onChange(parseInt(value))}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o dia" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="15">Dia 15 (primeira quinzena)</SelectItem>
+                          <SelectItem value="30">Dia 30 (segunda quinzena)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-sm text-muted-foreground">
+                        Para recorrência quinzenal, escolha entre dia 15 ou 30
+                      </p>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -214,7 +242,7 @@ const RecurrenceFields: React.FC<RecurrenceFieldsProps> = ({ control, watch }) =
                     </FormControl>
                     <p className="text-sm text-muted-foreground">
                       {recurrenceFrequency === 'weekly' && 'A partir desta data, a conta se repetirá toda semana'}
-                      {recurrenceFrequency === 'biweekly' && 'A partir desta data, a conta se repetirá a cada 2 semanas'}
+                      {recurrenceFrequency === 'biweekly' && 'A partir desta data, a conta se repetirá quinzenalmente (dia 15 e 30)'}
                       {recurrenceFrequency === 'monthly' && 'A partir desta data, a conta se repetirá todo mês'}
                       {recurrenceFrequency === 'quarterly' && 'A partir desta data, a conta se repetirá a cada 3 meses'}
                       {recurrenceFrequency === 'yearly' && 'A partir desta data, a conta se repetirá todo ano'}

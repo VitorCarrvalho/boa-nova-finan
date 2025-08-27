@@ -211,27 +211,36 @@ export const ImportPreviewTable: React.FC<ImportPreviewTableProps> = ({ data, on
                   </div>
                 </TableCell>
                 <TableCell>
-                  {account.is_recurring && (
-                    <div className="space-y-1 text-xs">
-                      {(account.recurrence_frequency === 'weekly' || account.recurrence_frequency === 'biweekly') && (
-                        <div>
-                          <strong>Dia semana:</strong> {renderEditableCell(account, index, 'recurrence_day_of_week', 'number')}
-                          <div className="text-muted-foreground">(0=Dom, 6=Sab)</div>
-                        </div>
-                      )}
-                      {account.recurrence_frequency === 'monthly' && (
-                        <div>
-                          <strong>Dia mês:</strong> {renderEditableCell(account, index, 'recurrence_day_of_month', 'number')}
-                        </div>
-                      )}
-                      {account.next_occurrence_date && (
-                        <div>
-                          <strong>Próxima:</strong> {renderEditableCell(account, index, 'next_occurrence_date', 'date')}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </TableCell>
+                   {account.is_recurring && (
+                     <div className="space-y-1 text-xs">
+                       {account.recurrence_frequency === 'weekly' && (
+                         <div>
+                           <strong>Dia semana:</strong> {renderEditableCell(account, index, 'recurrence_day_of_week', 'number')}
+                           <div className="text-muted-foreground">(0=Dom, 6=Sab)</div>
+                         </div>
+                       )}
+                       {account.recurrence_frequency === 'biweekly' && (
+                         <div>
+                           <strong>Dia do mês:</strong> {renderEditableCell(account, index, 'recurrence_day_of_month', 'select', [
+                             { value: '15', label: 'Dia 15' },
+                             { value: '30', label: 'Dia 30' }
+                           ])}
+                           <div className="text-muted-foreground">(Quinzenal)</div>
+                         </div>
+                       )}
+                       {['monthly', 'quarterly', 'yearly'].includes(account.recurrence_frequency || '') && (
+                         <div>
+                           <strong>Dia mês:</strong> {renderEditableCell(account, index, 'recurrence_day_of_month', 'number')}
+                         </div>
+                       )}
+                       {account.next_occurrence_date && (
+                         <div>
+                           <strong>Próxima:</strong> {renderEditableCell(account, index, 'next_occurrence_date', 'date')}
+                         </div>
+                       )}
+                     </div>
+                   )}
+                 </TableCell>
                 <TableCell>
                   <div className="space-y-1 text-xs">
                     {account.urgency_level && (
