@@ -174,12 +174,12 @@ export const useAccountsImport = () => {
     const categoryId = categoryMap.get(account.category_name!) || account.category_id;
     const congregationId = congregationMap.get(account.congregation_name!) || account.congregation_id;
 
-    // Validate that we have valid UUIDs
-    if (!categoryId || categoryId === 'TO_CREATE') {
-      throw new Error(`Categoria "${account.category_name}" não foi encontrada no sistema`);
+    // Validate that we have valid UUIDs - categories and congregations should have been created by now
+    if (!categoryId) {
+      throw new Error(`Categoria "${account.category_name}" não pôde ser criada ou encontrada`);
     }
-    if (!congregationId || congregationId === 'TO_CREATE') {
-      throw new Error(`Congregação "${account.congregation_name}" não foi encontrada no sistema`);
+    if (!congregationId) {
+      throw new Error(`Congregação "${account.congregation_name}" não pôde ser criada ou encontrada`);
     }
 
     const accountData = {
