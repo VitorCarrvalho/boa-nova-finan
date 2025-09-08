@@ -29,15 +29,14 @@ export const validateAccountData = (
     errors.push('Descrição é obrigatória');
   }
 
-  if (!account.category_id) {
+  if (!account.category_name) {
     errors.push('Categoria é obrigatória');
   } else {
     const categoryExists = categories.some(c => 
-      c.name.toLowerCase() === account.category_id.toLowerCase() ||
-      c.id === account.category_id
+      c.name.toLowerCase() === account.category_name.toLowerCase()
     );
     if (!categoryExists) {
-      warnings.push(`Categoria "${account.category_id}" será criada automaticamente`);
+      warnings.push(`Categoria "${account.category_name}" será criada automaticamente`);
     }
   }
 
@@ -67,15 +66,14 @@ export const validateAccountData = (
     errors.push('Nome do favorecido é obrigatório');
   }
 
-  if (!account.congregation_id) {
+  if (!account.congregation_name) {
     errors.push('Congregação é obrigatória');
   } else {
     const congregationExists = congregations.some(c => 
-      c.name.toLowerCase() === account.congregation_id.toLowerCase() ||
-      c.id === account.congregation_id
+      c.name.toLowerCase() === account.congregation_name.toLowerCase()
     );
     if (!congregationExists) {
-      warnings.push(`Congregação "${account.congregation_id}" será criada automaticamente`);
+      warnings.push(`Congregação "${account.congregation_name}" será criada automaticamente`);
     }
   }
 

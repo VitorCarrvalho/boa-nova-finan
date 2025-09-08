@@ -40,8 +40,8 @@ export const useImportValidation = () => {
       const account: ImportedAccount = {
         id: `import_${i}`,
         description: String(row.description || '').trim(),
-        category_id: String(row.category_name || '').trim(),
-        category_name: undefined,
+        category_id: '',
+        category_name: String(row.category_name || '').trim(),
         amount: parseBrazilianCurrency(String(row.amount || '0')),
         due_date: formatDate(row.due_date || row.vencimento),
         payment_method: normalizePaymentMethod(row.payment_method || row.pagamento),
@@ -50,8 +50,8 @@ export const useImportValidation = () => {
         bank_name: String(row.bank_name || '').trim() || undefined,
         bank_agency: String(row.bank_agency || '').trim() || undefined,
         bank_account: String(row.bank_account || '').trim() || undefined,
-        congregation_id: String(row.congregation_name || '').trim(),
-        congregation_name: undefined,
+        congregation_id: '',
+        congregation_name: String(row.congregation_name || '').trim(),
         observations: String(row.observations || '').trim() || undefined,
         invoice_number: String(row.invoice_number || '').trim() || undefined,
         is_recurring: parseBooleanField(row.is_recurring),
@@ -80,17 +80,22 @@ export const useImportValidation = () => {
       account.warnings = validation.warnings;
       account.isValid = validation.isValid;
 
-      // Set category and congregation names if found
-      const foundCategory = categories.find(c => c.name.toLowerCase() === account.category_id.toLowerCase());
+      // Map category name to ID
+      const foundCategory = categories.find(c => c.name.toLowerCase() === account.category_name?.toLowerCase());
       if (foundCategory) {
         account.category_id = foundCategory.id;
-        account.category_name = foundCategory.name;
+      } else if (account.category_name) {
+        // Category will be created automatically, but set a temporary flag
+        account.category_id = 'TO_CREATE';
       }
 
-      const foundCongregation = congregations.find(c => c.name.toLowerCase() === account.congregation_id.toLowerCase());
+      // Map congregation name to ID
+      const foundCongregation = congregations.find(c => c.name.toLowerCase() === account.congregation_name?.toLowerCase());
       if (foundCongregation) {
         account.congregation_id = foundCongregation.id;
-        account.congregation_name = foundCongregation.name;
+      } else if (account.congregation_name) {
+        // Congregation will be created automatically, but set a temporary flag
+        account.congregation_id = 'TO_CREATE';
       }
 
       // Check for duplicates

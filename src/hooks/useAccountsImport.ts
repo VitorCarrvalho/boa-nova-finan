@@ -99,8 +99,8 @@ export const useAccountsImport = () => {
     const congregationMap = new Map<string, string>();
 
     // Get unique categories and congregations needed
-    const uniqueCategories = [...new Set(accounts.map(acc => acc.category_name || acc.category_id).filter(Boolean))];
-    const uniqueCongregations = [...new Set(accounts.map(acc => acc.congregation_name || acc.congregation_id).filter(Boolean))];
+    const uniqueCategories = [...new Set(accounts.map(acc => acc.category_name).filter(Boolean))];
+    const uniqueCongregations = [...new Set(accounts.map(acc => acc.congregation_name).filter(Boolean))];
 
     // Fetch existing categories
     const { data: existingCategories } = await supabase
@@ -171,8 +171,16 @@ export const useAccountsImport = () => {
     congregationMap: Map<string, string>,
     userId: string
   ) => {
-    const categoryId = categoryMap.get(account.category_name || account.category_id) || account.category_id;
-    const congregationId = congregationMap.get(account.congregation_name || account.congregation_id) || account.congregation_id;
+    const categoryId = categoryMap.get(account.category_name!) || account.category_id;
+    const congregationId = congregationMap.get(account.congregation_name!) || account.congregation_id;
+
+    // Validate that we have valid UUIDs
+    if (!categoryId || categoryId === 'TO_CREATE') {
+      throw new Error(`Categoria "${account.category_name}" não foi encontrada no sistema`);
+    }
+    if (!congregationId || congregationId === 'TO_CREATE') {
+      throw new Error(`Congregação "${account.congregation_name}" não foi encontrada no sistema`);
+    }
 
     const accountData = {
       description: account.description,
