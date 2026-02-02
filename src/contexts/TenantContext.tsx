@@ -31,6 +31,8 @@ export interface TenantHomeConfig {
   }>;
 }
 
+export type TenantModulesConfig = Record<string, boolean>;
+
 export interface Tenant {
   id: string;
   name: string;
@@ -46,6 +48,7 @@ export interface TenantContextType {
   tenant: Tenant | null;
   branding: TenantBranding;
   homeConfig: TenantHomeConfig;
+  modulesConfig: TenantModulesConfig;
   loading: boolean;
   error: string | null;
   isMultiTenant: boolean;
@@ -78,6 +81,9 @@ const defaultHomeConfig: TenantHomeConfig = {
   customBanners: [],
 };
 
+// Por padrão, todos os módulos habilitados (para instância principal e tenants existentes)
+const defaultModulesConfig: TenantModulesConfig = {};
+
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 function getTenantIdentifier(): string | null {
@@ -101,6 +107,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [branding, setBranding] = useState<TenantBranding>(defaultBranding);
   const [homeConfig, setHomeConfig] = useState<TenantHomeConfig>(defaultHomeConfig);
+  const [modulesConfig, setModulesConfig] = useState<TenantModulesConfig>(defaultModulesConfig);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -117,6 +124,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         setTenant(null);
         setBranding(defaultBranding);
         setHomeConfig(defaultHomeConfig);
+        setModulesConfig(defaultModulesConfig);
         setLoading(false);
         return;
       }
@@ -147,12 +155,12 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         trialEndsAt: tenantData.trial_ends_at,
       });
 
-      // Fetch tenant settings (branding and home config)
+      // Fetch tenant settings (branding, home config, and modules)
       const { data: settingsData } = await supabase
         .from('tenant_settings')
         .select('category, settings')
         .eq('tenant_id', tenantData.id)
-        .in('category', ['branding', 'home']);
+        .in('category', ['branding', 'home', 'modules']);
 
       if (settingsData) {
         settingsData.forEach((setting) => {
@@ -178,6 +186,10 @@ export function TenantProvider({ children }: { children: ReactNode }) {
               widgetOrder: (homeSettings.widgetOrder as string[]) || defaultHomeConfig.widgetOrder,
               customBanners: (homeSettings.customBanners as TenantHomeConfig['customBanners']) || [],
             });
+          }
+          if (setting.category === 'modules' && setting.settings) {
+            const modulesSettings = setting.settings as TenantModulesConfig;
+            setModulesConfig(modulesSettings);
           }
         });
       }
@@ -221,6 +233,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     tenant,
     branding,
     homeConfig,
+    modulesConfig,
     loading,
     error,
     isMultiTenant,

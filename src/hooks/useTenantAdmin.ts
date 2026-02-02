@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Tenant, TenantBranding, TenantHomeConfig } from '@/contexts/TenantContext';
+import { Tenant, TenantBranding, TenantHomeConfig, TenantModulesConfig } from '@/contexts/TenantContext';
 
 interface TenantWithSettings extends Tenant {
   branding?: TenantBranding;
   homeConfig?: TenantHomeConfig;
+  modulesConfig?: TenantModulesConfig;
   adminsCount?: number;
   usersCount?: number;
 }
@@ -89,6 +90,7 @@ export function useTenantAdmin() {
 
           let branding: TenantBranding | undefined;
           let homeConfig: TenantHomeConfig | undefined;
+          let modulesConfig: TenantModulesConfig | undefined;
 
           settingsData?.forEach((s) => {
             const settings = s.settings as Record<string, unknown>;
@@ -97,6 +99,9 @@ export function useTenantAdmin() {
             }
             if (s.category === 'home') {
               homeConfig = settings as unknown as TenantHomeConfig;
+            }
+            if (s.category === 'modules') {
+              modulesConfig = settings as unknown as TenantModulesConfig;
             }
           });
 
@@ -111,6 +116,7 @@ export function useTenantAdmin() {
             trialEndsAt: t.trial_ends_at,
             branding,
             homeConfig,
+            modulesConfig,
             adminsCount: adminsCount || 0,
             usersCount: usersCount || 0,
           };
@@ -367,6 +373,53 @@ export function useTenantAdmin() {
     }
   };
 
+  const updateTenantModules = async (tenantId: string, modules: TenantModulesConfig): Promise<boolean> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { data: existing } = await supabase
+        .from('tenant_settings')
+        .select('id, settings')
+        .eq('tenant_id', tenantId)
+        .eq('category', 'modules')
+        .single();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('tenant_settings')
+          .update({ settings: modules, updated_by: user?.id })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('tenant_settings')
+          .insert({
+            tenant_id: tenantId,
+            category: 'modules',
+            settings: modules,
+            updated_by: user?.id,
+          });
+        if (error) throw error;
+      }
+
+      toast({
+        title: 'Sucesso',
+        description: 'Módulos atualizados com sucesso!',
+      });
+
+      await fetchTenants();
+      return true;
+    } catch (error: any) {
+      console.error('Error updating modules:', error);
+      toast({
+        title: 'Erro',
+        description: error.message || 'Não foi possível atualizar os módulos.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchTenants();
   }, [fetchTenants]);
@@ -380,6 +433,7 @@ export function useTenantAdmin() {
     updateTenant,
     updateTenantBranding,
     updateTenantHomeConfig,
+    updateTenantModules,
     deleteTenant,
   };
 }

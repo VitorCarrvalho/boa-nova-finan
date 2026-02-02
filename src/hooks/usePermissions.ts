@@ -1,15 +1,22 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { hasNestedPermission } from '@/utils/permissionUtils';
+import { useTenantModules } from '@/hooks/useTenantModules';
 
 export const usePermissions = () => {
   const { userPermissions, hasPermission } = useAuth();
+  const { isModuleEnabled } = useTenantModules();
 
   const checkModuleAccess = (module: string, action: string = 'view'): boolean => {
+    // Primeiro verifica se o módulo está habilitado para o tenant
+    if (!isModuleEnabled(module)) {
+      return false;
+    }
+    // Depois verifica se o usuário tem permissão
     return hasPermission(module, action);
   };
 
   const canViewModule = (module: string): boolean => {
-    return hasPermission(module, 'view');
+    return checkModuleAccess(module, 'view');
   };
 
   const canInsertModule = (module: string): boolean => {

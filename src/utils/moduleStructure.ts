@@ -302,4 +302,16 @@ export const MODULE_STRUCTURE: Module[] = [
       { key: 'edit', label: 'Editar', applicable: true },
     ],
   },
+  {
+    key: 'conecta',
+    label: 'Conecta IPTM',
+    icon: 'Network',
+    actions: [
+      { key: 'view', label: 'Visualizar', applicable: true },
+      { key: 'insert', label: 'Inserir', applicable: true },
+      { key: 'edit', label: 'Editar', applicable: true },
+      { key: 'delete', label: 'Excluir', applicable: true },
+      { key: 'approve', label: 'Aprovar', applicable: true },
+    ],
+  },
 ];
