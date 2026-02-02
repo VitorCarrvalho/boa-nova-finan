@@ -44,6 +44,7 @@ import {
   Truck,
   Calculator,
   Network,
+  Building,
 } from 'lucide-react';
 
 interface MenuItemType {
@@ -315,6 +316,17 @@ const DesktopSidebar = () => {
                     icon: FileText,
                     route: '/documentacao',
                     module: 'documentacao'
+                  }} />
+                </SidebarMenuItem>
+              )}
+
+              {canViewModule('gestao-acessos') && (
+                <SidebarMenuItem key="tenants">
+                  <MenuItemComponent item={{
+                    title: 'Gestão de Tenants',
+                    icon: Building,
+                    route: '/tenants',
+                    module: 'gestao-acessos'
                   }} />
                 </SidebarMenuItem>
               )}

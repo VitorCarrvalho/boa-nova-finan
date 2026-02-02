@@ -60,6 +60,9 @@ import ConectaIPTM from "@/pages/ConectaIPTM";
 import ConectaProviderProfile from "@/pages/ConectaProviderProfile";
 import ConectaManagement from "@/pages/ConectaManagement";
 
+// Import Tenant Management
+import TenantManagement from "@/pages/TenantManagement";
+
 import NotFound from "@/pages/NotFound";
 import VerifyRedirect from "@/components/VerifyRedirect";
 
@@ -244,6 +247,13 @@ const App = () => (
               <Route path="/documentacao" element={
                 <ProtectedRoute>
                   <Documentation />
+                </ProtectedRoute>
+              } />
+              
+              {/* Tenant Management - Super Admin Only */}
+              <Route path="/tenants" element={
+                <ProtectedRoute>
+                  <TenantManagement />
                 </ProtectedRoute>
               } />
               
