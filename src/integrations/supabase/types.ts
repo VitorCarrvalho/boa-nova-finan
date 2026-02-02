@@ -1799,6 +1799,10 @@ export type Database = {
         Args: { _tenant_id?: string; _user_id?: string }
         Returns: boolean
       }
+      is_tenant_owner: {
+        Args: { _tenant_id?: string; _user_id?: string }
+        Returns: boolean
+      }
       module_requires_congregation_access: {
         Args: { _module: string }
         Returns: boolean
