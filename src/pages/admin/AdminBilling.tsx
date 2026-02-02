@@ -96,7 +96,7 @@ const AdminBilling = () => {
             </h1>
             <p className="text-slate-400 mt-1">Gerencie assinaturas e pagamentos</p>
           </div>
-          <Button variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800">
+          <Button className="bg-orange-500 hover:bg-orange-600 text-white">
             <Download className="mr-2 h-4 w-4" />
             Exportar Relatório
           </Button>

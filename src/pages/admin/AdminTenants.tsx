@@ -158,7 +158,7 @@ const AdminTenants = () => {
               Gerencie as organizações (igrejas) que utilizam a plataforma
             </p>
           </div>
-          <Button onClick={handleCreate} className="bg-primary hover:bg-primary/90">
+          <Button onClick={handleCreate} className="bg-orange-500 hover:bg-orange-600 text-white">
             <Plus className="mr-2 h-4 w-4" />
             Novo Tenant
           </Button>
