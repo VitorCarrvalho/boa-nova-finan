@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
@@ -6,15 +5,22 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import MobileSidebar from './MobileSidebar';
 import DesktopSidebar from './DesktopSidebar';
 import HeaderProfile from './HeaderProfile';
+import SuperAdminLayout from './SuperAdminLayout';
 import fiveIcon from '@/assets/fiveicon.svg';
+import useSuperAdmin from '@/hooks/useSuperAdmin';
+import { useLocation } from 'react-router-dom';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { isSuperAdmin, loading: superAdminLoading } = useSuperAdmin();
   const isMobile = useIsMobile();
+  const location = useLocation();
+
+  const loading = authLoading || superAdminLoading;
 
   if (loading) {
     return (
@@ -28,7 +34,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   }
 
   if (!user) {
-    return null; // Será redirecionado para auth
+    return null;
+  }
+
+  // Se for Super Admin e estiver nas rotas /admin/*, usar SuperAdminLayout
+  // Se for Super Admin mas estiver em outra rota (ex: /dashboard via "Ver como Tenant"), usar layout normal
+  const isAdminRoute = location.pathname.startsWith('/admin');
+  
+  if (isSuperAdmin && isAdminRoute) {
+    return <SuperAdminLayout>{children}</SuperAdminLayout>;
   }
 
   if (isMobile) {
@@ -38,7 +52,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <MobileSidebar />
           
           <div className="flex-1 flex flex-col">
-            {/* Header with mobile menu trigger and logo */}
             <header className="bg-card border-b border-border px-4 py-4 sticky top-0 z-40">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -54,7 +67,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </div>
             </header>
             
-            {/* Main content */}
             <main className="flex-1 p-4 md:p-6 bg-background">
               {children}
             </main>
@@ -70,7 +82,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <DesktopSidebar />
         
         <div className="flex-1 flex flex-col">
-          {/* Header with logo */}
           <header className="bg-card border-b border-border px-4 py-4 sticky top-0 z-40">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -85,7 +96,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
           </header>
           
-          {/* Main content */}
           <main className="flex-1 p-4 md:p-6 ml-0 bg-background">
             {children}
           </main>

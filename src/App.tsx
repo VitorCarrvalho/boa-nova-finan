@@ -63,6 +63,14 @@ import ConectaManagement from "@/pages/ConectaManagement";
 // Import Tenant Management
 import TenantManagement from "@/pages/TenantManagement";
 
+// Import Super Admin pages
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminTenants from "@/pages/admin/AdminTenants";
+import AdminBilling from "@/pages/admin/AdminBilling";
+import AdminMetrics from "@/pages/admin/AdminMetrics";
+import AdminAuditoria from "@/pages/admin/AdminAuditoria";
+import AdminSettings from "@/pages/admin/AdminSettings";
+
 import NotFound from "@/pages/NotFound";
 import VerifyRedirect from "@/components/VerifyRedirect";
 
@@ -254,6 +262,38 @@ const App = () => (
               <Route path="/tenants" element={
                 <ProtectedRoute>
                   <TenantManagement />
+                </ProtectedRoute>
+              } />
+              
+              {/* Super Admin Routes */}
+              <Route path="/admin" element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/tenants" element={
+                <ProtectedRoute>
+                  <AdminTenants />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/billing" element={
+                <ProtectedRoute>
+                  <AdminBilling />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/metricas" element={
+                <ProtectedRoute>
+                  <AdminMetrics />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/auditoria" element={
+                <ProtectedRoute>
+                  <AdminAuditoria />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/configuracoes" element={
+                <ProtectedRoute>
+                  <AdminSettings />
                 </ProtectedRoute>
               } />
               
