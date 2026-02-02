@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useCongregationsPublic } from '@/hooks/useCongregationsPublic';
+import useSuperAdmin from '@/hooks/useSuperAdmin';
 
 const AuthPage = () => {
   const [email, setEmail] = useState('');
@@ -19,17 +20,25 @@ const AuthPage = () => {
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const { signIn, signUp, resetPassword, user, loading: authLoading } = useAuth();
+  const { isSuperAdmin, loading: superAdminLoading } = useSuperAdmin();
   const { data: congregations } = useCongregationsPublic();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     // Só redirecionar se não estiver carregando e tem usuário
-    if (!authLoading && user) {
-      console.log('Usuário autenticado, redirecionando...');
-      navigate('/dashboard');
+    if (!authLoading && !superAdminLoading && user) {
+      console.log('Usuário autenticado, verificando tipo de usuário...', { isSuperAdmin });
+      
+      if (isSuperAdmin) {
+        console.log('🚀 Super Admin detectado, redirecionando para /admin');
+        navigate('/admin');
+      } else {
+        console.log('Usuário normal, redirecionando para /dashboard');
+        navigate('/dashboard');
+      }
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, superAdminLoading, isSuperAdmin, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();

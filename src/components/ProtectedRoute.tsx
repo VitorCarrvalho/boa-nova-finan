@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
 import { Navigate, useLocation } from 'react-router-dom';
+import useSuperAdmin from '@/hooks/useSuperAdmin';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -15,6 +16,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiresCongregationAccess = false 
 }) => {
   const { user, userAccessProfile, loading } = useAuth();
+  const { isSuperAdmin, loading: superAdminLoading } = useSuperAdmin();
   const { data: congregationAccess, isLoading: congregationLoading } = useUserCongregationAccess();
   const location = useLocation();
 
@@ -22,14 +24,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     hasUser: !!user, 
     userAccessProfile, 
     loading, 
+    isSuperAdmin,
+    superAdminLoading,
     requiresCongregationAccess,
     congregationLoading,
     pathname: location.pathname
   });
 
   // Mostrar loading apenas para dados essenciais
-  if (loading) {
-    console.log('⏳ ProtectedRoute: Waiting for auth...');
+  if (loading || superAdminLoading) {
+    console.log('⏳ ProtectedRoute: Waiting for auth or super admin check...');
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -43,6 +47,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Se não tem usuário, redirecionar para login
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Se é Super Admin e NÃO está em rota /admin/*, redirecionar para /admin
+  const isAdminRoute = location.pathname.startsWith('/admin');
+  if (isSuperAdmin && !isAdminRoute) {
+    console.log('🚀 ProtectedRoute: Super Admin detected, redirecting to /admin');
+    return <Navigate to="/admin" replace />;
   }
 
   // Aguardar carregamento das permissões por mais tempo após o login
