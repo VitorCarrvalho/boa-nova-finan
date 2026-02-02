@@ -15,12 +15,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Edit, Trash2, Palette, Layout, Users, ExternalLink } from 'lucide-react';
-import { Tenant, TenantBranding, TenantHomeConfig } from '@/contexts/TenantContext';
+import { MoreHorizontal, Edit, Trash2, Palette, Layout, Users, ExternalLink, Puzzle } from 'lucide-react';
+import { Tenant, TenantBranding, TenantHomeConfig, TenantModulesConfig } from '@/contexts/TenantContext';
 
 interface TenantWithSettings extends Tenant {
   branding?: TenantBranding;
   homeConfig?: TenantHomeConfig;
+  modulesConfig?: TenantModulesConfig;
   adminsCount?: number;
   usersCount?: number;
 }
@@ -30,6 +31,7 @@ interface TenantTableProps {
   onEdit: (tenant: TenantWithSettings) => void;
   onEditBranding: (tenant: TenantWithSettings) => void;
   onEditHome: (tenant: TenantWithSettings) => void;
+  onEditModules: (tenant: TenantWithSettings) => void;
   onManageUsers: (tenant: TenantWithSettings) => void;
   onDelete: (tenant: TenantWithSettings) => void;
 }
@@ -54,6 +56,7 @@ export function TenantTable({
   onEdit,
   onEditBranding,
   onEditHome,
+  onEditModules,
   onManageUsers,
   onDelete,
 }: TenantTableProps) {
@@ -140,6 +143,10 @@ export function TenantTable({
                     <DropdownMenuItem onClick={() => onEditHome(tenant)}>
                       <Layout className="mr-2 h-4 w-4" />
                       Config Home
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEditModules(tenant)}>
+                      <Puzzle className="mr-2 h-4 w-4" />
+                      Módulos
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onManageUsers(tenant)}>
                       <Users className="mr-2 h-4 w-4" />

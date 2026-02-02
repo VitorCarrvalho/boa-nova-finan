@@ -8,6 +8,7 @@ import TenantTable from '@/components/tenants/TenantTable';
 import TenantFormDialog from '@/components/tenants/TenantFormDialog';
 import TenantBrandingDialog from '@/components/tenants/TenantBrandingDialog';
 import TenantHomeConfigDialog from '@/components/tenants/TenantHomeConfigDialog';
+import TenantModulesDialog from '@/components/tenants/TenantModulesDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,11 +19,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Tenant, TenantBranding, TenantHomeConfig } from '@/contexts/TenantContext';
+import { Tenant, TenantBranding, TenantHomeConfig, TenantModulesConfig } from '@/contexts/TenantContext';
 
 interface TenantWithSettings extends Tenant {
   branding?: TenantBranding;
   homeConfig?: TenantHomeConfig;
+  modulesConfig?: TenantModulesConfig;
   adminsCount?: number;
   usersCount?: number;
 }
@@ -36,12 +38,14 @@ const TenantManagement = () => {
     updateTenant,
     updateTenantBranding,
     updateTenantHomeConfig,
+    updateTenantModules,
     deleteTenant,
   } = useTenantAdmin();
 
   const [formOpen, setFormOpen] = useState(false);
   const [brandingOpen, setBrandingOpen] = useState(false);
   const [homeConfigOpen, setHomeConfigOpen] = useState(false);
+  const [modulesOpen, setModulesOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<TenantWithSettings | null>(null);
   const [formLoading, setFormLoading] = useState(false);
@@ -64,6 +68,11 @@ const TenantManagement = () => {
   const handleEditHome = (tenant: TenantWithSettings) => {
     setSelectedTenant(tenant);
     setHomeConfigOpen(true);
+  };
+
+  const handleEditModules = (tenant: TenantWithSettings) => {
+    setSelectedTenant(tenant);
+    setModulesOpen(true);
   };
 
   const handleManageUsers = (tenant: TenantWithSettings) => {
@@ -116,6 +125,16 @@ const TenantManagement = () => {
     setFormLoading(true);
     try {
       await updateTenantHomeConfig(selectedTenant.id, values);
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleModulesSubmit = async (values: TenantModulesConfig) => {
+    if (!selectedTenant) return;
+    setFormLoading(true);
+    try {
+      await updateTenantModules(selectedTenant.id, values);
     } finally {
       setFormLoading(false);
     }
@@ -179,6 +198,7 @@ const TenantManagement = () => {
                 onEdit={handleEdit}
                 onEditBranding={handleEditBranding}
                 onEditHome={handleEditHome}
+                onEditModules={handleEditModules}
                 onManageUsers={handleManageUsers}
                 onDelete={handleDeleteClick}
               />
@@ -210,6 +230,16 @@ const TenantManagement = () => {
         tenantName={selectedTenant?.name || ''}
         homeConfig={selectedTenant?.homeConfig}
         onSubmit={handleHomeConfigSubmit}
+        loading={formLoading}
+      />
+
+      <TenantModulesDialog
+        open={modulesOpen}
+        onOpenChange={setModulesOpen}
+        tenantName={selectedTenant?.name || ''}
+        tenantPlan={selectedTenant?.planType || 'free'}
+        modulesConfig={selectedTenant?.modulesConfig}
+        onSubmit={handleModulesSubmit}
         loading={formLoading}
       />
 
