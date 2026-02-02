@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ReportsProvider } from "@/contexts/ReportsContext";
+import { TenantProvider } from "@/contexts/TenantContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Import all pages
@@ -77,8 +78,9 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <AuthProvider>
-              <ReportsProvider>
+            <TenantProvider>
+              <AuthProvider>
+                <ReportsProvider>
               <Routes>
                 <Route path="/" element={<Home />} />
                 
@@ -307,6 +309,7 @@ const App = () => (
               </Routes>
             </ReportsProvider>
           </AuthProvider>
+        </TenantProvider>
         </BrowserRouter>
       </TooltipProvider>
       </ThemeProvider>
