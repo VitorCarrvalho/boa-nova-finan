@@ -1100,6 +1100,7 @@ export type Database = {
           profile_id: string | null
           rejection_reason: string | null
           role: Database["public"]["Enums"]["user_role"]
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1116,6 +1117,7 @@ export type Database = {
           profile_id?: string | null
           rejection_reason?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1132,6 +1134,7 @@ export type Database = {
           profile_id?: string | null
           rejection_reason?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1154,6 +1157,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "access_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -1477,6 +1487,27 @@ export type Database = {
         }
         Relationships: []
       }
+      super_admins: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           address: string | null
@@ -1509,6 +1540,118 @@ export type Database = {
           name?: string
           phone?: string | null
           services?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tenant_admins: {
+        Row: {
+          created_at: string
+          id: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["tenant_admin_role"]
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["tenant_admin_role"]
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["tenant_admin_role"]
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_admins_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_settings: {
+        Row: {
+          category: string
+          id: string
+          settings: Json
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category: string
+          id?: string
+          settings?: Json
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string
+          id?: string
+          settings?: Json
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          name: string
+          plan_type: Database["public"]["Enums"]["tenant_plan_type"]
+          slug: string
+          subdomain: string
+          subscription_status: Database["public"]["Enums"]["tenant_subscription_status"]
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          plan_type?: Database["public"]["Enums"]["tenant_plan_type"]
+          slug: string
+          subdomain: string
+          subscription_status?: Database["public"]["Enums"]["tenant_subscription_status"]
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          plan_type?: Database["public"]["Enums"]["tenant_plan_type"]
+          slug?: string
+          subdomain?: string
+          subscription_status?: Database["public"]["Enums"]["tenant_subscription_status"]
+          trial_ends_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1650,6 +1793,12 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      get_user_tenant_id: { Args: { _user_id?: string }; Returns: string }
+      is_super_admin: { Args: { _user_id?: string }; Returns: boolean }
+      is_tenant_admin: {
+        Args: { _tenant_id?: string; _user_id?: string }
+        Returns: boolean
+      }
       module_requires_congregation_access: {
         Args: { _module: string }
         Returns: boolean
@@ -1674,6 +1823,10 @@ export type Database = {
           }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      user_belongs_to_tenant: {
+        Args: { _tenant_id?: string; _user_id?: string }
+        Returns: boolean
+      }
       user_has_congregation_access: { Args: never; Returns: boolean }
       user_has_nested_permission: {
         Args: { _permission_path: string }
@@ -1725,6 +1878,14 @@ export type Database = {
       recipient_profile: "pastores" | "financeiro" | "membros" | "todos"
       service_provider_status: "pending" | "approved" | "rejected" | "inactive"
       service_review_status: "pending" | "approved" | "rejected"
+      tenant_admin_role: "owner" | "admin" | "manager"
+      tenant_plan_type: "free" | "basic" | "pro" | "enterprise"
+      tenant_subscription_status:
+        | "pending"
+        | "trial"
+        | "active"
+        | "suspended"
+        | "cancelled"
       transaction_type: "income" | "expense"
       urgency_level: "normal" | "urgent"
       user_role:
@@ -1910,6 +2071,15 @@ export const Constants = {
       recipient_profile: ["pastores", "financeiro", "membros", "todos"],
       service_provider_status: ["pending", "approved", "rejected", "inactive"],
       service_review_status: ["pending", "approved", "rejected"],
+      tenant_admin_role: ["owner", "admin", "manager"],
+      tenant_plan_type: ["free", "basic", "pro", "enterprise"],
+      tenant_subscription_status: [
+        "pending",
+        "trial",
+        "active",
+        "suspended",
+        "cancelled",
+      ],
       transaction_type: ["income", "expense"],
       urgency_level: ["normal", "urgent"],
       user_role: [
