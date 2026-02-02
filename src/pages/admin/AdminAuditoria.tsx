@@ -89,9 +89,8 @@ const AdminAuditoria = () => {
             <p className="text-slate-400 mt-1">Logs de atividades e ações administrativas</p>
           </div>
           <Button 
-            variant="outline" 
             onClick={handleExport}
-            className="border-slate-700 text-slate-300 hover:bg-slate-800"
+            className="bg-orange-500 hover:bg-orange-600 text-white"
           >
             <Download className="mr-2 h-4 w-4" />
             Exportar Logs

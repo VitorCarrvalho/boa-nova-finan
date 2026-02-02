@@ -77,7 +77,7 @@ const AdminSettings = () => {
               </div>
               <Switch />
             </div>
-            <Button className="bg-primary hover:bg-primary/90">
+            <Button className="bg-orange-500 hover:bg-orange-600 text-white">
               Salvar Configurações
             </Button>
           </CardContent>
@@ -119,7 +119,7 @@ const AdminSettings = () => {
               </div>
               <Switch defaultChecked />
             </div>
-            <Button className="bg-primary hover:bg-primary/90">
+            <Button className="bg-orange-500 hover:bg-orange-600 text-white">
               Salvar Configurações
             </Button>
           </CardContent>
@@ -162,7 +162,7 @@ const AdminSettings = () => {
               </div>
               <Switch />
             </div>
-            <Button className="bg-primary hover:bg-primary/90">
+            <Button className="bg-orange-500 hover:bg-orange-600 text-white">
               Salvar Configurações
             </Button>
           </CardContent>
@@ -203,7 +203,7 @@ const AdminSettings = () => {
               </div>
               <Switch defaultChecked />
             </div>
-            <Button className="bg-primary hover:bg-primary/90">
+            <Button className="bg-orange-500 hover:bg-orange-600 text-white">
               Salvar Configurações
             </Button>
           </CardContent>
