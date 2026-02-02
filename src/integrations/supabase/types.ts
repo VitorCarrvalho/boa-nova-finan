@@ -285,7 +285,7 @@ export type Database = {
           downloaded_at: string
           downloaded_by: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           user_agent: string | null
         }
         Insert: {
@@ -293,7 +293,7 @@ export type Database = {
           downloaded_at?: string
           downloaded_by: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
         }
         Update: {
@@ -301,7 +301,7 @@ export type Database = {
           downloaded_at?: string
           downloaded_by?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
         }
         Relationships: [
@@ -473,6 +473,36 @@ export type Database = {
           state?: string | null
           street?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      cta_clicks: {
+        Row: {
+          button_location: string
+          clicked_at: string
+          created_at: string
+          id: string
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          button_location: string
+          clicked_at?: string
+          created_at?: string
+          id?: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          button_location?: string
+          clicked_at?: string
+          created_at?: string
+          id?: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -697,6 +727,147 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          created_at: string | null
+          id: number
+          nome: string | null
+          possui_thread: boolean | null
+          remoteJid: string | null
+          response_id: string | null
+          thread_id: string | null
+          total_tokens: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          nome?: string | null
+          possui_thread?: boolean | null
+          remoteJid?: string | null
+          response_id?: string | null
+          thread_id?: string | null
+          total_tokens?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          nome?: string | null
+          possui_thread?: boolean | null
+          remoteJid?: string | null
+          response_id?: string | null
+          thread_id?: string | null
+          total_tokens?: string | null
+        }
+        Relationships: []
+      }
+      leads_plamev: {
+        Row: {
+          castracao: string | null
+          como_conheceu: string | null
+          created_at: string
+          email: string | null
+          especie: string | null
+          id: number
+          idade: string | null
+          name: string | null
+          objetivo: string | null
+          pets_name: string | null
+          qtd_pets: string | null
+          raca_ou_porte: string | null
+          sexo: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          castracao?: string | null
+          como_conheceu?: string | null
+          created_at?: string
+          email?: string | null
+          especie?: string | null
+          id?: number
+          idade?: string | null
+          name?: string | null
+          objetivo?: string | null
+          pets_name?: string | null
+          qtd_pets?: string | null
+          raca_ou_porte?: string | null
+          sexo?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          castracao?: string | null
+          como_conheceu?: string | null
+          created_at?: string
+          email?: string | null
+          especie?: string | null
+          id?: number
+          idade?: string | null
+          name?: string | null
+          objetivo?: string | null
+          pets_name?: string | null
+          qtd_pets?: string | null
+          raca_ou_porte?: string | null
+          sexo?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      "leads-filipe": {
+        Row: {
+          cep: string | null
+          created_at: string
+          id: number
+          nome: string | null
+          placa_veiculo: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          cep?: string | null
+          created_at?: string
+          id?: number
+          nome?: string | null
+          placa_veiculo?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          cep?: string | null
+          created_at?: string
+          id?: number
+          nome?: string | null
+          placa_veiculo?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      "leads-top-1264": {
+        Row: {
+          created_at: string
+          email: string | null
+          id: number
+          nome: string | null
+          nome_completo: string | null
+          sobrenome: string | null
+          telefone: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: number
+          nome?: string | null
+          nome_completo?: string | null
+          sobrenome?: string | null
+          telefone?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: number
+          nome?: string | null
+          nome_completo?: string | null
+          sobrenome?: string | null
+          telefone?: string | null
+        }
+        Relationships: []
+      }
       members: {
         Row: {
           address: string | null
@@ -887,6 +1058,30 @@ export type Database = {
           id?: string
           nome?: string | null
           texto?: string
+        }
+        Relationships: []
+      }
+      pre_inscricoes: {
+        Row: {
+          created_at: string
+          data_nascimento: string
+          id: string
+          nome: string
+          telefone: string
+        }
+        Insert: {
+          created_at?: string
+          data_nascimento: string
+          id?: string
+          nome: string
+          telefone: string
+        }
+        Update: {
+          created_at?: string
+          data_nascimento?: string
+          id?: string
+          nome?: string
+          telefone?: string
         }
         Relationships: []
       }
@@ -1258,6 +1453,30 @@ export type Database = {
           },
         ]
       }
+      site_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string | null
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           address: string | null
@@ -1425,73 +1644,37 @@ export type Database = {
         Args: { provider_name: string }
         Returns: string
       }
-      get_authenticated_user_permissions: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      get_current_user_permissions: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      get_authenticated_user_permissions: { Args: never; Returns: Json }
+      get_current_user_permissions: { Args: never; Returns: Json }
       get_current_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["user_role"]
-      }
-      gtrgm_compress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_decompress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_in: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_options: {
-        Args: { "": unknown }
-        Returns: undefined
-      }
-      gtrgm_out: {
-        Args: { "": unknown }
-        Returns: unknown
       }
       module_requires_congregation_access: {
         Args: { _module: string }
         Returns: boolean
       }
-      reject_user: {
-        Args:
-          | {
+      reject_user:
+        | {
+            Args: {
+              _rejected_by?: string
+              _rejection_reason?: string
+              _user_id: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
               _allow_reapply?: boolean
               _rejected_by?: string
               _rejection_reason?: string
               _user_id: string
             }
-          | {
-              _rejected_by?: string
-              _rejection_reason?: string
-              _user_id: string
-            }
-        Returns: boolean
-      }
-      set_limit: {
-        Args: { "": number }
-        Returns: number
-      }
-      show_limit: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      show_trgm: {
-        Args: { "": string }
-        Returns: string[]
-      }
-      user_has_congregation_access: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+            Returns: boolean
+          }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      user_has_congregation_access: { Args: never; Returns: boolean }
       user_has_nested_permission: {
         Args: { _permission_path: string }
         Returns: boolean
