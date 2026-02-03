@@ -6,7 +6,7 @@ import MobileSidebar from './MobileSidebar';
 import DesktopSidebar from './DesktopSidebar';
 import HeaderProfile from './HeaderProfile';
 import SuperAdminLayout from './SuperAdminLayout';
-import fiveIcon from '@/assets/fiveicon.svg';
+import logoIM from '@/assets/logoIM.png';
 import useSuperAdmin from '@/hooks/useSuperAdmin';
 import { useLocation } from 'react-router-dom';
 
@@ -56,8 +56,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <img 
-                    src={fiveIcon} 
-                    alt="IPTM Logo" 
+                    src={logoIM} 
+                    alt="Igreja Moove" 
                     className="w-10 h-10"
                   />
                   <SidebarTrigger className="md:hidden" />
@@ -85,11 +85,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <header className="bg-card border-b border-border px-4 py-4 sticky top-0 z-40">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <img 
-                  src={fiveIcon} 
-                  alt="IPTM Logo" 
-                  className="w-10 h-10"
-                />
+              <img 
+                src={logoIM} 
+                alt="Igreja Moove" 
+                className="w-10 h-10"
+              />
                 <h1 className="text-xl font-bold text-foreground">Painel Administrativo</h1>
               </div>
               <HeaderProfile />
