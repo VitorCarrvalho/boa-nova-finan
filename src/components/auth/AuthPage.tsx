@@ -241,11 +241,8 @@ const AuthPage = () => {
           <img 
             src={logoIM} 
             alt="Igreja Moove" 
-            className="w-20 h-20 mx-auto mb-4"
+            className="w-32 h-32 mx-auto mb-2"
           />
-          <CardTitle className="text-2xl font-bold text-gray-900">
-            Igreja Moove
-          </CardTitle>
           <CardDescription>
             Sistema de Gestão da Igreja
           </CardDescription>
@@ -286,7 +283,7 @@ const AuthPage = () => {
                 </div>
                 <Button 
                   type="submit" 
-                  className="w-full bg-red-600 hover:bg-red-700"
+                  className="w-full bg-[#2652e9] hover:bg-[#1e42c4]"
                   disabled={loading}
                 >
                   {loading ? 'Entrando...' : 'Entrar'}
@@ -350,7 +347,7 @@ const AuthPage = () => {
                 </div>
                 <Button 
                   type="submit" 
-                  className="w-full bg-red-600 hover:bg-red-700"
+                  className="w-full bg-[#2652e9] hover:bg-[#1e42c4]"
                   disabled={loading}
                 >
                   {loading ? 'Cadastrando...' : 'Cadastrar'}
@@ -374,7 +371,7 @@ const AuthPage = () => {
                 </div>
                 <Button 
                   type="submit" 
-                  className="w-full bg-red-600 hover:bg-red-700"
+                  className="w-full bg-[#2652e9] hover:bg-[#1e42c4]"
                   disabled={resetLoading}
                 >
                   {resetLoading ? 'Enviando...' : 'Enviar Link de Recuperação'}
