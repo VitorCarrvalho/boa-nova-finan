@@ -1,155 +1,138 @@
 
-# Plano: Gestão de Usuários por Tenant
+# Plano: Correção da Arquitetura Multi-Tenant
 
-## Objetivo
-Implementar um sistema para que Super Admins possam criar e gerenciar usuários administradores para cada tenant diretamente da página de Gestão de Tenants.
+## Problemas Identificados
 
-## Fluxo de Uso
+### 1. Configurações de Personalização no Lugar Errado
+A página de personalização (branding, home, módulos) está em `/tenants` que só Super Admins veem. Admins dos tenants não conseguem personalizar sua própria igreja.
 
-1. Super Admin clica em "Usuários" no menu de ações do tenant Mica
-2. Abre um dialog mostrando a lista de admins do tenant (atualmente vazia)
-3. Super Admin clica em "Adicionar Admin"
-4. Preenche: Nome, Email, Senha temporária e Role (Owner/Admin/Manager)
-5. Sistema cria o usuário no Supabase Auth e associa ao tenant
-6. Usuário recebe email de confirmação e pode acessar o sistema do tenant
+### 2. Dados Compartilhados Entre Tenants
+As tabelas principais não possuem `tenant_id`:
+- `members` - Sem tenant_id
+- `church_events` - Sem tenant_id  
+- `financial_records` - Sem tenant_id
+- `congregations` - Sem tenant_id
+- `ministries` - Sem tenant_id
+- `departments` - Sem tenant_id
+- `suppliers` - Sem tenant_id
+- E outras tabelas de dados...
 
-## Arquivos a Criar
+Isso faz com que todos os tenants vejam os mesmos dados (como mostra a screenshot - Mica vendo eventos e membros da IPTM).
 
-### 1. `src/components/tenants/TenantUsersDialog.tsx`
-Dialog principal para gestão de usuários do tenant.
+---
 
-```text
-+----------------------------------------------+
-|  Usuários - Mica                        [X] |
-|----------------------------------------------|
-|  Gerencie os administradores deste tenant    |
-|                                              |
-|  [+ Adicionar Admin]                         |
-|                                              |
-|  +------------------------------------------+|
-|  | Nome         | Email           | Role    ||
-|  |--------------|-----------------|---------|
-|  | João Silva   | joao@mica.com   | Owner   ||
-|  | Maria Santos | maria@mica.com  | Admin   ||
-|  +------------------------------------------+|
-|                                              |
-|                              [Fechar]        |
-+----------------------------------------------+
-```
+## Solução em Duas Partes
 
-Funcionalidades:
-- Listar admins do tenant (da tabela `tenant_admins`)
-- Botão para adicionar novo admin
-- Opção de remover admin existente
-- Mostrar role de cada admin (Owner/Admin/Manager)
+### Parte 1: Página de Configurações do Tenant
 
-### 2. `src/components/tenants/TenantUserFormDialog.tsx`
-Sub-dialog para criar/editar um admin.
+Adicionar na página `/configuracoes` abas para que o Admin do tenant possa personalizar:
 
 ```text
-+----------------------------------------------+
-|  Adicionar Administrador                [X] |
-|----------------------------------------------|
-|                                              |
-|  Nome Completo                               |
-|  [____________________________]              |
-|                                              |
-|  Email                                       |
-|  [____________________________]              |
-|                                              |
-|  Senha Temporária                            |
-|  [____________________________]              |
-|                                              |
-|  Perfil de Acesso do Tenant                  |
-|  [Owner ▼]                                   |
-|   - Owner: Acesso total ao tenant            |
-|   - Admin: Gerencia usuários e configs       |
-|   - Manager: Gerencia operações              |
-|                                              |
-|             [Cancelar]  [Criar Usuário]      |
-+----------------------------------------------+
+┌─────────────────────────────────────────────────────────┐
+│ Configurações                                           │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  [Geral]  [Branding]  [Home]  [Módulos]  [Segurança]   │
+│                                                         │
+│  ┌─ ABA BRANDING ────────────────────────────────────┐ │
+│  │                                                    │ │
+│  │  Logo da Igreja         [Upload]                  │ │
+│  │  Favicon                [Upload]                  │ │
+│  │  Nome da Igreja         [______________]          │ │
+│  │  Tagline                [______________]          │ │
+│  │                                                    │ │
+│  │  Cor Primária           [Picker] #2652e9          │ │
+│  │  Cor Secundária         [Picker]                  │ │
+│  │  Cor de Destaque        [Picker]                  │ │
+│  │                                                    │ │
+│  └────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### 3. `src/hooks/useTenantUsers.ts`
-Hook para operações CRUD de usuários do tenant.
+**Arquivos a modificar/criar:**
+- `src/pages/Settings.tsx` - Adicionar tabs com configurações do tenant
+- Reutilizar componentes de `TenantBrandingDialog`, `TenantHomeConfigDialog`, `TenantModulesDialog`
+- Criar hook `useCurrentTenantSettings.ts` para carregar/salvar configurações do tenant atual
 
-```typescript
-interface TenantUser {
-  id: string;
-  user_id: string;
-  tenant_id: string;
-  role: 'owner' | 'admin' | 'manager';
-  created_at: string;
-  user: {
-    name: string;
-    email: string;
-  };
-}
+### Parte 2: Isolamento de Dados por Tenant (Migração de Banco)
 
-// Funções:
-- fetchTenantUsers(tenantId)
-- createTenantUser(tenantId, userData)
-- updateTenantUserRole(userId, newRole)
-- removeTenantUser(userId)
+Adicionar coluna `tenant_id` a TODAS as tabelas de dados:
+
+```sql
+-- Tabelas que precisam de tenant_id
+ALTER TABLE members ADD COLUMN tenant_id UUID REFERENCES tenants(id);
+ALTER TABLE church_events ADD COLUMN tenant_id UUID REFERENCES tenants(id);
+ALTER TABLE financial_records ADD COLUMN tenant_id UUID REFERENCES tenants(id);
+ALTER TABLE congregations ADD COLUMN tenant_id UUID REFERENCES tenants(id);
+ALTER TABLE ministries ADD COLUMN tenant_id UUID REFERENCES tenants(id);
+ALTER TABLE departments ADD COLUMN tenant_id UUID REFERENCES tenants(id);
+ALTER TABLE suppliers ADD COLUMN tenant_id UUID REFERENCES tenants(id);
+ALTER TABLE reconciliations ADD COLUMN tenant_id UUID REFERENCES tenants(id);
+ALTER TABLE accounts_payable ADD COLUMN tenant_id UUID REFERENCES tenants(id);
+-- E outras tabelas relacionadas...
+
+-- Criar índices para performance
+CREATE INDEX idx_members_tenant ON members(tenant_id);
+CREATE INDEX idx_events_tenant ON church_events(tenant_id);
+-- etc...
+
+-- Atualizar RLS policies para filtrar por tenant
+CREATE POLICY "Users can only see their tenant data" ON members
+  FOR ALL USING (
+    tenant_id = get_user_tenant_id(auth.uid())
+  );
 ```
 
-## Arquivos a Modificar
+**Atualizar hooks de dados para filtrar por tenant:**
+- `useMemberData.ts`
+- `useEventData.ts`
+- `useFinancialData.ts`
+- `useCongregationData.ts`
+- `useMinistryData.ts`
+- `useDepartmentData.ts`
+- `useSupplierData.ts`
+- E outros hooks de dados...
 
-### 4. `src/pages/admin/AdminTenants.tsx`
-- Adicionar estado `usersOpen` e `TenantUsersDialog`
-- Implementar `handleManageUsers` para abrir o dialog
+---
 
-### 5. `src/hooks/useTenantAdmin.ts`
-- Adicionar função `createTenantUser` que:
-  1. Cria usuário no Supabase Auth via `supabase.auth.admin.createUser()`
-  2. Insere registro em `profiles` com `tenant_id` correto
-  3. Insere registro em `tenant_admins` com a role selecionada
+## Sequência de Implementação
 
-## Fluxo Técnico de Criação de Usuário
+### Fase 1: Configurações do Tenant (Rápido)
+1. Modificar `Settings.tsx` para adicionar tabs de personalização
+2. Permitir que Admins do tenant editem branding/home/módulos
+3. Usar o `tenant_id` do profile do usuário logado
 
-```text
-1. Super Admin preenche formulário
-         |
-         v
-2. Chamar supabase.auth.admin.createUser()
-   - email, password, email_confirm: true
-         |
-         v
-3. Criar profile no banco
-   - id: user.id
-   - name, email, tenant_id
-   - approval_status: 'ativo'
-   - role: 'admin'
-         |
-         v
-4. Criar tenant_admin
-   - user_id, tenant_id
-   - role: 'owner' | 'admin' | 'manager'
-   - invited_by: super_admin_id
-         |
-         v
-5. Usuário pode fazer login
-   e acessar o tenant
-```
+### Fase 2: Isolamento de Dados (Mais Complexo)
+1. Migração SQL para adicionar `tenant_id` em todas as tabelas
+2. Definir tenant padrão (IPTM Global) para dados existentes
+3. Atualizar RLS policies
+4. Atualizar todos os hooks de dados para filtrar por tenant
+5. Atualizar mutations para incluir tenant_id nos inserts
 
-## Considerações de Segurança
+---
 
-1. **Criação via Admin API**: Usar `supabase.auth.admin.createUser()` requer uma Edge Function com service_role key
-2. **Alternativa**: Usar o fluxo de convite (`supabase.auth.inviteUserByEmail()`)
-3. **RLS**: Usuários só verão dados do próprio tenant
+## Decisão Necessária
 
-## Estrutura de Permissões
+O Problema 2 (isolamento de dados) é uma mudança **estrutural grande** que afeta:
+- 15+ tabelas no banco de dados
+- 10+ hooks de dados
+- Todas as operações de CRUD
+- Políticas RLS
 
-| Role | Pode criar usuários | Pode editar branding | Pode ver relatórios |
-|------|---------------------|----------------------|---------------------|
-| Owner | Sim | Sim | Sim |
-| Admin | Sim | Sim | Sim |
-| Manager | Não | Não | Sim |
+**Você quer que eu implemente:**
 
-## Resultado Esperado
+**A) Apenas Parte 1** - Configurações do Tenant na página Settings (rápido)
 
-Após implementação, você poderá:
-1. Clicar em "Usuários" no tenant Mica
-2. Criar um admin com email `admin@mica.com`
-3. Esse usuário poderá fazer login em `?tenant=mica`
-4. Verá apenas dados da Mica, com branding personalizado
+**B) Parte 1 + Parte 2** - Configurações + Isolamento completo de dados (mais complexo, mas resolve o problema raiz)
+
+---
+
+## Resumo Técnico
+
+| Item | Situação Atual | Solução |
+|------|---------------|---------|
+| Personalização | Só Super Admin em /tenants | Admin pode editar em /configuracoes |
+| Dados de Membros | Compartilhados | Filtrar por tenant_id |
+| Dados de Eventos | Compartilhados | Filtrar por tenant_id |
+| Dados Financeiros | Compartilhados | Filtrar por tenant_id |
+| RLS Policies | Sem tenant | Adicionar filtro tenant_id |
