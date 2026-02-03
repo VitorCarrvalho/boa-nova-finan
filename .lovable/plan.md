@@ -1,96 +1,106 @@
 
-# Plano: Adicionar Query Parameter para Teste de Tenant
+# Plano: Eliminar Dados Hardcoded dos Widgets da Home
 
-## Objetivo
-Permitir que Super Admins testem a visualização de qualquer tenant usando `?tenant=slug` na URL, sem precisar configurar DNS ou publicar.
+## Problema Identificado
+Quando você acessa via `?tenant=mica`, os widgets da Home ainda mostram informações da IPTM:
+- Instagram: `@catedraliptmoficial`
+- Pastores: Foto específica da IPTM Global
+- Mapa: Endereço "Rua João Vicente, 741 - Osvaldo Cruz - RJ"
+- Conecta: Título "Conecta IPTM"
 
-## Exemplo de Uso
-```
-https://id-preview--41e4016e-aff1-4b61-8f27-09c2db2825c6.lovable.app/?tenant=mica
-https://id-preview--41e4016e-aff1-4b61-8f27-09c2db2825c6.lovable.app/auth?tenant=mica
-```
+## Solução Proposta
 
-## Alteração Necessária
+Expandir a configuração de Home do tenant para incluir dados específicos de cada widget, tornando tudo personalizável.
 
-### Arquivo: `src/contexts/TenantContext.tsx`
+### 1. Atualizar Estrutura de Dados (TenantContext)
 
-Modificar a função `getTenantIdentifier()` para verificar também query parameters:
+Adicionar novos campos ao `TenantHomeConfig`:
 
-**Código atual (linhas 89-104):**
 ```typescript
-function getTenantIdentifier(): string | null {
-  const hostname = window.location.hostname;
+export interface TenantHomeConfig {
+  widgets: { ... };
+  widgetOrder: string[];
+  customBanners: Array<...>;
   
-  // Check for localhost or preview URLs (default tenant)
-  if (hostname === 'localhost' || hostname.includes('lovable.app') || hostname.includes('127.0.0.1')) {
-    return null; // Use default/main tenant
-  }
-  
-  // Extract subdomain from hostname
-  const parts = hostname.split('.');
-  if (parts.length >= 3) {
-    return parts[0];
-  }
-  
-  return null;
+  // NOVOS CAMPOS:
+  instagram?: {
+    handle: string;      // ex: "@igrejamica"
+    url: string;         // ex: "https://instagram.com/igrejamica"
+  };
+  address?: {
+    street: string;      // ex: "Rua Principal, 100"
+    neighborhood: string; // ex: "Centro"
+    city: string;        // ex: "São Paulo - SP"
+    cep: string;         // ex: "01000-000"
+  };
+  pastoresImageUrl?: string; // URL da imagem dos pastores
 }
 ```
 
-**Código novo:**
+### 2. Atualizar Widgets para Usar Dados do Tenant
+
+**InstagramWidget.tsx:**
 ```typescript
-function getTenantIdentifier(): string | null {
-  // 1. Verificar query parameter primeiro (para testes/preview)
-  const urlParams = new URLSearchParams(window.location.search);
-  const tenantParam = urlParams.get('tenant');
-  if (tenantParam) {
-    return tenantParam;
-  }
-
-  const hostname = window.location.hostname;
-  
-  // 2. Check for localhost or preview URLs (default tenant)
-  if (hostname === 'localhost' || hostname.includes('lovable.app') || hostname.includes('127.0.0.1')) {
-    return null;
-  }
-  
-  // 3. Extract subdomain from hostname
-  const parts = hostname.split('.');
-  if (parts.length >= 3) {
-    return parts[0];
-  }
-  
-  return null;
-}
+const { homeConfig } = useTenant();
+const instagramHandle = homeConfig.instagram?.handle || '@igrejamoove';
+const instagramUrl = homeConfig.instagram?.url || 'https://instagram.com/igrejamoove';
 ```
 
-## Como Funciona
-
-1. **Prioridade 1**: Query param `?tenant=mica`
-2. **Prioridade 2**: Subdomínio real (ex: `mica.igrejamoove.app`)
-3. **Fallback**: Tenant padrão (Igreja Moove)
-
-## Benefícios
-
-- Testar branding de qualquer tenant sem configurar DNS
-- Super Admin pode visualizar exatamente como o cliente vê
-- Funciona em localhost e preview do Lovable
-- Não afeta ambientes de produção (query param tem prioridade apenas se presente)
-
-## Melhoria Adicional (Opcional)
-
-Adicionar um banner discreto no topo quando estiver em "modo preview de tenant":
-
-```tsx
-{tenantParam && (
-  <div className="bg-yellow-100 text-yellow-800 text-xs py-1 px-4 text-center">
-    👁️ Visualizando como: {tenant?.name || tenantParam}
-  </div>
-)}
+**MapaWidget.tsx:**
+```typescript
+const { homeConfig } = useTenant();
+const address = homeConfig.address || {
+  street: 'Não configurado',
+  neighborhood: '',
+  city: '',
+  cep: ''
+};
 ```
 
-## Resultado
+**PastoresWidget.tsx:**
+```typescript
+const { homeConfig } = useTenant();
+const pastoresImageUrl = homeConfig.pastoresImageUrl || '/placeholder.svg';
+```
 
-Após a implementação, você poderá acessar:
-- `https://[preview-url]/?tenant=mica` para ver o tenant Mica
-- O sistema carregará o branding configurado (logo, cores, nome)
-- A tela de login e todo o painel usarão a identidade visual do tenant Mica
+**ConectaWidget.tsx:**
+```typescript
+const { branding } = useTenant();
+// Usar nome genérico "Conecta" + nome da igreja
+<h3>Conecta {branding.churchName.split(' ')[0]}</h3>
+// Resultado: "Conecta Mica" ou "Conecta IPTM"
+```
+
+### 3. Atualizar Dialog de Configuração da Home
+
+Adicionar seções no `TenantHomeConfigDialog.tsx` para configurar:
+
+- **Instagram**: Campo para handle e URL
+- **Endereço**: Campos para rua, bairro, cidade, CEP
+- **Imagem dos Pastores**: Upload de imagem
+
+### 4. Arquivos a Modificar
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/contexts/TenantContext.tsx` | Expandir interface `TenantHomeConfig` |
+| `src/components/home/widgets/InstagramWidget.tsx` | Usar dados do tenant |
+| `src/components/home/widgets/MapaWidget.tsx` | Usar dados do tenant |
+| `src/components/home/widgets/PastoresWidget.tsx` | Usar dados do tenant |
+| `src/components/home/widgets/ConectaWidget.tsx` | Usar branding.churchName |
+| `src/components/tenants/TenantHomeConfigDialog.tsx` | Adicionar campos de config |
+
+### 5. Valores Padrão (Fallback)
+
+Para tenants que ainda não configuraram seus dados, usaremos valores genéricos neutros:
+- Instagram: Ocultar widget ou mostrar "Não configurado"
+- Mapa: Ocultar widget ou mostrar "Endereço não configurado"  
+- Pastores: Placeholder ou ocultar widget
+- Conecta: Usar "Conecta" + primeira palavra do nome da igreja
+
+## Resultado Esperado
+
+Ao acessar `?tenant=mica`:
+- Todos os widgets mostrarão dados específicos da Mica (quando configurados)
+- Nenhuma referência à IPTM aparecerá
+- Admin do tenant pode personalizar cada widget no painel de gestão
