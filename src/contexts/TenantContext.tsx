@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface TenantBranding {
@@ -129,100 +129,169 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const [modulesConfig, setModulesConfig] = useState<TenantModulesConfig>(defaultModulesConfig);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const tenantIdentifier = getTenantIdentifier();
-  const isMultiTenant = tenantIdentifier !== null;
+  const isMultiTenant = tenantIdentifier !== null || tenant !== null;
 
-  const fetchTenantData = async () => {
+  // Listen for auth state changes (avoiding circular dependency with AuthContext)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setCurrentUserId(data.session?.user?.id || null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setCurrentUserId(session?.user?.id || null);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Function to fetch tenant_id from user's profile
+  const fetchTenantFromProfile = useCallback(async (): Promise<string | null> => {
+    if (!currentUserId) return null;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('tenant_id')
+      .eq('id', currentUserId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching tenant from profile:', error);
+      return null;
+    }
+
+    return data?.tenant_id || null;
+  }, [currentUserId]);
+
+  // Function to load tenant settings (branding, home, modules)
+  const loadTenantSettings = useCallback(async (tenantId: string) => {
+    const { data: settingsData } = await supabase
+      .from('tenant_settings')
+      .select('category, settings')
+      .eq('tenant_id', tenantId)
+      .in('category', ['branding', 'home', 'modules']);
+
+    if (settingsData) {
+      settingsData.forEach((setting) => {
+        if (setting.category === 'branding' && setting.settings) {
+          const brandingSettings = setting.settings as Record<string, unknown>;
+          setBranding({
+            ...defaultBranding,
+            primaryColor: (brandingSettings.primaryColor as string) || defaultBranding.primaryColor,
+            secondaryColor: (brandingSettings.secondaryColor as string) || defaultBranding.secondaryColor,
+            accentColor: (brandingSettings.accentColor as string) || defaultBranding.accentColor,
+            logoUrl: (brandingSettings.logoUrl as string) || null,
+            faviconUrl: (brandingSettings.faviconUrl as string) || null,
+            fontFamily: (brandingSettings.fontFamily as string) || defaultBranding.fontFamily,
+            churchName: (brandingSettings.churchName as string) || defaultBranding.churchName,
+            tagline: (brandingSettings.tagline as string) || defaultBranding.tagline,
+          });
+        }
+        if (setting.category === 'home' && setting.settings) {
+          const homeSettings = setting.settings as Record<string, unknown>;
+          setHomeConfig({
+            ...defaultHomeConfig,
+            widgets: (homeSettings.widgets as TenantHomeConfig['widgets']) || defaultHomeConfig.widgets,
+            widgetOrder: (homeSettings.widgetOrder as string[]) || defaultHomeConfig.widgetOrder,
+            customBanners: (homeSettings.customBanners as TenantHomeConfig['customBanners']) || [],
+          });
+        }
+        if (setting.category === 'modules' && setting.settings) {
+          const modulesSettings = setting.settings as TenantModulesConfig;
+          setModulesConfig(modulesSettings);
+        }
+      });
+    }
+  }, []);
+
+  const fetchTenantData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      if (!tenantIdentifier) {
-        // No tenant identifier - use defaults (main IPTM Global instance)
-        setTenant(null);
-        setBranding(defaultBranding);
-        setHomeConfig(defaultHomeConfig);
-        setModulesConfig(defaultModulesConfig);
-        setLoading(false);
-        return;
-      }
+      // Priority 1: URL identifier (query param or subdomain)
+      if (tenantIdentifier) {
+        const { data: tenantData, error: tenantError } = await supabase
+          .from('tenants')
+          .select('*')
+          .or(`subdomain.eq.${tenantIdentifier},slug.eq.${tenantIdentifier}`)
+          .eq('is_active', true)
+          .single();
 
-      // Fetch tenant by subdomain
-      const { data: tenantData, error: tenantError } = await supabase
-        .from('tenants')
-        .select('*')
-        .or(`subdomain.eq.${tenantIdentifier},slug.eq.${tenantIdentifier}`)
-        .eq('is_active', true)
-        .single();
+        if (tenantError || !tenantData) {
+          console.error('Tenant not found:', tenantError);
+          setError('Organização não encontrada');
+          setLoading(false);
+          return;
+        }
 
-      if (tenantError || !tenantData) {
-        console.error('Tenant not found:', tenantError);
-        setError('Organização não encontrada');
-        setLoading(false);
-        return;
-      }
-
-      setTenant({
-        id: tenantData.id,
-        name: tenantData.name,
-        slug: tenantData.slug,
-        subdomain: tenantData.subdomain,
-        isActive: tenantData.is_active,
-        planType: tenantData.plan_type,
-        subscriptionStatus: tenantData.subscription_status,
-        trialEndsAt: tenantData.trial_ends_at,
-      });
-
-      // Fetch tenant settings (branding, home config, and modules)
-      const { data: settingsData } = await supabase
-        .from('tenant_settings')
-        .select('category, settings')
-        .eq('tenant_id', tenantData.id)
-        .in('category', ['branding', 'home', 'modules']);
-
-      if (settingsData) {
-        settingsData.forEach((setting) => {
-          if (setting.category === 'branding' && setting.settings) {
-            const brandingSettings = setting.settings as Record<string, unknown>;
-            setBranding({
-              ...defaultBranding,
-              primaryColor: (brandingSettings.primaryColor as string) || defaultBranding.primaryColor,
-              secondaryColor: (brandingSettings.secondaryColor as string) || defaultBranding.secondaryColor,
-              accentColor: (brandingSettings.accentColor as string) || defaultBranding.accentColor,
-              logoUrl: (brandingSettings.logoUrl as string) || null,
-              faviconUrl: (brandingSettings.faviconUrl as string) || null,
-              fontFamily: (brandingSettings.fontFamily as string) || defaultBranding.fontFamily,
-              churchName: (brandingSettings.churchName as string) || defaultBranding.churchName,
-              tagline: (brandingSettings.tagline as string) || defaultBranding.tagline,
-            });
-          }
-          if (setting.category === 'home' && setting.settings) {
-            const homeSettings = setting.settings as Record<string, unknown>;
-            setHomeConfig({
-              ...defaultHomeConfig,
-              widgets: (homeSettings.widgets as TenantHomeConfig['widgets']) || defaultHomeConfig.widgets,
-              widgetOrder: (homeSettings.widgetOrder as string[]) || defaultHomeConfig.widgetOrder,
-              customBanners: (homeSettings.customBanners as TenantHomeConfig['customBanners']) || [],
-            });
-          }
-          if (setting.category === 'modules' && setting.settings) {
-            const modulesSettings = setting.settings as TenantModulesConfig;
-            setModulesConfig(modulesSettings);
-          }
+        setTenant({
+          id: tenantData.id,
+          name: tenantData.name,
+          slug: tenantData.slug,
+          subdomain: tenantData.subdomain,
+          isActive: tenantData.is_active,
+          planType: tenantData.plan_type,
+          subscriptionStatus: tenantData.subscription_status,
+          trialEndsAt: tenantData.trial_ends_at,
         });
+
+        await loadTenantSettings(tenantData.id);
+        setLoading(false);
+        return;
       }
+
+      // Priority 2: Tenant from user's profile (fallback for logged-in users)
+      if (currentUserId) {
+        const profileTenantId = await fetchTenantFromProfile();
+        
+        if (profileTenantId) {
+          const { data: tenantData, error: tenantError } = await supabase
+            .from('tenants')
+            .select('*')
+            .eq('id', profileTenantId)
+            .eq('is_active', true)
+            .single();
+
+          if (!tenantError && tenantData) {
+            setTenant({
+              id: tenantData.id,
+              name: tenantData.name,
+              slug: tenantData.slug,
+              subdomain: tenantData.subdomain,
+              isActive: tenantData.is_active,
+              planType: tenantData.plan_type,
+              subscriptionStatus: tenantData.subscription_status,
+              trialEndsAt: tenantData.trial_ends_at,
+            });
+
+            await loadTenantSettings(tenantData.id);
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
+      // No tenant found - use defaults (main IPTM Global instance)
+      setTenant(null);
+      setBranding(defaultBranding);
+      setHomeConfig(defaultHomeConfig);
+      setModulesConfig(defaultModulesConfig);
+      setLoading(false);
     } catch (err) {
       console.error('Error fetching tenant:', err);
       setError('Erro ao carregar dados da organização');
-    } finally {
       setLoading(false);
     }
-  };
+  }, [tenantIdentifier, currentUserId, fetchTenantFromProfile, loadTenantSettings]);
 
   useEffect(() => {
     fetchTenantData();
-  }, [tenantIdentifier]);
+  }, [fetchTenantData]);
 
   // Apply branding CSS variables
   useEffect(() => {
