@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTenant } from '@/contexts/TenantContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,9 +23,17 @@ const AuthPage = () => {
   const [resetLoading, setResetLoading] = useState(false);
   const { signIn, signUp, resetPassword, user, loading: authLoading } = useAuth();
   const { isSuperAdmin, loading: superAdminLoading } = useSuperAdmin();
+  const { branding, loading: tenantLoading } = useTenant();
   const { data: congregations } = useCongregationsPublic();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Dynamic styles based on tenant branding
+  const buttonStyle = {
+    backgroundColor: `hsl(${branding.primaryColor})`,
+  };
+
+  const buttonHoverClass = "hover:opacity-90";
 
   useEffect(() => {
     // Só redirecionar se não estiver carregando e tem usuário
@@ -234,17 +243,25 @@ const AuthPage = () => {
     setResetLoading(false);
   };
 
+  // Use tenant logo if available, otherwise fall back to default
+  const displayLogo = branding.logoUrl || logoIM;
+  const displayName = branding.churchName || 'Igreja Moove';
+  const displayTagline = branding.tagline || 'Sistema de Gestão da Igreja';
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <img 
-            src={logoIM} 
-            alt="Igreja Moove" 
-            className="w-32 h-32 mx-auto mb-2"
+            src={displayLogo} 
+            alt={displayName} 
+            className="w-32 h-32 mx-auto mb-2 object-contain"
           />
+          {branding.logoUrl && (
+            <CardTitle className="text-xl">{displayName}</CardTitle>
+          )}
           <CardDescription>
-            Sistema de Gestão da Igreja
+            {displayTagline}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -283,7 +300,8 @@ const AuthPage = () => {
                 </div>
                 <Button 
                   type="submit" 
-                  className="w-full bg-[#2652e9] hover:bg-[#1e42c4]"
+                  className={`w-full ${buttonHoverClass}`}
+                  style={buttonStyle}
                   disabled={loading}
                 >
                   {loading ? 'Entrando...' : 'Entrar'}
@@ -347,7 +365,8 @@ const AuthPage = () => {
                 </div>
                 <Button 
                   type="submit" 
-                  className="w-full bg-[#2652e9] hover:bg-[#1e42c4]"
+                  className={`w-full ${buttonHoverClass}`}
+                  style={buttonStyle}
                   disabled={loading}
                 >
                   {loading ? 'Cadastrando...' : 'Cadastrar'}
@@ -371,7 +390,8 @@ const AuthPage = () => {
                 </div>
                 <Button 
                   type="submit" 
-                  className="w-full bg-[#2652e9] hover:bg-[#1e42c4]"
+                  className={`w-full ${buttonHoverClass}`}
+                  style={buttonStyle}
                   disabled={resetLoading}
                 >
                   {resetLoading ? 'Enviando...' : 'Enviar Link de Recuperação'}
