@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
+import { useTenant } from '@/contexts/TenantContext';
 import type { Database } from '@/integrations/supabase/types';
 
 type Reconciliation = Database['public']['Tables']['reconciliations']['Row'];
@@ -55,6 +56,7 @@ export const useReconciliations = () => {
 
 export const useCreateReconciliation = () => {
   const queryClient = useQueryClient();
+  const { tenant } = useTenant();
 
   return useMutation({
     mutationFn: async (reconciliationData: ReconciliationInsert) => {
@@ -69,11 +71,12 @@ export const useCreateReconciliation = () => {
         throw new Error('Data da conciliação é obrigatória');
       }
       
-      // Ensure status is always pending for new reconciliations
+      // Ensure status is always pending for new reconciliations and include tenant_id
       const dataToInsert = {
         ...reconciliationData,
         status: 'pending',
-        total_income: reconciliationData.total_income || 0
+        total_income: reconciliationData.total_income || 0,
+        ...(tenant?.id ? { tenant_id: tenant.id } : {})
       };
       
       const { data, error } = await supabase

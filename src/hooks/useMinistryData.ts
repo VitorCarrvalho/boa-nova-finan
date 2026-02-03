@@ -1,8 +1,8 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import { useTenant } from '@/contexts/TenantContext';
 
 type Ministry = Database['public']['Tables']['ministries']['Row'];
 type MinistryInsert = Database['public']['Tables']['ministries']['Insert'];
@@ -51,14 +51,20 @@ export const useMinistries = () => {
 
 export const useCreateMinistry = () => {
   const queryClient = useQueryClient();
+  const { tenant } = useTenant();
 
   return useMutation({
     mutationFn: async (ministryData: MinistryInsert) => {
       console.log('Creating ministry with data:', ministryData);
       
+      // Include tenant_id if available
+      const dataWithTenant = tenant?.id 
+        ? { ...ministryData, tenant_id: tenant.id }
+        : ministryData;
+      
       const { data, error } = await supabase
         .from('ministries')
-        .insert(ministryData)
+        .insert(dataWithTenant)
         .select()
         .single();
 
