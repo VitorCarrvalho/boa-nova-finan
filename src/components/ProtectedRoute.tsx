@@ -49,9 +49,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/auth" replace />;
   }
 
-  // Se é Super Admin e NÃO está em rota /admin/*, redirecionar para /admin
+  // Se é Super Admin, apenas redirecionar para /admin se estiver tentando acessar rotas proibidas
+  // Permitir rotas de tenant (ex: /configuracoes, /dashboard) para Super Admins acessarem normalmente
   const isAdminRoute = location.pathname.startsWith('/admin');
-  if (isSuperAdmin && !isAdminRoute) {
+  const isTenantRoute = ['/configuracoes', '/dashboard', '/membros', '/financeiro', '/eventos'].some(
+    r => location.pathname.startsWith(r)
+  );
+  
+  // Super Admin só é forçado para /admin na entrada inicial (não em rotas de tenant)
+  if (isSuperAdmin && !isAdminRoute && !isTenantRoute && location.pathname !== '/') {
     console.log('🚀 ProtectedRoute: Super Admin detected, redirecting to /admin');
     return <Navigate to="/admin" replace />;
   }

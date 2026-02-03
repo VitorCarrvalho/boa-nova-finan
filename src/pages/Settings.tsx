@@ -9,7 +9,24 @@ import TenantHomeTab from '@/components/settings/TenantHomeTab';
 import TenantModulesTab from '@/components/settings/TenantModulesTab';
 
 const Settings = () => {
-  const { tenant, isMultiTenant } = useTenant();
+  const { tenant, isMultiTenant, loading: tenantLoading } = useTenant();
+  
+  // Show loading while tenant data is being resolved
+  if (tenantLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Carregando configurações...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+  
+  // Determine if tenant tabs should be shown
+  const showTenantTabs = isMultiTenant || tenant !== null;
 
   return (
     <Layout>
@@ -21,9 +38,9 @@ const Settings = () => {
           </p>
         </div>
 
-        <Tabs defaultValue={isMultiTenant || tenant ? "branding" : "geral"} className="space-y-6">
+        <Tabs defaultValue={showTenantTabs ? "branding" : "geral"} className="space-y-6">
           <TabsList className="flex-wrap h-auto gap-2">
-            {(isMultiTenant || tenant) && (
+            {showTenantTabs && (
               <>
                 <TabsTrigger value="branding" className="flex items-center gap-2">
                   <Palette className="h-4 w-4" />
@@ -50,21 +67,21 @@ const Settings = () => {
           </TabsList>
 
           {/* Branding Tab */}
-          {(isMultiTenant || tenant) && (
+          {showTenantTabs && (
             <TabsContent value="branding">
               <TenantBrandingTab />
             </TabsContent>
           )}
 
           {/* Home Tab */}
-          {(isMultiTenant || tenant) && (
+          {showTenantTabs && (
             <TabsContent value="home">
               <TenantHomeTab />
             </TabsContent>
           )}
 
           {/* Modules Tab */}
-          {(isMultiTenant || tenant) && (
+          {showTenantTabs && (
             <TabsContent value="modules">
               <TenantModulesTab />
             </TabsContent>
