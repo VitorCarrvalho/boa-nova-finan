@@ -109,7 +109,10 @@ function getTenantIdentifier(): string | null {
   const hostname = window.location.hostname;
   
   // 2. Check for localhost or preview URLs (default tenant)
-  if (hostname === 'localhost' || hostname.includes('lovable.app') || hostname.includes('127.0.0.1')) {
+  if (hostname === 'localhost' || 
+      hostname.includes('lovable.app') || 
+      hostname.includes('lovableproject.com') ||
+      hostname.includes('127.0.0.1')) {
     return null; // Use default/main tenant
   }
   
