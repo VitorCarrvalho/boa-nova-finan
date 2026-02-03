@@ -29,6 +29,18 @@ export interface TenantHomeConfig {
     linkUrl?: string;
     altText: string;
   }>;
+  // Dados específicos dos widgets
+  instagram?: {
+    handle: string;
+    url: string;
+  };
+  address?: {
+    street: string;
+    neighborhood: string;
+    city: string;
+    cep: string;
+  };
+  pastoresImageUrl?: string;
 }
 
 export type TenantModulesConfig = Record<string, boolean>;
