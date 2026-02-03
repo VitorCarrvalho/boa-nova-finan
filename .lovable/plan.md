@@ -1,32 +1,209 @@
 
-# Plano: Adicionar Logo do Igreja Moove
+# Plano: Sistema de Branding Personalizavel por Tenant
 
 ## Objetivo
-Substituir o logo antigo (`fiveicon.svg`) pelo novo logo oficial do Igreja Moove em todos os lugares relevantes do sistema.
+Permitir que cada tenant (igreja) configure seu proprio logo e paleta de cores, aplicando automaticamente na tela de login e em todo o painel administrativo.
 
-## Arquivos Afetados
+## Arquitetura Atual (ja existente)
 
-### 1. Copiar o logo para o projeto
-- **De**: `user-uploads://logoIM.png`
-- **Para**: `src/assets/logoIM.png`
+O sistema JA possui uma infraestrutura de branding:
 
-### 2. Atualizar Layout.tsx
-Substituir a importacao e uso do `fiveIcon` pelo novo `logoIM`:
+1. **TenantContext.tsx**: Carrega configuracoes do tenant baseado no subdominio
+2. **tenant_settings (banco)**: Armazena branding em JSON (category = 'branding')
+3. **TenantBrandingDialog.tsx**: Formulario para editar branding (cores HSL, logo URL, nome, etc.)
+4. **useTenantBranding.ts**: Hook para consumir branding no frontend
 
-| Local | Alteracao |
-|-------|-----------|
-| Linha 9 | Trocar `import fiveIcon from '@/assets/fiveicon.svg'` por `import logoIM from '@/assets/logoIM.png'` |
-| Linha 59 | Trocar `src={fiveIcon}` por `src={logoIM}` |
-| Linha 60 | Trocar `alt="IPTM Logo"` por `alt="Igreja Moove"` |
-| Linha 89 | Trocar `src={fiveIcon}` por `src={logoIM}` |
-| Linha 90 | Trocar `alt="IPTM Logo"` por `alt="Igreja Moove"` |
+### Estrutura de Branding Existente
+```typescript
+interface TenantBranding {
+  primaryColor: string;      // HSL: "222.2 47.4% 11.2%"
+  secondaryColor: string;
+  accentColor: string;
+  logoUrl: string | null;
+  faviconUrl: string | null;
+  fontFamily: string;
+  churchName: string;
+  tagline: string | null;
+}
+```
 
-### 3. Pagina de Login (AuthPage.tsx)
-Adicionar o logo acima do titulo "Igreja Moove" para reforcar a identidade visual na tela de login.
+## O Que Falta Implementar
 
-### 4. Considerar outros locais (opcional)
-- Sidebar Desktop/Mobile: Podem receber o logo no cabecalho
-- Super Admin Layout: Pode manter o icone atual diferenciado
+### 1. Tela de Login Dinamica (AuthPage.tsx)
 
-## Resultado Esperado
-O novo logo do Igreja Moove (circulo azul com igreja + texto) aparecera no header do painel administrativo e na tela de login, substituindo o icone antigo e reforçando a identidade da marca.
+**Problema atual**: A tela de login usa logo estatico (`logoIM.png`) e cor fixa (`#2652e9`)
+
+**Solucao**:
+- Usar `useTenantBranding()` para obter logo e cores do tenant
+- Renderizar logo do tenant se existir, senao usar logo padrao
+- Aplicar `primaryColor` do tenant nos botoes
+- Mostrar `churchName` e `tagline` do tenant
+
+### 2. Layout Administrativo (Layout.tsx)
+
+**Problema atual**: Logo estatico no header
+
+**Solucao**:
+- Usar branding do tenant no header
+- Logo dinamico baseado no tenant
+
+### 3. Seletores de Cor Amigaveis (TenantBrandingDialog.tsx)
+
+**Problema atual**: Usuario precisa digitar valores HSL manualmente (ex: "222.2 47.4% 11.2%")
+
+**Solucao**:
+- Adicionar color picker visual (input type="color")
+- Converter HEX para HSL automaticamente
+- Preview em tempo real das cores
+
+### 4. Upload de Logo (Novo)
+
+**Problema atual**: Usuario precisa fornecer URL externa do logo
+
+**Solucao**:
+- Adicionar upload de imagem para Supabase Storage
+- Bucket ja existe: `profile-pictures` (pode ser usado) ou criar `tenant-logos`
+- Salvar URL gerada no branding
+
+---
+
+## Arquivos a Modificar
+
+### 1. `src/components/auth/AuthPage.tsx`
+- Importar `useTenantBranding` ou `useTenant`
+- Substituir logo estatico por `branding.logoUrl || logoIM`
+- Aplicar `branding.primaryColor` nos botoes
+- Mostrar `branding.churchName` como titulo (se existir)
+
+### 2. `src/components/layout/Layout.tsx`
+- Usar branding do tenant no header
+- Logo dinamico
+
+### 3. `src/components/tenants/TenantBrandingDialog.tsx`
+- Adicionar color pickers visuais
+- Funcao de conversao HEX para HSL
+- Componente de upload de logo
+- Preview do logo carregado
+
+### 4. `src/contexts/TenantContext.tsx`
+- Adicionar campo `buttonColor` ou usar `primaryColor` para botoes
+- (Opcional) Adicionar mais opcoes de personalizacao
+
+### 5. Criar: `src/utils/colorUtils.ts`
+- Funcao `hexToHsl(hex: string): string`
+- Funcao `hslToHex(hsl: string): string`
+- Facilitar conversao entre formatos
+
+### 6. Criar bucket de storage (SQL Migration)
+- Bucket: `tenant-logos`
+- Politica: Super admins podem fazer upload
+
+---
+
+## Fluxo de Funcionamento
+
+```
++------------------------+
+|  Super Admin acessa    |
+|  /admin/tenants        |
++-----------+------------+
+            |
+            v
++------------------------+
+|  Clica em "Branding"   |
+|  de um tenant          |
++-----------+------------+
+            |
+            v
++------------------------+
+|  TenantBrandingDialog  |
+|  - Color Pickers       |
+|  - Upload Logo         |
+|  - Preview             |
++-----------+------------+
+            |
+            v
++------------------------+
+|  Salva em              |
+|  tenant_settings       |
++-----------+------------+
+            |
+            v
++------------------------+
+|  Usuario do tenant     |
+|  acessa via subdominio |
++-----------+------------+
+            |
+            v
++------------------------+
+|  TenantContext carrega |
+|  branding do tenant    |
++-----------+------------+
+            |
+            v
++------------------------+
+|  AuthPage e Layout     |
+|  aplicam cores/logo    |
++------------------------+
+```
+
+---
+
+## Detalhes Tecnicos
+
+### Conversao de Cores
+- Input visual: `<input type="color">` retorna HEX (#2652e9)
+- CSS Variables do Tailwind: usam HSL (222.2 47.4% 11.2%)
+- Necessario converter HEX para HSL ao salvar
+
+### Upload de Logo
+- Usar Supabase Storage (bucket publico)
+- Limitar tamanho (max 2MB)
+- Aceitar PNG, JPG, SVG
+- Retornar URL publica para salvar no branding
+
+### Aplicacao das Cores
+- Cores principais: via CSS variables (ja implementado no TenantContext)
+- Botoes especificos: usar `style={{ backgroundColor: hsl(primaryColor) }}`
+- Alternativa: Definir classe CSS dinamica
+
+---
+
+## Prioridades de Implementacao
+
+1. **Alta**: Color pickers visuais no TenantBrandingDialog
+2. **Alta**: Login dinamico com branding do tenant  
+3. **Media**: Upload de logo para Storage
+4. **Media**: Layout header dinamico
+5. **Baixa**: Mais opcoes de personalizacao (gradientes, etc.)
+
+---
+
+## Resumo das Mudancas
+
+| Arquivo | Mudanca |
+|---------|---------|
+| AuthPage.tsx | Usar branding dinamico (logo, cores, nome) |
+| Layout.tsx | Logo dinamico no header |
+| TenantBrandingDialog.tsx | Color pickers + upload de logo |
+| colorUtils.ts (novo) | Funcoes de conversao HEX/HSL |
+| SQL Migration | Bucket tenant-logos |
+
+## Resultado Final
+
+Cada tenant podera personalizar:
+- Logo (upload ou URL)
+- Favicon
+- Cor primaria (visual picker)
+- Cor secundaria
+- Cor de destaque
+- Nome da igreja
+- Slogan/tagline
+- Fonte
+
+E essas configuracoes serao aplicadas automaticamente em:
+- Tela de Login
+- Header do painel
+- Botoes principais
+- Favicon do navegador
+- Titulo da pagina
