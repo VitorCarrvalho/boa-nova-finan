@@ -87,14 +87,21 @@ const defaultModulesConfig: TenantModulesConfig = {};
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 function getTenantIdentifier(): string | null {
+  // 1. Verificar query parameter primeiro (para testes/preview)
+  const urlParams = new URLSearchParams(window.location.search);
+  const tenantParam = urlParams.get('tenant');
+  if (tenantParam) {
+    return tenantParam;
+  }
+
   const hostname = window.location.hostname;
   
-  // Check for localhost or preview URLs (default tenant)
+  // 2. Check for localhost or preview URLs (default tenant)
   if (hostname === 'localhost' || hostname.includes('lovable.app') || hostname.includes('127.0.0.1')) {
     return null; // Use default/main tenant
   }
   
-  // Extract subdomain from hostname
+  // 3. Extract subdomain from hostname
   const parts = hostname.split('.');
   if (parts.length >= 3) {
     return parts[0]; // Return subdomain
