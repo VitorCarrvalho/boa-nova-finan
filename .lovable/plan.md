@@ -1,138 +1,139 @@
 
-# Plano: Correção da Arquitetura Multi-Tenant
+# Plano: Correção da Detecção de Tenant pelo Profile do Usuário
 
-## Problemas Identificados
+## Problema Identificado
 
-### 1. Configurações de Personalização no Lugar Errado
-A página de personalização (branding, home, módulos) está em `/tenants` que só Super Admins veem. Admins dos tenants não conseguem personalizar sua própria igreja.
+O sistema não está detectando automaticamente o tenant do usuário logado. Atualmente:
+- TenantContext só reconhece tenant via URL (`?tenant=slug` ou subdomínio)
+- Usuários como `admin@mica.com` que têm `tenant_id` no profile não são reconhecidos
+- Resultado: abas de Branding/Home/Módulos não aparecem em `/configuracoes`
 
-### 2. Dados Compartilhados Entre Tenants
-As tabelas principais não possuem `tenant_id`:
-- `members` - Sem tenant_id
-- `church_events` - Sem tenant_id  
-- `financial_records` - Sem tenant_id
-- `congregations` - Sem tenant_id
-- `ministries` - Sem tenant_id
-- `departments` - Sem tenant_id
-- `suppliers` - Sem tenant_id
-- E outras tabelas de dados...
+## Solução Proposta
 
-Isso faz com que todos os tenants vejam os mesmos dados (como mostra a screenshot - Mica vendo eventos e membros da IPTM).
-
----
-
-## Solução em Duas Partes
-
-### Parte 1: Página de Configurações do Tenant
-
-Adicionar na página `/configuracoes` abas para que o Admin do tenant possa personalizar:
+Modificar o `TenantContext.tsx` para detectar o tenant em 3 níveis:
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│ Configurações                                           │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  [Geral]  [Branding]  [Home]  [Módulos]  [Segurança]   │
-│                                                         │
-│  ┌─ ABA BRANDING ────────────────────────────────────┐ │
-│  │                                                    │ │
-│  │  Logo da Igreja         [Upload]                  │ │
-│  │  Favicon                [Upload]                  │ │
-│  │  Nome da Igreja         [______________]          │ │
-│  │  Tagline                [______________]          │ │
-│  │                                                    │ │
-│  │  Cor Primária           [Picker] #2652e9          │ │
-│  │  Cor Secundária         [Picker]                  │ │
-│  │  Cor de Destaque        [Picker]                  │ │
-│  │                                                    │ │
-│  └────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────┘
+Prioridade de Detecção:
+1. Query parameter (?tenant=slug) → Para testes
+2. Subdomínio (mica.example.com) → Produção
+3. tenant_id do profile do usuário → Fallback automático
 ```
 
-**Arquivos a modificar/criar:**
-- `src/pages/Settings.tsx` - Adicionar tabs com configurações do tenant
-- Reutilizar componentes de `TenantBrandingDialog`, `TenantHomeConfigDialog`, `TenantModulesDialog`
-- Criar hook `useCurrentTenantSettings.ts` para carregar/salvar configurações do tenant atual
+## Arquivos a Modificar
 
-### Parte 2: Isolamento de Dados por Tenant (Migração de Banco)
+### 1. `src/contexts/TenantContext.tsx`
 
-Adicionar coluna `tenant_id` a TODAS as tabelas de dados:
+Adicionar lógica para buscar o tenant_id do profile do usuário autenticado:
 
-```sql
--- Tabelas que precisam de tenant_id
-ALTER TABLE members ADD COLUMN tenant_id UUID REFERENCES tenants(id);
-ALTER TABLE church_events ADD COLUMN tenant_id UUID REFERENCES tenants(id);
-ALTER TABLE financial_records ADD COLUMN tenant_id UUID REFERENCES tenants(id);
-ALTER TABLE congregations ADD COLUMN tenant_id UUID REFERENCES tenants(id);
-ALTER TABLE ministries ADD COLUMN tenant_id UUID REFERENCES tenants(id);
-ALTER TABLE departments ADD COLUMN tenant_id UUID REFERENCES tenants(id);
-ALTER TABLE suppliers ADD COLUMN tenant_id UUID REFERENCES tenants(id);
-ALTER TABLE reconciliations ADD COLUMN tenant_id UUID REFERENCES tenants(id);
-ALTER TABLE accounts_payable ADD COLUMN tenant_id UUID REFERENCES tenants(id);
--- E outras tabelas relacionadas...
+```typescript
+// Adicionar dependência do AuthContext
+import { useAuth } from '@/contexts/AuthContext';
 
--- Criar índices para performance
-CREATE INDEX idx_members_tenant ON members(tenant_id);
-CREATE INDEX idx_events_tenant ON church_events(tenant_id);
--- etc...
+// Dentro do TenantProvider:
+const { user } = useAuth();
 
--- Atualizar RLS policies para filtrar por tenant
-CREATE POLICY "Users can only see their tenant data" ON members
-  FOR ALL USING (
-    tenant_id = get_user_tenant_id(auth.uid())
+// Nova função para buscar tenant do profile
+const fetchTenantFromProfile = async () => {
+  if (!user?.id) return null;
+  
+  const { data } = await supabase
+    .from('profiles')
+    .select('tenant_id')
+    .eq('id', user.id)
+    .single();
+    
+  return data?.tenant_id || null;
+};
+
+// Modificar fetchTenantData para usar essa info
+const fetchTenantData = async () => {
+  // 1. Tentar identificador da URL
+  let effectiveTenantId = tenantIdentifier;
+  
+  // 2. Se não encontrou na URL, buscar do profile
+  if (!effectiveTenantId && user?.id) {
+    const profileTenantId = await fetchTenantFromProfile();
+    if (profileTenantId) {
+      // Buscar tenant pelo ID
+      const { data } = await supabase
+        .from('tenants')
+        .select('*')
+        .eq('id', profileTenantId)
+        .single();
+      
+      if (data) {
+        setTenant({ /* ... dados do tenant */ });
+        // Carregar branding, home, modules...
+        return;
+      }
+    }
+  }
+  
+  // Resto da lógica atual...
+};
+```
+
+### 2. Dependência Circular
+
+Problema: `TenantContext` precisa de `AuthContext`, mas pode haver dependência circular.
+
+Solução: Usar `supabase.auth.getUser()` direto ao invés de `useAuth()`:
+
+```typescript
+// Em vez de useAuth (que pode causar dependência circular)
+const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+useEffect(() => {
+  supabase.auth.getSession().then(({ data }) => {
+    setCurrentUserId(data.session?.user?.id || null);
+  });
+  
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    (_event, session) => {
+      setCurrentUserId(session?.user?.id || null);
+    }
   );
+  
+  return () => subscription.unsubscribe();
+}, []);
 ```
 
-**Atualizar hooks de dados para filtrar por tenant:**
-- `useMemberData.ts`
-- `useEventData.ts`
-- `useFinancialData.ts`
-- `useCongregationData.ts`
-- `useMinistryData.ts`
-- `useDepartmentData.ts`
-- `useSupplierData.ts`
-- E outros hooks de dados...
+## Fluxo Corrigido
 
----
+```text
+Usuário admin@mica.com faz login
+           ↓
+TenantContext verifica URL
+           ↓
+Não encontra ?tenant ou subdomínio
+           ↓
+Busca tenant_id do profile (bf9bb59f-...)
+           ↓
+Carrega dados do tenant Mica
+           ↓
+tenant !== null
+           ↓
+Abas Branding/Home/Módulos aparecem em /configuracoes
+```
 
-## Sequência de Implementação
+## Resultado Esperado
 
-### Fase 1: Configurações do Tenant (Rápido)
-1. Modificar `Settings.tsx` para adicionar tabs de personalização
-2. Permitir que Admins do tenant editem branding/home/módulos
-3. Usar o `tenant_id` do profile do usuário logado
+Após a correção:
 
-### Fase 2: Isolamento de Dados (Mais Complexo)
-1. Migração SQL para adicionar `tenant_id` em todas as tabelas
-2. Definir tenant padrão (IPTM Global) para dados existentes
-3. Atualizar RLS policies
-4. Atualizar todos os hooks de dados para filtrar por tenant
-5. Atualizar mutations para incluir tenant_id nos inserts
+1. Usuário `admin@mica.com` faz login
+2. Sistema detecta automaticamente que ele pertence à Mica
+3. Ao acessar `/configuracoes`, as abas aparecem:
+   - ✅ Branding (cores, logo, nome da igreja)
+   - ✅ Home (widgets, Instagram, endereço)
+   - ✅ Módulos (habilitar/desabilitar funcionalidades)
+   - ✅ Geral
+   - ✅ Segurança
 
----
+4. Dados salvos vão para `tenant_settings` com `tenant_id` da Mica
+5. Não precisa mais usar `?tenant=mica` na URL
 
-## Decisão Necessária
+## Considerações de Segurança
 
-O Problema 2 (isolamento de dados) é uma mudança **estrutural grande** que afeta:
-- 15+ tabelas no banco de dados
-- 10+ hooks de dados
-- Todas as operações de CRUD
-- Políticas RLS
-
-**Você quer que eu implemente:**
-
-**A) Apenas Parte 1** - Configurações do Tenant na página Settings (rápido)
-
-**B) Parte 1 + Parte 2** - Configurações + Isolamento completo de dados (mais complexo, mas resolve o problema raiz)
-
----
-
-## Resumo Técnico
-
-| Item | Situação Atual | Solução |
-|------|---------------|---------|
-| Personalização | Só Super Admin em /tenants | Admin pode editar em /configuracoes |
-| Dados de Membros | Compartilhados | Filtrar por tenant_id |
-| Dados de Eventos | Compartilhados | Filtrar por tenant_id |
-| Dados Financeiros | Compartilhados | Filtrar por tenant_id |
-| RLS Policies | Sem tenant | Adicionar filtro tenant_id |
+- O tenant é determinado pelo `tenant_id` armazenado no banco (não manipulável pelo cliente)
+- RLS policies garantem que usuários só podem modificar settings do próprio tenant
+- Super Admins mantêm acesso ao painel `/admin` para gerenciar todos os tenants
