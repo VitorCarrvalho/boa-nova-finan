@@ -218,6 +218,7 @@ const TenantManagement = () => {
       <TenantBrandingDialog
         open={brandingOpen}
         onOpenChange={setBrandingOpen}
+        tenantId={selectedTenant?.id || ''}
         tenantName={selectedTenant?.name || ''}
         branding={selectedTenant?.branding}
         onSubmit={handleBrandingSubmit}

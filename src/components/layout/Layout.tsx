@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTenant } from '@/contexts/TenantContext';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileSidebar from './MobileSidebar';
@@ -16,11 +17,16 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, loading: authLoading } = useAuth();
+  const { branding } = useTenant();
   const { isSuperAdmin, loading: superAdminLoading } = useSuperAdmin();
   const isMobile = useIsMobile();
   const location = useLocation();
 
   const loading = authLoading || superAdminLoading;
+
+  // Dynamic branding
+  const displayLogo = branding.logoUrl || logoIM;
+  const displayName = branding.churchName || 'Igreja Moove';
 
   if (loading) {
     return (
@@ -56,12 +62,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <img 
-                    src={logoIM} 
-                    alt="Igreja Moove" 
-                    className="w-10 h-10"
+                    src={displayLogo} 
+                    alt={displayName} 
+                    className="w-10 h-10 object-contain"
                   />
                   <SidebarTrigger className="md:hidden" />
-                  <h1 className="text-xl font-bold text-foreground">Painel Administrativo</h1>
+                  <h1 className="text-xl font-bold text-foreground">{displayName}</h1>
                 </div>
                 <HeaderProfile />
               </div>
@@ -85,12 +91,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <header className="bg-card border-b border-border px-4 py-4 sticky top-0 z-40">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-              <img 
-                src={logoIM} 
-                alt="Igreja Moove" 
-                className="w-10 h-10"
-              />
-                <h1 className="text-xl font-bold text-foreground">Painel Administrativo</h1>
+                <img 
+                  src={displayLogo} 
+                  alt={displayName} 
+                  className="w-10 h-10 object-contain"
+                />
+                <h1 className="text-xl font-bold text-foreground">{displayName}</h1>
               </div>
               <HeaderProfile />
             </div>
