@@ -1,106 +1,155 @@
 
-# Plano: Eliminar Dados Hardcoded dos Widgets da Home
+# Plano: Gestão de Usuários por Tenant
 
-## Problema Identificado
-Quando você acessa via `?tenant=mica`, os widgets da Home ainda mostram informações da IPTM:
-- Instagram: `@catedraliptmoficial`
-- Pastores: Foto específica da IPTM Global
-- Mapa: Endereço "Rua João Vicente, 741 - Osvaldo Cruz - RJ"
-- Conecta: Título "Conecta IPTM"
+## Objetivo
+Implementar um sistema para que Super Admins possam criar e gerenciar usuários administradores para cada tenant diretamente da página de Gestão de Tenants.
 
-## Solução Proposta
+## Fluxo de Uso
 
-Expandir a configuração de Home do tenant para incluir dados específicos de cada widget, tornando tudo personalizável.
+1. Super Admin clica em "Usuários" no menu de ações do tenant Mica
+2. Abre um dialog mostrando a lista de admins do tenant (atualmente vazia)
+3. Super Admin clica em "Adicionar Admin"
+4. Preenche: Nome, Email, Senha temporária e Role (Owner/Admin/Manager)
+5. Sistema cria o usuário no Supabase Auth e associa ao tenant
+6. Usuário recebe email de confirmação e pode acessar o sistema do tenant
 
-### 1. Atualizar Estrutura de Dados (TenantContext)
+## Arquivos a Criar
 
-Adicionar novos campos ao `TenantHomeConfig`:
+### 1. `src/components/tenants/TenantUsersDialog.tsx`
+Dialog principal para gestão de usuários do tenant.
+
+```text
++----------------------------------------------+
+|  Usuários - Mica                        [X] |
+|----------------------------------------------|
+|  Gerencie os administradores deste tenant    |
+|                                              |
+|  [+ Adicionar Admin]                         |
+|                                              |
+|  +------------------------------------------+|
+|  | Nome         | Email           | Role    ||
+|  |--------------|-----------------|---------|
+|  | João Silva   | joao@mica.com   | Owner   ||
+|  | Maria Santos | maria@mica.com  | Admin   ||
+|  +------------------------------------------+|
+|                                              |
+|                              [Fechar]        |
++----------------------------------------------+
+```
+
+Funcionalidades:
+- Listar admins do tenant (da tabela `tenant_admins`)
+- Botão para adicionar novo admin
+- Opção de remover admin existente
+- Mostrar role de cada admin (Owner/Admin/Manager)
+
+### 2. `src/components/tenants/TenantUserFormDialog.tsx`
+Sub-dialog para criar/editar um admin.
+
+```text
++----------------------------------------------+
+|  Adicionar Administrador                [X] |
+|----------------------------------------------|
+|                                              |
+|  Nome Completo                               |
+|  [____________________________]              |
+|                                              |
+|  Email                                       |
+|  [____________________________]              |
+|                                              |
+|  Senha Temporária                            |
+|  [____________________________]              |
+|                                              |
+|  Perfil de Acesso do Tenant                  |
+|  [Owner ▼]                                   |
+|   - Owner: Acesso total ao tenant            |
+|   - Admin: Gerencia usuários e configs       |
+|   - Manager: Gerencia operações              |
+|                                              |
+|             [Cancelar]  [Criar Usuário]      |
++----------------------------------------------+
+```
+
+### 3. `src/hooks/useTenantUsers.ts`
+Hook para operações CRUD de usuários do tenant.
 
 ```typescript
-export interface TenantHomeConfig {
-  widgets: { ... };
-  widgetOrder: string[];
-  customBanners: Array<...>;
-  
-  // NOVOS CAMPOS:
-  instagram?: {
-    handle: string;      // ex: "@igrejamica"
-    url: string;         // ex: "https://instagram.com/igrejamica"
+interface TenantUser {
+  id: string;
+  user_id: string;
+  tenant_id: string;
+  role: 'owner' | 'admin' | 'manager';
+  created_at: string;
+  user: {
+    name: string;
+    email: string;
   };
-  address?: {
-    street: string;      // ex: "Rua Principal, 100"
-    neighborhood: string; // ex: "Centro"
-    city: string;        // ex: "São Paulo - SP"
-    cep: string;         // ex: "01000-000"
-  };
-  pastoresImageUrl?: string; // URL da imagem dos pastores
 }
+
+// Funções:
+- fetchTenantUsers(tenantId)
+- createTenantUser(tenantId, userData)
+- updateTenantUserRole(userId, newRole)
+- removeTenantUser(userId)
 ```
 
-### 2. Atualizar Widgets para Usar Dados do Tenant
+## Arquivos a Modificar
 
-**InstagramWidget.tsx:**
-```typescript
-const { homeConfig } = useTenant();
-const instagramHandle = homeConfig.instagram?.handle || '@igrejamoove';
-const instagramUrl = homeConfig.instagram?.url || 'https://instagram.com/igrejamoove';
+### 4. `src/pages/admin/AdminTenants.tsx`
+- Adicionar estado `usersOpen` e `TenantUsersDialog`
+- Implementar `handleManageUsers` para abrir o dialog
+
+### 5. `src/hooks/useTenantAdmin.ts`
+- Adicionar função `createTenantUser` que:
+  1. Cria usuário no Supabase Auth via `supabase.auth.admin.createUser()`
+  2. Insere registro em `profiles` com `tenant_id` correto
+  3. Insere registro em `tenant_admins` com a role selecionada
+
+## Fluxo Técnico de Criação de Usuário
+
+```text
+1. Super Admin preenche formulário
+         |
+         v
+2. Chamar supabase.auth.admin.createUser()
+   - email, password, email_confirm: true
+         |
+         v
+3. Criar profile no banco
+   - id: user.id
+   - name, email, tenant_id
+   - approval_status: 'ativo'
+   - role: 'admin'
+         |
+         v
+4. Criar tenant_admin
+   - user_id, tenant_id
+   - role: 'owner' | 'admin' | 'manager'
+   - invited_by: super_admin_id
+         |
+         v
+5. Usuário pode fazer login
+   e acessar o tenant
 ```
 
-**MapaWidget.tsx:**
-```typescript
-const { homeConfig } = useTenant();
-const address = homeConfig.address || {
-  street: 'Não configurado',
-  neighborhood: '',
-  city: '',
-  cep: ''
-};
-```
+## Considerações de Segurança
 
-**PastoresWidget.tsx:**
-```typescript
-const { homeConfig } = useTenant();
-const pastoresImageUrl = homeConfig.pastoresImageUrl || '/placeholder.svg';
-```
+1. **Criação via Admin API**: Usar `supabase.auth.admin.createUser()` requer uma Edge Function com service_role key
+2. **Alternativa**: Usar o fluxo de convite (`supabase.auth.inviteUserByEmail()`)
+3. **RLS**: Usuários só verão dados do próprio tenant
 
-**ConectaWidget.tsx:**
-```typescript
-const { branding } = useTenant();
-// Usar nome genérico "Conecta" + nome da igreja
-<h3>Conecta {branding.churchName.split(' ')[0]}</h3>
-// Resultado: "Conecta Mica" ou "Conecta IPTM"
-```
+## Estrutura de Permissões
 
-### 3. Atualizar Dialog de Configuração da Home
-
-Adicionar seções no `TenantHomeConfigDialog.tsx` para configurar:
-
-- **Instagram**: Campo para handle e URL
-- **Endereço**: Campos para rua, bairro, cidade, CEP
-- **Imagem dos Pastores**: Upload de imagem
-
-### 4. Arquivos a Modificar
-
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/contexts/TenantContext.tsx` | Expandir interface `TenantHomeConfig` |
-| `src/components/home/widgets/InstagramWidget.tsx` | Usar dados do tenant |
-| `src/components/home/widgets/MapaWidget.tsx` | Usar dados do tenant |
-| `src/components/home/widgets/PastoresWidget.tsx` | Usar dados do tenant |
-| `src/components/home/widgets/ConectaWidget.tsx` | Usar branding.churchName |
-| `src/components/tenants/TenantHomeConfigDialog.tsx` | Adicionar campos de config |
-
-### 5. Valores Padrão (Fallback)
-
-Para tenants que ainda não configuraram seus dados, usaremos valores genéricos neutros:
-- Instagram: Ocultar widget ou mostrar "Não configurado"
-- Mapa: Ocultar widget ou mostrar "Endereço não configurado"  
-- Pastores: Placeholder ou ocultar widget
-- Conecta: Usar "Conecta" + primeira palavra do nome da igreja
+| Role | Pode criar usuários | Pode editar branding | Pode ver relatórios |
+|------|---------------------|----------------------|---------------------|
+| Owner | Sim | Sim | Sim |
+| Admin | Sim | Sim | Sim |
+| Manager | Não | Não | Sim |
 
 ## Resultado Esperado
 
-Ao acessar `?tenant=mica`:
-- Todos os widgets mostrarão dados específicos da Mica (quando configurados)
-- Nenhuma referência à IPTM aparecerá
-- Admin do tenant pode personalizar cada widget no painel de gestão
+Após implementação, você poderá:
+1. Clicar em "Usuários" no tenant Mica
+2. Criar um admin com email `admin@mica.com`
+3. Esse usuário poderá fazer login em `?tenant=mica`
+4. Verá apenas dados da Mica, com branding personalizado
