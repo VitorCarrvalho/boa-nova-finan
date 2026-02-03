@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useCongregationsPublic } from '@/hooks/useCongregationsPublic';
 import useSuperAdmin from '@/hooks/useSuperAdmin';
+import logoIM from '@/assets/logoIM.png';
 
 const AuthPage = () => {
   const [email, setEmail] = useState('');
@@ -237,6 +238,11 @@ const AuthPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <img 
+            src={logoIM} 
+            alt="Igreja Moove" 
+            className="w-20 h-20 mx-auto mb-4"
+          />
           <CardTitle className="text-2xl font-bold text-gray-900">
             Igreja Moove
           </CardTitle>
