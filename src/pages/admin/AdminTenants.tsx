@@ -9,6 +9,7 @@ import TenantFormDialog from '@/components/tenants/TenantFormDialog';
 import TenantBrandingDialog from '@/components/tenants/TenantBrandingDialog';
 import TenantHomeConfigDialog from '@/components/tenants/TenantHomeConfigDialog';
 import TenantModulesDialog from '@/components/tenants/TenantModulesDialog';
+import TenantUsersDialog from '@/components/tenants/TenantUsersDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +46,7 @@ const AdminTenants = () => {
   const [brandingOpen, setBrandingOpen] = useState(false);
   const [homeConfigOpen, setHomeConfigOpen] = useState(false);
   const [modulesOpen, setModulesOpen] = useState(false);
+  const [usersOpen, setUsersOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<TenantWithSettings | null>(null);
   const [formLoading, setFormLoading] = useState(false);
@@ -75,7 +77,8 @@ const AdminTenants = () => {
   };
 
   const handleManageUsers = (tenant: TenantWithSettings) => {
-    console.log('Manage users for tenant:', tenant.id);
+    setSelectedTenant(tenant);
+    setUsersOpen(true);
   };
 
   const handleDeleteClick = (tenant: TenantWithSettings) => {
@@ -226,6 +229,13 @@ const AdminTenants = () => {
         modulesConfig={selectedTenant?.modulesConfig}
         onSubmit={handleModulesSubmit}
         loading={formLoading}
+      />
+
+      <TenantUsersDialog
+        open={usersOpen}
+        onOpenChange={setUsersOpen}
+        tenantId={selectedTenant?.id || ''}
+        tenantName={selectedTenant?.name || ''}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
