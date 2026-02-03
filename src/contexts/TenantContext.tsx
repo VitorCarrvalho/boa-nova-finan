@@ -62,8 +62,8 @@ const defaultBranding: TenantBranding = {
   logoUrl: null,
   faviconUrl: null,
   fontFamily: 'Inter, sans-serif',
-  churchName: 'IPTM Global',
-  tagline: 'Deus não é religião, é relacionamento.',
+  churchName: 'Igreja Moove',
+  tagline: 'Gestão inteligente para igrejas modernas.',
 };
 
 const defaultHomeConfig: TenantHomeConfig = {
