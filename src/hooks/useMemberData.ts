@@ -4,6 +4,7 @@ import { Database } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
+import { useTenant } from '@/contexts/TenantContext';
 
 type Member = Database['public']['Tables']['members']['Row'];
 type MemberInsert = Database['public']['Tables']['members']['Insert'];
@@ -111,12 +112,18 @@ export const useMemberStats = () => {
 export const useCreateMember = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { tenant } = useTenant();
 
   return useMutation({
     mutationFn: async (memberData: MemberInsert) => {
+      // Include tenant_id if available
+      const dataWithTenant = tenant?.id 
+        ? { ...memberData, tenant_id: tenant.id }
+        : memberData;
+      
       const { data, error } = await supabase
         .from('members')
-        .insert([memberData])
+        .insert([dataWithTenant])
         .select()
         .single();
 

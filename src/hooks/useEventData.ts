@@ -1,8 +1,8 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import { useTenant } from '@/contexts/TenantContext';
 
 type ChurchEvent = Database['public']['Tables']['church_events']['Row'];
 type ChurchEventInsert = Database['public']['Tables']['church_events']['Insert'];
@@ -35,14 +35,20 @@ export const useEvents = () => {
 
 export const useCreateEvent = () => {
   const queryClient = useQueryClient();
+  const { tenant } = useTenant();
 
   return useMutation({
     mutationFn: async (eventData: ChurchEventInsert) => {
       console.log('Creating event with data:', eventData);
       
+      // Include tenant_id if available
+      const dataWithTenant = tenant?.id 
+        ? { ...eventData, tenant_id: tenant.id }
+        : eventData;
+      
       const { data, error } = await supabase
         .from('church_events')
-        .insert(eventData)
+        .insert(dataWithTenant)
         .select()
         .single();
 

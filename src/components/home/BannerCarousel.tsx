@@ -76,7 +76,8 @@ const BannerCarousel = ({ events, defaultBannerUrl, defaultBannerMobileUrl }: Ba
         max_attendees: null,
         current_attendees: null,
         is_active: true,
-        banner_image_url: null
+        banner_image_url: null,
+        tenant_id: null
       });
     } else {
       setSelectedEvent(item as ChurchEvent);

@@ -1,8 +1,8 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import { useTenant } from '@/contexts/TenantContext';
 
 type Congregation = Database['public']['Tables']['congregations']['Row'];
 type CongregationInsert = Database['public']['Tables']['congregations']['Insert'];
@@ -32,14 +32,20 @@ export const useCongregations = () => {
 
 export const useCreateCongregation = () => {
   const queryClient = useQueryClient();
+  const { tenant } = useTenant();
 
   return useMutation({
     mutationFn: async (congregationData: CongregationInsert) => {
       console.log('Creating congregation with data:', congregationData);
       
+      // Include tenant_id if available
+      const dataWithTenant = tenant?.id 
+        ? { ...congregationData, tenant_id: tenant.id }
+        : congregationData;
+      
       const { data, error } = await supabase
         .from('congregations')
-        .insert(congregationData)
+        .insert(dataWithTenant)
         .select()
         .single();
 
