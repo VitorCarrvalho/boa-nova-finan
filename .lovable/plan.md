@@ -1,139 +1,119 @@
 
-# Plano: Correção da Detecção de Tenant pelo Profile do Usuário
+# Plano: Correção Definitiva do Multi-Tenant
 
-## Problema Identificado
+## Problemas Identificados
 
-O sistema não está detectando automaticamente o tenant do usuário logado. Atualmente:
-- TenantContext só reconhece tenant via URL (`?tenant=slug` ou subdomínio)
-- Usuários como `admin@mica.com` que têm `tenant_id` no profile não são reconhecidos
-- Resultado: abas de Branding/Home/Módulos não aparecem em `/configuracoes`
+### Problema 1: Políticas RLS Duplicadas
+Existem **DUAS** políticas SELECT na tabela `members`:
+- `Tenant users can view their tenant members` → filtra por tenant
+- `Usuários com permissão podem ver membros` → **NÃO filtra por tenant**
 
-## Solução Proposta
+Como RLS policies são **OR**, a política antiga permite ver tudo!
 
-Modificar o `TenantContext.tsx` para detectar o tenant em 3 níveis:
+O mesmo problema existe em TODAS as tabelas de dados.
 
-```text
-Prioridade de Detecção:
-1. Query parameter (?tenant=slug) → Para testes
-2. Subdomínio (mica.example.com) → Produção
-3. tenant_id do profile do usuário → Fallback automático
+### Problema 2: Dados Existentes sem tenant_id
+Todos os membros, eventos, etc. têm `tenant_id = NULL`. Precisam ser associados ao tenant correto (IPTM Global).
+
+### Problema 3: TenantContext não carrega corretamente
+O `fetchTenantData` pode ter race condition com `currentUserId`.
+
+---
+
+## Solução
+
+### Parte 1: Migração SQL para Remover Políticas Antigas
+
+Remover TODAS as políticas antigas que não filtram por tenant:
+
+```sql
+-- MEMBERS
+DROP POLICY IF EXISTS "Usuários com permissão podem ver membros" ON members;
+DROP POLICY IF EXISTS "Usuários com permissão podem criar membros" ON members;
+DROP POLICY IF EXISTS "Usuários com permissão podem editar membros" ON members;
+DROP POLICY IF EXISTS "Users can view members for dropdowns" ON members;
+
+-- CHURCH_EVENTS  
+DROP POLICY IF EXISTS "Usuários com permissão podem ver eventos" ON church_events;
+DROP POLICY IF EXISTS "Usuários com permissão podem criar eventos" ON church_events;
+DROP POLICY IF EXISTS "Usuários com permissão podem atualizar eventos" ON church_events;
+DROP POLICY IF EXISTS "Usuários com permissão podem deletar eventos" ON church_events;
+DROP POLICY IF EXISTS "Public can view active events" ON church_events;
+
+-- CONGREGATIONS
+DROP POLICY IF EXISTS "Public can view basic congregation info for registration" ON congregations;
+DROP POLICY IF EXISTS "Usuários com permissão podem criar congregações" ON congregations;
+DROP POLICY IF EXISTS "Usuários com permissão podem editar congregações" ON congregations;
+DROP POLICY IF EXISTS "Usuários com permissão podem deletar congregações" ON congregations;
+DROP POLICY IF EXISTS "Usuários com permissão podem ver congregações" ON congregations;
+
+-- ... e todas as outras tabelas
 ```
 
-## Arquivos a Modificar
+### Parte 2: Atualizar Dados Existentes
 
-### 1. `src/contexts/TenantContext.tsx`
+Associar todos os dados sem tenant_id ao IPTM Global:
 
-Adicionar lógica para buscar o tenant_id do profile do usuário autenticado:
-
-```typescript
-// Adicionar dependência do AuthContext
-import { useAuth } from '@/contexts/AuthContext';
-
-// Dentro do TenantProvider:
-const { user } = useAuth();
-
-// Nova função para buscar tenant do profile
-const fetchTenantFromProfile = async () => {
-  if (!user?.id) return null;
-  
-  const { data } = await supabase
-    .from('profiles')
-    .select('tenant_id')
-    .eq('id', user.id)
-    .single();
-    
-  return data?.tenant_id || null;
-};
-
-// Modificar fetchTenantData para usar essa info
-const fetchTenantData = async () => {
-  // 1. Tentar identificador da URL
-  let effectiveTenantId = tenantIdentifier;
-  
-  // 2. Se não encontrou na URL, buscar do profile
-  if (!effectiveTenantId && user?.id) {
-    const profileTenantId = await fetchTenantFromProfile();
-    if (profileTenantId) {
-      // Buscar tenant pelo ID
-      const { data } = await supabase
-        .from('tenants')
-        .select('*')
-        .eq('id', profileTenantId)
-        .single();
-      
-      if (data) {
-        setTenant({ /* ... dados do tenant */ });
-        // Carregar branding, home, modules...
-        return;
-      }
-    }
-  }
-  
-  // Resto da lógica atual...
-};
+```sql
+-- O ID do IPTM Global é 846fa096-6e2c-4f36-bb2c-3d807c4e4939
+UPDATE members SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
+UPDATE church_events SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
+UPDATE congregations SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
+UPDATE ministries SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
+UPDATE departments SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
+UPDATE suppliers SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
+UPDATE financial_records SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
+UPDATE reconciliations SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
+UPDATE accounts_payable SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
 ```
 
-### 2. Dependência Circular
+### Parte 3: Corrigir TenantContext
 
-Problema: `TenantContext` precisa de `AuthContext`, mas pode haver dependência circular.
-
-Solução: Usar `supabase.auth.getUser()` direto ao invés de `useAuth()`:
+Garantir que `fetchTenantData` é re-executado quando `currentUserId` muda:
 
 ```typescript
-// Em vez de useAuth (que pode causar dependência circular)
-const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-
+// Adicionar currentUserId como dependência explícita do useEffect
 useEffect(() => {
-  supabase.auth.getSession().then(({ data }) => {
-    setCurrentUserId(data.session?.user?.id || null);
-  });
-  
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(
-    (_event, session) => {
-      setCurrentUserId(session?.user?.id || null);
-    }
-  );
-  
-  return () => subscription.unsubscribe();
-}, []);
+  // Só executar se loading terminou ou userId mudou
+  if (currentUserId !== undefined) {
+    fetchTenantData();
+  }
+}, [currentUserId, tenantIdentifier]);
 ```
 
-## Fluxo Corrigido
+---
 
-```text
-Usuário admin@mica.com faz login
-           ↓
-TenantContext verifica URL
-           ↓
-Não encontra ?tenant ou subdomínio
-           ↓
-Busca tenant_id do profile (bf9bb59f-...)
-           ↓
-Carrega dados do tenant Mica
-           ↓
-tenant !== null
-           ↓
-Abas Branding/Home/Módulos aparecem em /configuracoes
-```
+## Tabelas Afetadas
+
+| Tabela | Políticas a Remover | Dados a Migrar |
+|--------|---------------------|----------------|
+| members | 4 políticas antigas | ~7 registros |
+| church_events | 5 políticas antigas | X registros |
+| congregations | 5 políticas antigas | X registros |
+| ministries | 5 políticas antigas | X registros |
+| departments | 4 políticas antigas | X registros |
+| suppliers | 4 políticas antigas | X registros |
+| financial_records | 3 políticas antigas | X registros |
+| reconciliations | 4 políticas antigas | X registros |
+| accounts_payable | 4 políticas antigas | X registros |
+| expense_categories | 2 políticas antigas | X registros |
+| access_profiles | 2 políticas antigas | Manter NULL para perfis globais |
+
+---
 
 ## Resultado Esperado
 
 Após a correção:
 
-1. Usuário `admin@mica.com` faz login
-2. Sistema detecta automaticamente que ele pertence à Mica
-3. Ao acessar `/configuracoes`, as abas aparecem:
-   - ✅ Branding (cores, logo, nome da igreja)
-   - ✅ Home (widgets, Instagram, endereço)
-   - ✅ Módulos (habilitar/desabilitar funcionalidades)
-   - ✅ Geral
-   - ✅ Segurança
+1. **admin@mica.com** → Vê apenas dados da Mica (tenant_id = bf9bb59f)
+2. **admin@iptm.com** → Vê apenas dados do IPTM Global (tenant_id = 846fa096)
+3. **Super Admin** → Vê dados de todos os tenants
+4. **Tela de Configurações** → Mostra abas Branding/Home/Módulos para usuários com tenant
 
-4. Dados salvos vão para `tenant_settings` com `tenant_id` da Mica
-5. Não precisa mais usar `?tenant=mica` na URL
+---
 
-## Considerações de Segurança
+## Arquivos a Modificar
 
-- O tenant é determinado pelo `tenant_id` armazenado no banco (não manipulável pelo cliente)
-- RLS policies garantem que usuários só podem modificar settings do próprio tenant
-- Super Admins mantêm acesso ao painel `/admin` para gerenciar todos os tenants
+1. **Nova migração SQL** - Remover políticas duplicadas e migrar dados
+2. **src/contexts/TenantContext.tsx** - Corrigir race condition no carregamento
+
