@@ -238,7 +238,7 @@ const AuthPage = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-gray-900">
-            Gestor iptm
+            Igreja Moove
           </CardTitle>
           <CardDescription>
             Sistema de Gestão da Igreja

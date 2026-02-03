@@ -289,7 +289,7 @@ const MobileSidebar = () => {
         {state === 'expanded' && (
           <SidebarGroup>
             <div className="p-4 border-b">
-              <h1 className="text-lg font-bold mb-3">Gestor iptm</h1>
+              <h1 className="text-lg font-bold mb-3">Igreja Moove</h1>
               
               <div className="flex items-center gap-3">
                 <div className="relative group">

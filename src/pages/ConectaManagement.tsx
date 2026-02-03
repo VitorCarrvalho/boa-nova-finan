@@ -248,7 +248,7 @@ const ConectaManagement = () => {
   return (
     <Layout>
       <Helmet>
-        <title>Gestão Conecta IPTM - Gestor IPTM</title>
+        <title>Gestão Conecta IPTM - Igreja Moove</title>
         <meta name="description" content="Gerencie cadastros de prestadores de serviço pendentes de aprovação" />
       </Helmet>
 
