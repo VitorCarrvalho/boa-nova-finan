@@ -1,45 +1,32 @@
 
-# Plano: Renomear Sistema de "Gestor IPTM" para "Igreja Moove"
+# Plano: Adicionar Logo do Igreja Moove
 
-## Problema Identificado
+## Objetivo
+Substituir o logo antigo (`fiveicon.svg`) pelo novo logo oficial do Igreja Moove em todos os lugares relevantes do sistema.
 
-O sistema atualmente usa "Gestor IPTM" como nome em varios lugares, porem:
-- **IPTM** e o nome de uma igreja especifica (um tenant)
-- **Igreja Moove** e o nome correto do sistema/plataforma SaaS
+## Arquivos Afetados
 
-## Arquivos a Modificar
+### 1. Copiar o logo para o projeto
+- **De**: `user-uploads://logoIM.png`
+- **Para**: `src/assets/logoIM.png`
 
-### 1. Pagina de Login (`src/components/auth/AuthPage.tsx`)
-**Linha 241**: Alterar titulo de "Gestor iptm" para "Igreja Moove"
+### 2. Atualizar Layout.tsx
+Substituir a importacao e uso do `fiveIcon` pelo novo `logoIM`:
 
-### 2. Sidebar Desktop (`src/components/layout/Sidebar.tsx`)
-**Linha 323**: Alterar titulo de "Gestor iptm" para "Igreja Moove"
+| Local | Alteracao |
+|-------|-----------|
+| Linha 9 | Trocar `import fiveIcon from '@/assets/fiveicon.svg'` por `import logoIM from '@/assets/logoIM.png'` |
+| Linha 59 | Trocar `src={fiveIcon}` por `src={logoIM}` |
+| Linha 60 | Trocar `alt="IPTM Logo"` por `alt="Igreja Moove"` |
+| Linha 89 | Trocar `src={fiveIcon}` por `src={logoIM}` |
+| Linha 90 | Trocar `alt="IPTM Logo"` por `alt="Igreja Moove"` |
 
-### 3. Sidebar Mobile (`src/components/layout/MobileSidebar.tsx`)
-**Linha 292**: Alterar titulo de "Gestor iptm" para "Igreja Moove"
+### 3. Pagina de Login (AuthPage.tsx)
+Adicionar o logo acima do titulo "Igreja Moove" para reforcar a identidade visual na tela de login.
 
-### 4. Contexto de Tenant (`src/contexts/TenantContext.tsx`)
-**Linha 65**: Alterar `churchName` padrao de "IPTM Global" para "Igreja Moove"
-**Linha 66**: Atualizar `tagline` padrao (opcional)
+### 4. Considerar outros locais (opcional)
+- Sidebar Desktop/Mobile: Podem receber o logo no cabecalho
+- Super Admin Layout: Pode manter o icone atual diferenciado
 
-### 5. HTML Base (`index.html`)
-**Linhas 7, 11**: Atualizar titulo e og:title para "Igreja Moove"
-**Linha 8**: Atualizar descricao meta
-
-### 6. Pagina Conecta Management (`src/pages/ConectaManagement.tsx`)
-**Linha 251**: Atualizar titulo do Helmet
-
-## Resumo das Mudancas
-
-| Arquivo | De | Para |
-|---------|-----|------|
-| AuthPage.tsx | "Gestor iptm" | "Igreja Moove" |
-| Sidebar.tsx | "Gestor iptm" | "Igreja Moove" |
-| MobileSidebar.tsx | "Gestor iptm" | "Igreja Moove" |
-| TenantContext.tsx | "IPTM Global" | "Igreja Moove" |
-| index.html | "gestor" | "Igreja Moove" |
-| ConectaManagement.tsx | "Gestor IPTM" | "Igreja Moove" |
-
-## Nota sobre Modulo "Conecta IPTM"
-
-O modulo "Conecta IPTM" pode ser mantido como esta, pois e um modulo especifico para a comunidade IPTM. Se desejar renomear para "Conecta Moove" ou algo generico, isso pode ser feito em uma alteracao futura.
+## Resultado Esperado
+O novo logo do Igreja Moove (circulo azul com igreja + texto) aparecera no header do painel administrativo e na tela de login, substituindo o icone antigo e reforçando a identidade da marca.
