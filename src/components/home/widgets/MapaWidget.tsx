@@ -1,12 +1,19 @@
-
 import React from 'react';
 import { MapPin, Navigation, Home } from 'lucide-react';
 import WidgetContainer from './WidgetContainer';
 import { Button } from '@/components/ui/button';
+import { useTenant } from '@/contexts/TenantContext';
 
 const MapaWidget = () => {
-  const endereco = 'Rua João Vicente, 741 - Osvaldo Cruz - RJ';
-  const cep = '21340-020';
+  const { homeConfig } = useTenant();
+  const address = homeConfig.address || {
+    street: 'Endereço não configurado',
+    neighborhood: '',
+    city: '',
+    cep: ''
+  };
+  const endereco = address.street + (address.neighborhood ? ` - ${address.neighborhood}` : '') + (address.city ? ` - ${address.city}` : '');
+  const cep = address.cep;
 
   const abrirMapa = () => {
     const query = encodeURIComponent(`${endereco}, ${cep}`);

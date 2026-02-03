@@ -1,12 +1,13 @@
-
 import React from 'react';
 import { Instagram, ExternalLink, Camera } from 'lucide-react';
 import WidgetContainer from './WidgetContainer';
 import { Button } from '@/components/ui/button';
+import { useTenant } from '@/contexts/TenantContext';
 
 const InstagramWidget = () => {
-  const instagramHandle = '@catedraliptmoficial';
-  const instagramUrl = 'https://www.instagram.com/catedraliptmoficial/';
+  const { homeConfig } = useTenant();
+  const instagramHandle = homeConfig.instagram?.handle || '@igrejamoove';
+  const instagramUrl = homeConfig.instagram?.url || 'https://instagram.com/igrejamoove';
 
   const abrirInstagram = () => {
     window.open(instagramUrl, '_blank');

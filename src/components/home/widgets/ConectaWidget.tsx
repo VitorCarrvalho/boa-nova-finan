@@ -2,9 +2,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, ArrowRight, Briefcase, Heart } from 'lucide-react';
 import WidgetContainer from './WidgetContainer';
+import { useTenant } from '@/contexts/TenantContext';
 
 const ConectaWidget = () => {
   const navigate = useNavigate();
+  const { branding } = useTenant();
+  const churchFirstName = branding.churchName?.split(' ')[0] || 'Igreja';
 
   const handleClick = () => {
     navigate('/conecta');
@@ -27,7 +30,7 @@ const ConectaWidget = () => {
               </div>
               <div>
                 <h3 className="widget-title text-slate-700 text-xl font-bold">
-                  Conecta IPTM
+                  Conecta {churchFirstName}
                 </h3>
                 <p className="text-sm text-slate-600">
                   Rede de Serviços da Comunidade
