@@ -43,6 +43,8 @@ const AdminTenants = () => {
     updateTenantHomeConfig,
     updateTenantModules,
     deleteTenant,
+    checkTenantDns,
+    checkAllDns,
   } = useTenantAdmin();
 
   const [formOpen, setFormOpen] = useState(false);
