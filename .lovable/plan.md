@@ -1,76 +1,61 @@
 
-# Plano: White-Label com Subdomínio - Abordagem Híbrida
 
-## ✅ IMPLEMENTADO
+## Plano de Correção: Módulos não aparecem para usuários admin de organizações
 
-### Etapa 1 — Detecção de Subdomínio ✅
-- `getTenantIdentifier` atualizado para detectar subdomínios em `igrejamoove.com.br` e `igrejamoove.app`
-- `mica.igrejamoove.com.br` → slug "mica"
-- Domínio raiz sem subdomínio → plataforma admin (retorna null)
+### Diagnóstico (Causa Raiz)
 
-### Etapa 2 — Redirecionar Raiz para /auth ✅
-- Rota `/` agora redireciona para `/auth`
-- Imports de Home e Index removidos do App.tsx
-- Arquivos Home/widgets mantidos no repositório para uso futuro
+Investiguei o banco de dados e encontrei o problema concreto:
 
-### Etapa 3 — Renomear Interface: Tenants → Organizações ✅
-- SuperAdminSidebar: "Tenants" → "Organizações"
-- AdminTenants: "Gestão de Tenants" → "Gestão de Organizações"
-- TenantTable: labels atualizados
-- TenantFormDialog: "Novo Tenant" → "Nova Organização"
-- TenantUsersDialog: labels atualizados
-- TenantModulesDialog: labels atualizados
-- AdminSettings: "Auto-aprovação de Tenants" → "Auto-aprovação de Organizações"
-- Rota `/admin/tenants` → `/admin/organizacoes` (com redirect de compatibilidade)
+- Os dois usuários da organização Mica (`admin.mica@mica.com.br` e `admin@mica.com`) estão atribuídos ao perfil **"Membro"** global (`profile_id = ef578f88-...`), que tem a maioria dos módulos com `view: false`.
+- **Não existem access_profiles criados para o tenant Mica** (0 registros). A Edge Function `create-tenant-user` deveria ter criado os 4 perfis padrão (Admin, Pastor, Gerente Financeiro, Membro) mas falhou silenciosamente.
+- O trigger `handle_new_user` roda primeiro e atribui o perfil global "Membro". A Edge Function depois tenta atualizar para o Admin do tenant, mas como a criação dos perfis falhou, o `adminProfileId` ficou `null` e o `profile_id` nunca foi atualizado.
 
-### Etapa 4 — Renomear IPTM → Igreja Moove ✅
-- ConectaIPTM: "Conecta IPTM" → "Conecta Moove"
-- ConectaManagement: "Gestão Conecta IPTM" → "Gestão Conecta Moove"
-- ConectaProviderProfile: mensagem WhatsApp atualizada
-- AdminSettings: placeholder "Sistema IPTM" → "Igreja Moove"
-- PastoresWidget: alt text atualizado
-- moduleStructure.ts: label "Conecta IPTM" → "Conecta Moove"
-- TenantContext: comentários atualizados
-- useTenantModules: comentários atualizados
+### Módulos afetados
 
-### Etapa 5 — Remover Rota /tenants Duplicada ✅
-- Rota `/tenants` removida e redirecionada para `/admin/organizacoes`
-- Import de TenantManagement removido
+O perfil "Membro" global só libera: Dashboard, Membros (view), Congregações (view), Departamentos (view), Ministérios (view), Eventos (view), Notificações (view). Todos os demais (Financeiro, Conciliações, Fornecedores, Contas a Pagar, Relatórios, Gestão de Acessos, Documentação, Configurações) estão com `view: false`.
 
-### Etapa 6 — Provisioning Automático de Organização ✅
-- Wizard de criação com 2 etapas (dados + admin)
-- Criação automática de perfis de acesso padrão (Admin, Pastor, Gerente Financeiro, Membro)
-- Criação automática de config de módulos padrão (todos habilitados)
-- Criação automática de settings de branding e home
-- Primeiro admin criado via Edge Function com perfil Admin atribuído
-- Validação de unicidade de slug/subdomínio
-- Toasts corrigidos: "Tenant" → "Organização"
+### Plano de Correção
 
-### Etapa 7 — DNS e Visualização ✅
-- Dialog de instruções DNS com registros CNAME e A copiáveis
-- Informações sobre propagação e SSL
-- URLs de acesso (produção e teste/preview)
-- "Ver como Organização" — navega para /dashboard?tenant=slug
-- Link externo na tabela atualizado para igrejamoove.com.br
+**Etapa 1 — Corrigir Edge Function `create-tenant-user`**
 
-### Etapa 8 — Wizard de Onboarding Self-Service ✅
-- Edge Function pública `onboard-tenant` (verify_jwt=false)
-  - Cria tenant, tenant_settings (branding/home/modules), access_profiles, auth user, profile, tenant_admins
-  - Rollback automático em caso de falha
-  - Validação de slug e email únicos
-  - Branding padrão com paleta azul+âmbar (217 91% 45% / 35 92% 50%)
-- Página `/onboarding` com wizard de 4 etapas:
-  - Step 1: Dados da Igreja (nome, cidade, estado, slug auto-gerado)
-  - Step 2: Conta do Administrador (nome, email, senha)
-  - Step 3: Escolha do Plano (Free/Basic/Pro com trial 14 dias)
-  - Step 4: Resumo e confirmação
-- Rota pública `/onboarding` no App.tsx
-- CTA "Cadastre-se agora" na tela de login (AuthPage)
-- Cores padrão corrigidas no useTenantAdmin.ts
+Problema: A criação de perfis falha silenciosamente. Se falhar, o usuário fica com o perfil "Membro" global.
 
-## O que NÃO mudou (por design)
-- Tabelas do banco (tenants, tenant_id, tenant_settings)
-- RLS policies
-- Funções SQL (get_user_tenant_id, etc.)
-- Hooks internos (useTenantAdmin, TenantContext)
-- Nomes de arquivos de componentes (TenantTable.tsx, etc.)
+Correções:
+- Tornar a criação de perfis **obrigatória** (não silenciar erros). Se falhar, retornar erro ao invés de continuar.
+- Após criar o perfil Admin, garantir que o `profile_id` é atualizado no `profiles` com o ID correto do perfil do tenant.
+- Adicionar validação: se `adminProfileId` continuar `null` após tentativa de criação, lançar erro explícito.
+
+**Etapa 2 — Corrigir dados existentes via migração SQL**
+
+Para tenants que já foram criados sem perfis (como Mica), criar uma migração que:
+1. Identifica tenants sem access_profiles.
+2. Cria os 4 perfis padrão para esses tenants.
+3. Atualiza os usuários desses tenants que têm `role = 'admin'` para apontar para o perfil Admin correto do seu tenant.
+
+**Etapa 3 — Criar configuração de módulos para tenants existentes**
+
+Verificar se existe `tenant_settings` com `category = 'modules'` para os tenants afetados. Se não, criar com todos os módulos habilitados.
+
+### Detalhes técnicos
+
+```text
+Fluxo atual (com bug):
+  1. Edge Function chama auth.admin.createUser()
+  2. Trigger handle_new_user → atribui Membro global
+  3. Edge Function tenta criar access_profiles do tenant → falha silenciosa
+  4. adminProfileId = null → profile_id NÃO é atualizado
+  5. Usuário fica com perfil "Membro" global → poucos módulos
+
+Fluxo corrigido:
+  1. Edge Function chama auth.admin.createUser()
+  2. Trigger handle_new_user → atribui Membro global  
+  3. Edge Function cria access_profiles do tenant → ERRO FATAL se falhar
+  4. adminProfileId = UUID válido
+  5. Edge Function atualiza profile_id → Admin do tenant
+  6. Usuário tem todos os módulos liberados
+```
+
+**Arquivos a modificar:**
+- `supabase/functions/create-tenant-user/index.ts` — tornar criação de perfis robusta com tratamento de erro fatal
+- Nova migração SQL — corrigir dados dos tenants existentes (criar perfis + atualizar usuários + criar módulos config)
+
