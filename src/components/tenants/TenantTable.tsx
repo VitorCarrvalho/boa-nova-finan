@@ -13,9 +13,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Edit, Trash2, Palette, Layout, Users, ExternalLink, Puzzle } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Palette, Layout, Users, ExternalLink, Puzzle, Globe, Eye } from 'lucide-react';
 import { Tenant, TenantBranding, TenantHomeConfig, TenantModulesConfig } from '@/contexts/TenantContext';
 
 interface TenantWithSettings extends Tenant {
@@ -34,6 +35,8 @@ interface TenantTableProps {
   onEditModules: (tenant: TenantWithSettings) => void;
   onManageUsers: (tenant: TenantWithSettings) => void;
   onDelete: (tenant: TenantWithSettings) => void;
+  onViewDns?: (tenant: TenantWithSettings) => void;
+  onViewAsTenant?: (tenant: TenantWithSettings) => void;
 }
 
 const planBadgeVariant: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
@@ -59,6 +62,8 @@ export function TenantTable({
   onEditModules,
   onManageUsers,
   onDelete,
+  onViewDns,
+  onViewAsTenant,
 }: TenantTableProps) {
   if (tenants.length === 0) {
     return (
@@ -94,11 +99,12 @@ export function TenantTable({
               <TableCell>
                 <div className="flex items-center gap-1">
                   <span className="text-sm">{tenant.subdomain}</span>
+                  <span className="text-xs text-muted-foreground">.igrejamoove</span>
                   <a
-                    href={`https://${tenant.subdomain}.iptmglobal.com`}
+                    href={`https://${tenant.subdomain}.igrejamoove.com.br`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-primary"
+                    className="text-muted-foreground hover:text-primary ml-1"
                   >
                     <ExternalLink className="h-3 w-3" />
                   </a>
@@ -132,6 +138,12 @@ export function TenantTable({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    {onViewAsTenant && (
+                      <DropdownMenuItem onClick={() => onViewAsTenant(tenant)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        Ver como Organização
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={() => onEdit(tenant)}>
                       <Edit className="mr-2 h-4 w-4" />
                       Editar
@@ -152,6 +164,13 @@ export function TenantTable({
                       <Users className="mr-2 h-4 w-4" />
                       Usuários
                     </DropdownMenuItem>
+                    {onViewDns && (
+                      <DropdownMenuItem onClick={() => onViewDns(tenant)}>
+                        <Globe className="mr-2 h-4 w-4" />
+                        Config DNS
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => onDelete(tenant)}
                       className="text-destructive focus:text-destructive"
