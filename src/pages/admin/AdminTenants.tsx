@@ -211,9 +211,10 @@ const AdminTenants = () => {
                 onEditModules={handleEditModules}
                 onManageUsers={handleManageUsers}
                 onDelete={handleDeleteClick}
-                onViewDns={handleViewDns}
-                onViewAsTenant={handleViewAsTenant}
-              />
+                 onViewDns={handleViewDns}
+                 onViewAsTenant={handleViewAsTenant}
+                 onCheckDns={checkTenantDns}
+               />
             )}
           </CardContent>
         </Card>
