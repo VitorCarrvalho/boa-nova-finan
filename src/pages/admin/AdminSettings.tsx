@@ -106,8 +106,8 @@ const AdminSettings = () => {
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-300">Nome de Exibição</Label>
-                <Input 
-                  placeholder="Sistema IPTM"
+                 <Input 
+                   placeholder="Igreja Moove"
                   className="bg-slate-800 border-slate-700 text-white"
                 />
               </div>
