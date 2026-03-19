@@ -1,101 +1,76 @@
 
+# Plano: White-Label com Subdomínio - Abordagem Híbrida
 
-# Plano: Wizard de Onboarding Self-Service
+## ✅ IMPLEMENTADO
 
-Criar um fluxo público onde igrejas podem se auto-cadastrar na plataforma, criando automaticamente a organização, o usuário administrador e todas as configurações padrão.
+### Etapa 1 — Detecção de Subdomínio ✅
+- `getTenantIdentifier` atualizado para detectar subdomínios em `igrejamoove.com.br` e `igrejamoove.app`
+- `mica.igrejamoove.com.br` → slug "mica"
+- Domínio raiz sem subdomínio → plataforma admin (retorna null)
 
----
+### Etapa 2 — Redirecionar Raiz para /auth ✅
+- Rota `/` agora redireciona para `/auth`
+- Imports de Home e Index removidos do App.tsx
+- Arquivos Home/widgets mantidos no repositório para uso futuro
 
-## Fluxo do Usuário
+### Etapa 3 — Renomear Interface: Tenants → Organizações ✅
+- SuperAdminSidebar: "Tenants" → "Organizações"
+- AdminTenants: "Gestão de Tenants" → "Gestão de Organizações"
+- TenantTable: labels atualizados
+- TenantFormDialog: "Novo Tenant" → "Nova Organização"
+- TenantUsersDialog: labels atualizados
+- TenantModulesDialog: labels atualizados
+- AdminSettings: "Auto-aprovação de Tenants" → "Auto-aprovação de Organizações"
+- Rota `/admin/tenants` → `/admin/organizacoes` (com redirect de compatibilidade)
 
-```text
-/onboarding
-  Step 1: Dados da Igreja (nome, cidade, estado)
-  Step 2: Conta do Administrador (nome, email, senha)
-  Step 3: Escolha do Plano (free/basic/pro)
-  Step 4: Resumo + Confirmação
-  → Redirect para /auth com toast de sucesso
-```
+### Etapa 4 — Renomear IPTM → Igreja Moove ✅
+- ConectaIPTM: "Conecta IPTM" → "Conecta Moove"
+- ConectaManagement: "Gestão Conecta IPTM" → "Gestão Conecta Moove"
+- ConectaProviderProfile: mensagem WhatsApp atualizada
+- AdminSettings: placeholder "Sistema IPTM" → "Igreja Moove"
+- PastoresWidget: alt text atualizado
+- moduleStructure.ts: label "Conecta IPTM" → "Conecta Moove"
+- TenantContext: comentários atualizados
+- useTenantModules: comentários atualizados
 
----
+### Etapa 5 — Remover Rota /tenants Duplicada ✅
+- Rota `/tenants` removida e redirecionada para `/admin/organizacoes`
+- Import de TenantManagement removido
 
-## Etapa 1 — Edge Function `onboard-tenant`
+### Etapa 6 — Provisioning Automático de Organização ✅
+- Wizard de criação com 2 etapas (dados + admin)
+- Criação automática de perfis de acesso padrão (Admin, Pastor, Gerente Financeiro, Membro)
+- Criação automática de config de módulos padrão (todos habilitados)
+- Criação automática de settings de branding e home
+- Primeiro admin criado via Edge Function com perfil Admin atribuído
+- Validação de unicidade de slug/subdomínio
+- Toasts corrigidos: "Tenant" → "Organização"
 
-**Arquivo:** `supabase/functions/onboard-tenant/index.ts`
+### Etapa 7 — DNS e Visualização ✅
+- Dialog de instruções DNS com registros CNAME e A copiáveis
+- Informações sobre propagação e SSL
+- URLs de acesso (produção e teste/preview)
+- "Ver como Organização" — navega para /dashboard?tenant=slug
+- Link externo na tabela atualizado para igrejamoove.com.br
 
-Nova edge function pública (sem autenticação) que executa todo o provisioning:
+### Etapa 8 — Wizard de Onboarding Self-Service ✅
+- Edge Function pública `onboard-tenant` (verify_jwt=false)
+  - Cria tenant, tenant_settings (branding/home/modules), access_profiles, auth user, profile, tenant_admins
+  - Rollback automático em caso de falha
+  - Validação de slug e email únicos
+  - Branding padrão com paleta azul+âmbar (217 91% 45% / 35 92% 50%)
+- Página `/onboarding` com wizard de 4 etapas:
+  - Step 1: Dados da Igreja (nome, cidade, estado, slug auto-gerado)
+  - Step 2: Conta do Administrador (nome, email, senha)
+  - Step 3: Escolha do Plano (Free/Basic/Pro com trial 14 dias)
+  - Step 4: Resumo e confirmação
+- Rota pública `/onboarding` no App.tsx
+- CTA "Cadastre-se agora" na tela de login (AuthPage)
+- Cores padrão corrigidas no useTenantAdmin.ts
 
-1. Valida inputs (nome, slug, email, senha)
-2. Verifica unicidade de slug/subdomain
-3. Cria o tenant na tabela `tenants` (status: `trial`, ativo)
-4. Cria `tenant_settings` (branding com cores padrão azul+ambar, home, modules)
-5. Cria usuário no Auth via `auth.admin.createUser`
-6. Atualiza `profiles` com `tenant_id`, `approval_status: 'ativo'`, `role: 'admin'`
-7. Cria `tenant_admins` com role `owner`
-8. Cria perfis de acesso padrão (Admin, Pastor, Gerente Financeiro, Membro) vinculados ao tenant
-9. Atribui perfil Admin ao usuário criado
-10. Retorna sucesso com dados do tenant
-
-Reutiliza a lógica de `defaultProfiles` já existente em `create-tenant-user`.
-
-**Config:** `verify_jwt = false` no `config.toml`
-
----
-
-## Etapa 2 — Página `/onboarding`
-
-**Arquivo:** `src/pages/Onboarding.tsx`
-
-Wizard multi-step com visual alinhado à identidade azul+ambar:
-
-- **Step 1 — Igreja:** Nome, cidade, estado (slug auto-gerado)
-- **Step 2 — Administrador:** Nome completo, email, senha, confirmar senha
-- **Step 3 — Plano:** Cards visuais para Free, Basic, Pro (trial de 14 dias em todos)
-- **Step 4 — Resumo:** Revisão de todos os dados + botão "Criar Minha Igreja"
-
-Componentes: progress bar, validação com zod, feedback de erro inline, loading state durante criação.
-
----
-
-## Etapa 3 — Rota no App.tsx
-
-Adicionar rota pública:
-```
-<Route path="/onboarding" element={<Onboarding />} />
-```
-
----
-
-## Etapa 4 — Link na Tela de Login
-
-Adicionar na `AuthPage.tsx` um CTA abaixo do card de login:
-```
-"Sua igreja ainda não está na plataforma? Cadastre-se agora"
-→ Link para /onboarding
-```
-
----
-
-## Etapa 5 — Branding Padrão Correto
-
-Garantir que a edge function use as cores corretas da nova paleta ao criar `tenant_settings`:
-- `primaryColor: '217 91% 45%'`
-- `secondaryColor: '35 92% 50%'`
-- `accentColor: '35 92% 50%'`
-
-Também corrigir o `useTenantAdmin.ts` que ainda usa cores antigas (`222.2 47.4% 11.2%`).
-
----
-
-## Resumo
-
-| Componente | Tipo |
-|---|---|
-| `onboard-tenant` edge function | Backend (público) |
-| `Onboarding.tsx` page | Frontend (wizard 4 steps) |
-| Rota `/onboarding` | App.tsx |
-| CTA na tela de login | AuthPage.tsx |
-| Config.toml update | verify_jwt = false |
-
-Nenhuma migração de banco necessária — usa tabelas existentes (`tenants`, `tenant_settings`, `profiles`, `tenant_admins`, `access_profiles`, `user_profile_assignments`).
-
+## O que NÃO mudou (por design)
+- Tabelas do banco (tenants, tenant_id, tenant_settings)
+- RLS policies
+- Funções SQL (get_user_tenant_id, etc.)
+- Hooks internos (useTenantAdmin, TenantContext)
+- Nomes de arquivos de componentes (TenantTable.tsx, etc.)

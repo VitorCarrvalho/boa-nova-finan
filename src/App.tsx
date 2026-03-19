@@ -67,6 +67,7 @@ import AdminMetrics from "@/pages/admin/AdminMetrics";
 import AdminAuditoria from "@/pages/admin/AdminAuditoria";
 import AdminSettings from "@/pages/admin/AdminSettings";
 
+import Onboarding from "@/pages/Onboarding";
 import NotFound from "@/pages/NotFound";
 import VerifyRedirect from "@/components/VerifyRedirect";
 
@@ -96,6 +97,7 @@ const App = () => (
                 <Route path="/conecta/perfil/:slug" element={<ConectaProviderProfile />} />
                 
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/verify" element={<VerifyRedirect />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
               
