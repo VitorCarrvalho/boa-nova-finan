@@ -115,7 +115,7 @@ export function TenantFormDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? 'Editar Tenant' : 'Novo Tenant'}
+            {isEditing ? 'Editar Organização' : 'Nova Organização'}
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>
