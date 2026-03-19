@@ -284,7 +284,7 @@ const ConectaProviderProfile = () => {
               O prestador que você está procurando não foi encontrado ou não está mais disponível.
             </p>
             <Button onClick={() => navigate('/conecta')}>
-              Voltar para Conecta IPTM
+              Voltar para Conecta Moove
             </Button>
           </CardContent>
         </Card>
