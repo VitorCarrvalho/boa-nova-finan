@@ -9,9 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { 
   Settings, 
   CreditCard, 
-  Bell, 
-  Shield, 
-  Globe,
+  Shield,
   Mail,
   Palette
 } from 'lucide-react';
@@ -20,192 +18,149 @@ const AdminSettings = () => {
   return (
     <SuperAdminLayout>
       <div className="space-y-6">
-        {/* Page Header */}
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Settings className="h-7 w-7" />
             Configurações Globais
           </h1>
-          <p className="text-slate-400 mt-1">Configure as opções da plataforma</p>
+          <p className="text-muted-foreground mt-1">Configure as opções da plataforma</p>
         </div>
 
-        {/* Stripe Configuration */}
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="shadow-card">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5" />
               Integração Stripe
             </CardTitle>
-            <CardDescription className="text-slate-400">
+            <CardDescription>
               Configure as chaves de API do Stripe para processamento de pagamentos
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="stripe-pk" className="text-slate-300">Chave Pública (Publishable Key)</Label>
-                <Input 
-                  id="stripe-pk"
-                  type="password"
-                  placeholder="pk_live_..."
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
+                <Label htmlFor="stripe-pk">Chave Pública (Publishable Key)</Label>
+                <Input id="stripe-pk" type="password" placeholder="pk_live_..." />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="stripe-sk" className="text-slate-300">Chave Secreta (Secret Key)</Label>
-                <Input 
-                  id="stripe-sk"
-                  type="password"
-                  placeholder="sk_live_..."
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
+                <Label htmlFor="stripe-sk">Chave Secreta (Secret Key)</Label>
+                <Input id="stripe-sk" type="password" placeholder="sk_live_..." />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="stripe-webhook" className="text-slate-300">Webhook Secret</Label>
-              <Input 
-                id="stripe-webhook"
-                type="password"
-                placeholder="whsec_..."
-                className="bg-slate-800 border-slate-700 text-white"
-              />
+              <Label htmlFor="stripe-webhook">Webhook Secret</Label>
+              <Input id="stripe-webhook" type="password" placeholder="whsec_..." />
             </div>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label className="text-slate-300">Modo de Teste</Label>
-                <p className="text-xs text-slate-500">Usar chaves de teste do Stripe</p>
+                <Label>Modo de Teste</Label>
+                <p className="text-xs text-muted-foreground">Usar chaves de teste do Stripe</p>
               </div>
               <Switch />
             </div>
-            <Button className="bg-orange-500 hover:bg-orange-600 text-white">
-              Salvar Configurações
-            </Button>
+            <Button>Salvar Configurações</Button>
           </CardContent>
         </Card>
 
-        {/* Email Configuration */}
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="shadow-card">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
               <Mail className="h-5 w-5" />
               Configurações de E-mail
             </CardTitle>
-            <CardDescription className="text-slate-400">
+            <CardDescription>
               Configure o provedor de e-mail para notificações
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-slate-300">E-mail de Origem</Label>
-                <Input 
-                  type="email"
-                  placeholder="noreply@seudominio.com"
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
+                <Label>E-mail de Origem</Label>
+                <Input type="email" placeholder="noreply@seudominio.com" />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-300">Nome de Exibição</Label>
-                 <Input 
-                   placeholder="Igreja Moove"
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
+                <Label>Nome de Exibição</Label>
+                <Input placeholder="Igreja Moove" />
               </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label className="text-slate-300">E-mails Transacionais</Label>
-                <p className="text-xs text-slate-500">Enviar e-mails de boas-vindas e notificações</p>
+                <Label>E-mails Transacionais</Label>
+                <p className="text-xs text-muted-foreground">Enviar e-mails de boas-vindas e notificações</p>
               </div>
               <Switch defaultChecked />
             </div>
-            <Button className="bg-orange-500 hover:bg-orange-600 text-white">
-              Salvar Configurações
-            </Button>
+            <Button>Salvar Configurações</Button>
           </CardContent>
         </Card>
 
-        {/* Platform Defaults */}
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="shadow-card">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
               <Palette className="h-5 w-5" />
               Padrões da Plataforma
             </CardTitle>
-            <CardDescription className="text-slate-400">
+            <CardDescription>
               Configure os valores padrão para novas organizações
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-slate-300">Dias de Trial</Label>
-                <Input 
-                  type="number"
-                  defaultValue={14}
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
+                <Label>Dias de Trial</Label>
+                <Input type="number" defaultValue={14} />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-300">Plano Padrão</Label>
-                <Input 
-                  defaultValue="free"
-                  disabled
-                  className="bg-slate-800 border-slate-700 text-slate-500"
-                />
+                <Label>Plano Padrão</Label>
+                <Input defaultValue="free" disabled />
               </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label className="text-slate-300">Auto-aprovação de Organizações</Label>
-                <p className="text-xs text-slate-500">Aprovar automaticamente novos cadastros</p>
+                <Label>Auto-aprovação de Organizações</Label>
+                <p className="text-xs text-muted-foreground">Aprovar automaticamente novos cadastros</p>
               </div>
               <Switch />
             </div>
-            <Button className="bg-orange-500 hover:bg-orange-600 text-white">
-              Salvar Configurações
-            </Button>
+            <Button>Salvar Configurações</Button>
           </CardContent>
         </Card>
 
-        {/* Security */}
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="shadow-card">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
               Segurança
             </CardTitle>
-            <CardDescription className="text-slate-400">
+            <CardDescription>
               Configurações de segurança da plataforma
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label className="text-slate-300">Autenticação de Dois Fatores</Label>
-                <p className="text-xs text-slate-500">Exigir 2FA para Super Admins</p>
+                <Label>Autenticação de Dois Fatores</Label>
+                <p className="text-xs text-muted-foreground">Exigir 2FA para Super Admins</p>
               </div>
               <Switch />
             </div>
-            <Separator className="bg-slate-800" />
+            <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label className="text-slate-300">Logs de Auditoria</Label>
-                <p className="text-xs text-slate-500">Registrar todas as ações administrativas</p>
+                <Label>Logs de Auditoria</Label>
+                <p className="text-xs text-muted-foreground">Registrar todas as ações administrativas</p>
               </div>
               <Switch defaultChecked />
             </div>
-            <Separator className="bg-slate-800" />
+            <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label className="text-slate-300">Notificações de Segurança</Label>
-                <p className="text-xs text-slate-500">Alertar sobre atividades suspeitas</p>
+                <Label>Notificações de Segurança</Label>
+                <p className="text-xs text-muted-foreground">Alertar sobre atividades suspeitas</p>
               </div>
               <Switch defaultChecked />
             </div>
-            <Button className="bg-orange-500 hover:bg-orange-600 text-white">
-              Salvar Configurações
-            </Button>
+            <Button>Salvar Configurações</Button>
           </CardContent>
         </Card>
       </div>

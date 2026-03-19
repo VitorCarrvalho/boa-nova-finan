@@ -71,18 +71,18 @@ const SuperAdminSidebar: React.FC = () => {
   return (
     <Sidebar 
       collapsible="icon" 
-      className="border-r border-border bg-gradient-to-b from-slate-900 to-slate-800"
+      className="border-r border-border bg-card"
     >
-      <SidebarHeader className="p-4 border-b border-slate-700">
+      <SidebarHeader className="p-4 border-b border-border">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
                 <Shield className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
-                <h2 className="font-bold text-white text-sm">Super Admin</h2>
-                <p className="text-xs text-slate-400">Painel de Gestão</p>
+                <h2 className="font-bold text-foreground text-sm">Super Admin</h2>
+                <p className="text-xs text-muted-foreground">Painel de Gestão</p>
               </div>
             </div>
           )}
@@ -90,7 +90,7 @@ const SuperAdminSidebar: React.FC = () => {
             variant="ghost" 
             size="icon" 
             onClick={toggleSidebar}
-            className="text-slate-400 hover:text-white hover:bg-slate-700"
+            className="text-muted-foreground hover:text-foreground"
           >
             {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
@@ -113,7 +113,7 @@ const SuperAdminSidebar: React.FC = () => {
                     "w-full justify-start gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
                     isActive 
                       ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25" 
-                      : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
                   <NavLink to={item.href}>
@@ -127,13 +127,13 @@ const SuperAdminSidebar: React.FC = () => {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="p-2 border-t border-slate-700">
+      <SidebarFooter className="p-2 border-t border-border">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleLogout}
               tooltip="Sair"
-              className="w-full justify-start gap-3 px-3 py-2.5 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all duration-200"
+              className="w-full justify-start gap-3 px-3 py-2.5 rounded-lg text-destructive hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
             >
               <LogOut className="h-5 w-5" />
               <span className="font-medium">Sair</span>

@@ -34,13 +34,13 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const actionColors: Record<string, string> = {
-  create: 'bg-green-500/20 text-green-400 border-green-500/30',
-  update: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  delete: 'bg-red-500/20 text-red-400 border-red-500/30',
-  login: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-  logout: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
-  approve: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  reject: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  create: 'bg-green-500/20 text-green-700 border-green-500/30',
+  update: 'bg-blue-500/20 text-blue-700 border-blue-500/30',
+  delete: 'bg-red-500/20 text-red-700 border-red-500/30',
+  login: 'bg-purple-500/20 text-purple-700 border-purple-500/30',
+  logout: 'bg-muted text-muted-foreground border-border',
+  approve: 'bg-emerald-500/20 text-emerald-700 border-emerald-500/30',
+  reject: 'bg-orange-500/20 text-orange-700 border-orange-500/30',
 };
 
 const actionLabels: Record<string, string> = {
@@ -79,73 +79,67 @@ const AdminAuditoria = () => {
   return (
     <SuperAdminLayout>
       <div className="space-y-6">
-        {/* Page Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
               <Shield className="h-7 w-7" />
               Auditoria
             </h1>
-            <p className="text-slate-400 mt-1">Logs de atividades e ações administrativas</p>
+            <p className="text-muted-foreground mt-1">Logs de atividades e ações administrativas</p>
           </div>
-          <Button 
-            onClick={handleExport}
-            className="bg-orange-500 hover:bg-orange-600 text-white"
-          >
+          <Button onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
             Exportar Logs
           </Button>
         </div>
 
-        {/* Filters */}
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="shadow-card">
           <CardContent className="pt-6">
             <div className="flex flex-wrap gap-4">
               <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por tenant, admin ou detalhes..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                  className="pl-9"
                 />
               </div>
               
               <Select value={actionFilter} onValueChange={setActionFilter}>
-                <SelectTrigger className="w-40 bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger className="w-40">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Ação" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="all" className="text-white hover:bg-slate-700">Todas as ações</SelectItem>
-                  <SelectItem value="create" className="text-white hover:bg-slate-700">Criação</SelectItem>
-                  <SelectItem value="update" className="text-white hover:bg-slate-700">Atualização</SelectItem>
-                  <SelectItem value="delete" className="text-white hover:bg-slate-700">Exclusão</SelectItem>
-                  <SelectItem value="login" className="text-white hover:bg-slate-700">Login</SelectItem>
+                <SelectContent>
+                  <SelectItem value="all">Todas as ações</SelectItem>
+                  <SelectItem value="create">Criação</SelectItem>
+                  <SelectItem value="update">Atualização</SelectItem>
+                  <SelectItem value="delete">Exclusão</SelectItem>
+                  <SelectItem value="login">Login</SelectItem>
                 </SelectContent>
               </Select>
               
               <Select value={period} onValueChange={setPeriod}>
-                <SelectTrigger className="w-32 bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger className="w-32">
                   <Calendar className="h-4 w-4 mr-2" />
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="1d" className="text-white hover:bg-slate-700">Hoje</SelectItem>
-                  <SelectItem value="7d" className="text-white hover:bg-slate-700">7 dias</SelectItem>
-                  <SelectItem value="30d" className="text-white hover:bg-slate-700">30 dias</SelectItem>
-                  <SelectItem value="90d" className="text-white hover:bg-slate-700">90 dias</SelectItem>
+                <SelectContent>
+                  <SelectItem value="1d">Hoje</SelectItem>
+                  <SelectItem value="7d">7 dias</SelectItem>
+                  <SelectItem value="30d">30 dias</SelectItem>
+                  <SelectItem value="90d">90 dias</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </CardContent>
         </Card>
 
-        {/* Logs Table */}
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="shadow-card">
           <CardHeader>
-            <CardTitle className="text-white">Histórico de Atividades</CardTitle>
-            <CardDescription className="text-slate-400">
+            <CardTitle>Histórico de Atividades</CardTitle>
+            <CardDescription>
               {filteredLogs.length} registro(s) encontrado(s)
             </CardDescription>
           </CardHeader>
@@ -153,36 +147,36 @@ const AdminAuditoria = () => {
             {loading ? (
               <div className="space-y-3">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                  <Skeleton key={i} className="h-16 w-full bg-slate-800" />
+                  <Skeleton key={i} className="h-16 w-full" />
                 ))}
               </div>
             ) : filteredLogs.length === 0 ? (
-              <p className="text-slate-500 text-center py-12">
+              <p className="text-muted-foreground text-center py-12">
                 Nenhum log encontrado para os filtros selecionados
               </p>
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow className="border-slate-800 hover:bg-slate-800/50">
-                    <TableHead className="text-slate-400">Data/Hora</TableHead>
-                    <TableHead className="text-slate-400">Admin</TableHead>
-                    <TableHead className="text-slate-400">Ação</TableHead>
-                    <TableHead className="text-slate-400">Tenant</TableHead>
-                    <TableHead className="text-slate-400">Detalhes</TableHead>
+                  <TableRow>
+                    <TableHead>Data/Hora</TableHead>
+                    <TableHead>Admin</TableHead>
+                    <TableHead>Ação</TableHead>
+                    <TableHead>Tenant</TableHead>
+                    <TableHead>Detalhes</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredLogs.map((log) => (
-                    <TableRow key={log.id} className="border-slate-800 hover:bg-slate-800/50">
-                      <TableCell className="text-slate-400 whitespace-nowrap">
+                    <TableRow key={log.id}>
+                      <TableCell className="text-muted-foreground whitespace-nowrap">
                         {format(new Date(log.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
-                            <User className="h-4 w-4 text-slate-400" />
+                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                            <User className="h-4 w-4 text-muted-foreground" />
                           </div>
-                          <span className="text-white text-sm">{log.adminEmail || 'Sistema'}</span>
+                          <span className="text-sm">{log.adminEmail || 'Sistema'}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -193,15 +187,15 @@ const AdminAuditoria = () => {
                       <TableCell>
                         {log.tenantName ? (
                           <div className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4 text-slate-500" />
-                            <span className="text-white text-sm">{log.tenantName}</span>
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{log.tenantName}</span>
                           </div>
                         ) : (
-                          <span className="text-slate-500">-</span>
+                          <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
                       <TableCell className="max-w-xs">
-                        <p className="text-slate-400 text-sm truncate" title={log.details}>
+                        <p className="text-muted-foreground text-sm truncate" title={log.details}>
                           {log.details || '-'}
                         </p>
                       </TableCell>

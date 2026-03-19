@@ -22,7 +22,7 @@ const AdminDashboard = () => {
       value: stats?.totalTenants ?? 0,
       description: `${stats?.activeTenants ?? 0} ativos`,
       icon: Building2,
-      color: 'from-blue-500 to-blue-600',
+      color: 'from-primary to-primary/80',
     },
     {
       title: 'Usuários na Plataforma',
@@ -36,7 +36,7 @@ const AdminDashboard = () => {
       value: `R$ ${(stats?.mrr ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
       description: `${stats?.paidSubscriptions ?? 0} assinaturas pagas`,
       icon: DollarSign,
-      color: 'from-amber-500 to-orange-600',
+      color: 'from-secondary to-secondary/80',
     },
     {
       title: 'Conciliações do Mês',
@@ -50,18 +50,16 @@ const AdminDashboard = () => {
   return (
     <SuperAdminLayout>
       <div className="space-y-6">
-        {/* Page Header */}
         <div>
-          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-          <p className="text-slate-400 mt-1">Visão geral da plataforma</p>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Visão geral da plataforma</p>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {statCards.map((stat, index) => (
-            <Card key={index} className="bg-slate-900 border-slate-800">
+            <Card key={index} className="shadow-card">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-slate-400">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
                   {stat.title}
                 </CardTitle>
                 <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${stat.color} flex items-center justify-center`}>
@@ -70,11 +68,11 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 {loading ? (
-                  <Skeleton className="h-8 w-24 bg-slate-800" />
+                  <Skeleton className="h-8 w-24" />
                 ) : (
                   <>
-                    <div className="text-2xl font-bold text-white">{stat.value}</div>
-                    <p className="text-xs text-slate-500 mt-1">{stat.description}</p>
+                    <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+                    <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
                   </>
                 )}
               </CardContent>
@@ -82,17 +80,15 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Tenants by Plan */}
-          <Card className="bg-slate-900 border-slate-800">
+          <Card className="shadow-card">
             <CardHeader>
-              <CardTitle className="text-white">Tenants por Plano</CardTitle>
-              <CardDescription className="text-slate-400">Distribuição dos clientes</CardDescription>
+              <CardTitle>Tenants por Plano</CardTitle>
+              <CardDescription>Distribuição dos clientes</CardDescription>
             </CardHeader>
             <CardContent>
               {loading ? (
-                <Skeleton className="h-[250px] w-full bg-slate-800" />
+                <Skeleton className="h-[250px] w-full" />
               ) : (
                 <div className="h-[250px]">
                   <ResponsiveContainer width="100%" height="100%">
@@ -114,14 +110,7 @@ const AdminDashboard = () => {
                           />
                         ))}
                       </Pie>
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: '#1e293b', 
-                          border: '1px solid #334155',
-                          borderRadius: '8px',
-                          color: '#fff'
-                        }} 
-                      />
+                      <Tooltip />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -130,52 +119,35 @@ const AdminDashboard = () => {
                 {Object.entries(PLAN_COLORS).map(([plan, color]) => (
                   <div key={plan} className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-                    <span className="text-xs text-slate-400 capitalize">{plan}</span>
+                    <span className="text-xs text-muted-foreground capitalize">{plan}</span>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
 
-          {/* MRR Evolution */}
-          <Card className="bg-slate-900 border-slate-800">
+          <Card className="shadow-card">
             <CardHeader>
-              <CardTitle className="text-white">Evolução do MRR</CardTitle>
-              <CardDescription className="text-slate-400">Receita mensal recorrente</CardDescription>
+              <CardTitle>Evolução do MRR</CardTitle>
+              <CardDescription>Receita mensal recorrente</CardDescription>
             </CardHeader>
             <CardContent>
               {loading ? (
-                <Skeleton className="h-[250px] w-full bg-slate-800" />
+                <Skeleton className="h-[250px] w-full" />
               ) : (
                 <div className="h-[250px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={mrrHistory}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                      <XAxis 
-                        dataKey="month" 
-                        stroke="#64748b" 
-                        fontSize={12}
-                      />
-                      <YAxis 
-                        stroke="#64748b" 
-                        fontSize={12}
-                        tickFormatter={(value) => `R$${value}`}
-                      />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: '#1e293b', 
-                          border: '1px solid #334155',
-                          borderRadius: '8px',
-                          color: '#fff'
-                        }}
-                        formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'MRR']}
-                      />
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <XAxis dataKey="month" className="text-muted-foreground" fontSize={12} />
+                      <YAxis className="text-muted-foreground" fontSize={12} tickFormatter={(value) => `R$${value}`} />
+                      <Tooltip />
                       <Line 
                         type="monotone" 
                         dataKey="value" 
-                        stroke="#f59e0b" 
+                        stroke="hsl(35, 92%, 50%)" 
                         strokeWidth={2}
-                        dot={{ fill: '#f59e0b', strokeWidth: 2 }}
+                        dot={{ fill: 'hsl(35, 92%, 50%)', strokeWidth: 2 }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -185,40 +157,39 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        {/* Recent Activity */}
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="shadow-card">
           <CardHeader>
-            <CardTitle className="text-white">Atividade Recente</CardTitle>
-            <CardDescription className="text-slate-400">Últimas ações na plataforma</CardDescription>
+            <CardTitle>Atividade Recente</CardTitle>
+            <CardDescription>Últimas ações na plataforma</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="space-y-3">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <Skeleton key={i} className="h-12 w-full bg-slate-800" />
+                  <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
             ) : recentActivity.length === 0 ? (
-              <p className="text-slate-500 text-center py-8">Nenhuma atividade recente</p>
+              <p className="text-muted-foreground text-center py-8">Nenhuma atividade recente</p>
             ) : (
               <div className="space-y-3">
                 {recentActivity.map((activity, index) => (
                   <div 
                     key={index} 
-                    className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-slate-700"
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border"
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-2 h-2 rounded-full ${
                         activity.type === 'new_tenant' ? 'bg-green-500' :
-                        activity.type === 'subscription' ? 'bg-amber-500' :
-                        activity.type === 'user' ? 'bg-blue-500' : 'bg-slate-500'
+                        activity.type === 'subscription' ? 'bg-secondary' :
+                        activity.type === 'user' ? 'bg-primary' : 'bg-muted-foreground'
                       }`} />
                       <div>
-                        <p className="text-sm text-white">{activity.description}</p>
-                        <p className="text-xs text-slate-500">{activity.tenantName}</p>
+                        <p className="text-sm text-foreground">{activity.description}</p>
+                        <p className="text-xs text-muted-foreground">{activity.tenantName}</p>
                       </div>
                     </div>
-                    <span className="text-xs text-slate-500">{activity.time}</span>
+                    <span className="text-xs text-muted-foreground">{activity.time}</span>
                   </div>
                 ))}
               </div>
