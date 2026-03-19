@@ -89,9 +89,9 @@ const App = () => (
               <AuthProvider>
                 <ReportsProvider>
               <Routes>
-                <Route path="/" element={<Home />} />
+                <Route path="/" element={<Navigate to="/auth" replace />} />
                 
-                {/* Conecta IPTM - Public Routes */}
+                {/* Conecta Moove - Public Routes */}
                 <Route path="/conecta" element={<ConectaIPTM />} />
                 <Route path="/conecta/perfil/:slug" element={<ConectaProviderProfile />} />
                 
