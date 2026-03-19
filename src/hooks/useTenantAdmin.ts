@@ -9,6 +9,8 @@ interface TenantWithSettings extends Tenant {
   modulesConfig?: TenantModulesConfig;
   adminsCount?: number;
   usersCount?: number;
+  dnsStatus?: string;
+  dnsCheckedAt?: string | null;
 }
 
 interface CreateTenantInput {
