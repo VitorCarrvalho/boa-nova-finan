@@ -58,8 +58,6 @@ import ConectaIPTM from "@/pages/ConectaIPTM";
 import ConectaProviderProfile from "@/pages/ConectaProviderProfile";
 import ConectaManagement from "@/pages/ConectaManagement";
 
-// Import Tenant Management
-import TenantManagement from "@/pages/TenantManagement";
 
 // Import Super Admin pages
 import AdminDashboard from "@/pages/admin/AdminDashboard";
