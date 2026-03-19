@@ -116,7 +116,22 @@ function getTenantIdentifier(): string | null {
     return null; // Use default/main tenant
   }
   
-  // 3. Extract subdomain from hostname
+  // 3. Detectar subdomínio em igrejamoove.com.br
+  const mooveDomains = ['igrejamoove.com.br', 'igrejamoove.app'];
+  for (const domain of mooveDomains) {
+    if (hostname.endsWith(`.${domain}`)) {
+      const subdomain = hostname.replace(`.${domain}`, '');
+      if (subdomain && !subdomain.includes('.')) {
+        return subdomain;
+      }
+    }
+    // Domínio raiz sem subdomínio → plataforma admin
+    if (hostname === domain || hostname === `www.${domain}`) {
+      return null;
+    }
+  }
+  
+  // 4. Extract subdomain from other hostnames
   const parts = hostname.split('.');
   if (parts.length >= 3) {
     return parts[0]; // Return subdomain
