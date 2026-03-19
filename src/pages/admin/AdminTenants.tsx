@@ -153,17 +153,17 @@ const AdminTenants = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Building2 className="h-7 w-7" />
-              Gestão de Tenants
-            </h1>
-            <p className="text-slate-400 mt-1">
-              Gerencie as organizações (igrejas) que utilizam a plataforma
-            </p>
-          </div>
-          <Button onClick={handleCreate} className="bg-orange-500 hover:bg-orange-600 text-white">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Tenant
+             <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+               <Building2 className="h-7 w-7" />
+               Gestão de Organizações
+             </h1>
+             <p className="text-slate-400 mt-1">
+               Gerencie as organizações (igrejas) que utilizam a plataforma
+             </p>
+           </div>
+           <Button onClick={handleCreate} className="bg-orange-500 hover:bg-orange-600 text-white">
+             <Plus className="mr-2 h-4 w-4" />
+             Nova Organização
           </Button>
         </div>
 
