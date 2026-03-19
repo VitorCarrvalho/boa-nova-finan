@@ -1796,6 +1796,8 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          dns_checked_at: string | null
+          dns_status: string
           id: string
           is_active: boolean
           name: string
@@ -1809,6 +1811,8 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          dns_checked_at?: string | null
+          dns_status?: string
           id?: string
           is_active?: boolean
           name: string
@@ -1822,6 +1826,8 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          dns_checked_at?: string | null
+          dns_status?: string
           id?: string
           is_active?: boolean
           name?: string
