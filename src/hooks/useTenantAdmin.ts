@@ -144,6 +144,8 @@ export function useTenantAdmin() {
             modulesConfig,
             adminsCount: adminsCount || 0,
             usersCount: usersCount || 0,
+            dnsStatus: t.dns_status || 'pending',
+            dnsCheckedAt: t.dns_checked_at,
           };
         })
       );
