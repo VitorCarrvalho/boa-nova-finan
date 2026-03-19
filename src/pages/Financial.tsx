@@ -43,7 +43,7 @@ const Financial = () => {
           {canInsert && (
             <Button
               onClick={() => setShowForm(!showForm)}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-primary hover:bg-primary/90"
             >
               <Plus className="mr-2 h-4 w-4" />
               {showForm ? 'Cancelar' : 'Novo Registro'}

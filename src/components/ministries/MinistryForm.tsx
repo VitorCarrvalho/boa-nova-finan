@@ -174,7 +174,7 @@ const MinistryForm = ({ open, onOpenChange, ministry }: MinistryFormProps) => {
               </Button>
               <Button 
                 type="submit" 
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-primary hover:bg-primary/90"
                 disabled={createMinistry.isPending || updateMinistry.isPending}
               >
                 {ministry ? 'Atualizar' : 'Criar'}

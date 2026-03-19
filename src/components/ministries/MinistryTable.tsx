@@ -33,7 +33,7 @@ const MinistryTable = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -73,7 +73,7 @@ const MinistryTable = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleDelete(ministry.id)}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-primary hover:text-primary/80"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

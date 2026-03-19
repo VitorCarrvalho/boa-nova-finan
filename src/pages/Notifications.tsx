@@ -49,7 +49,7 @@ const Notifications = () => {
     <Layout>
       <div className="space-y-6">
         <div className="flex items-center gap-3">
-          <Bell className="h-8 w-8 text-red-600" />
+          <Bell className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Notificações</h1>
             <p className="text-gray-600">Sistema de notificações via WhatsApp</p>

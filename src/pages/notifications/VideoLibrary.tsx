@@ -121,7 +121,7 @@ const VideoLibrary = () => {
               Voltar
             </Button>
           </Link>
-          <Video className="h-8 w-8 text-red-600" />
+          <Video className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Biblioteca de Vídeos</h1>
             <p className="text-gray-600">Gerencie os vídeos disponíveis para notificações</p>
@@ -202,7 +202,7 @@ const VideoLibrary = () => {
           <CardContent>
             {isLoading ? (
               <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                 <p className="mt-2 text-gray-600">Carregando vídeos...</p>
               </div>
             ) : videos.length === 0 ? (
@@ -216,7 +216,7 @@ const VideoLibrary = () => {
                 {videos.map((video) => (
                   <div key={video.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center gap-3">
-                      <Video className="h-8 w-8 text-red-600" />
+                      <Video className="h-8 w-8 text-primary" />
                       <div>
                         <h3 className="font-medium">{video.title}</h3>
                         <div className="space-y-1">
@@ -251,7 +251,7 @@ const VideoLibrary = () => {
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
                           <AlertDialogAction 
                             onClick={() => handleDelete(video.id)}
-                            className="bg-red-600 hover:bg-red-700"
+                            className="bg-primary hover:bg-primary/90"
                           >
                             Remover
                           </AlertDialogAction>

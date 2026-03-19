@@ -16,7 +16,7 @@ const SupplierFormActions = ({ onCancel, isEditing, isLoading }: SupplierFormAct
       </Button>
       <Button 
         type="submit" 
-        className="bg-red-600 hover:bg-red-700"
+        className="bg-primary hover:bg-primary/90"
         disabled={isLoading}
       >
         {isEditing ? 'Atualizar' : 'Criar'}

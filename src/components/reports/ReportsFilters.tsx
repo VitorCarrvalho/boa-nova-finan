@@ -42,7 +42,7 @@ const ReportsFilters = () => {
       <Card>
         <CardContent className="p-6">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
             <p className="mt-2 text-sm text-gray-600">Carregando filtros...</p>
           </div>
         </CardContent>

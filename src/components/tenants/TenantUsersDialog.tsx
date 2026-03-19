@@ -225,7 +225,7 @@ const TenantUsersDialog: React.FC<TenantUsersDialogProps> = ({
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              className="bg-red-600 text-white hover:bg-red-700"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               Remover
             </AlertDialogAction>

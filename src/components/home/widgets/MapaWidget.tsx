@@ -45,7 +45,7 @@ const MapaWidget = () => {
     <WidgetContainer variant="glass" className="flex flex-col min-h-[160px]" onClick={abrirMapa}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <MapPin className="w-6 h-6 text-red-600 widget-icon" />
+          <MapPin className="w-6 h-6 text-primary widget-icon" />
           <h3 className="widget-title text-slate-700 text-lg">Nossa Igreja</h3>
         </div>
         <Home className="w-5 h-5 text-red-500 animate-pulse" />

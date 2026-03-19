@@ -232,7 +232,7 @@ const ReconciliationTable: React.FC<ReconciliationTableProps> = ({ reconciliatio
                                  variant="ghost"
                                  size="sm"
                                  onClick={() => handleReject(reconciliation)}
-                                 className="text-red-600 hover:text-red-700"
+                                 className="text-primary hover:text-primary/80"
                                  title="Reprovar"
                                >
                                  <X className="h-4 w-4" />
