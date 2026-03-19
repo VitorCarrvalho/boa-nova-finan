@@ -178,10 +178,16 @@ const AdminTenants = () => {
                Gerencie as organizações (igrejas) que utilizam a plataforma
              </p>
            </div>
-           <Button onClick={handleCreate} className="bg-orange-500 hover:bg-orange-600 text-white">
-             <Plus className="mr-2 h-4 w-4" />
-             Nova Organização
-          </Button>
+           <div className="flex gap-2">
+             <Button variant="outline" onClick={checkAllDns} className="border-slate-700 text-slate-300 hover:bg-slate-800">
+               <RefreshCw className="mr-2 h-4 w-4" />
+               Verificar DNS
+             </Button>
+             <Button onClick={handleCreate} className="bg-orange-500 hover:bg-orange-600 text-white">
+               <Plus className="mr-2 h-4 w-4" />
+               Nova Organização
+             </Button>
+           </div>
         </div>
 
         <Card className="bg-slate-900 border-slate-800">
