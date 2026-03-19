@@ -254,13 +254,6 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              {/* Tenant Management - Super Admin Only */}
-              <Route path="/tenants" element={
-                <ProtectedRoute>
-                  <TenantManagement />
-                </ProtectedRoute>
-              } />
-              
               {/* Super Admin Routes */}
               <Route path="/admin" element={
                 <ProtectedRoute>
