@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import SuperAdminLayout from '@/components/layout/SuperAdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Building2 } from 'lucide-react';
+import { Plus, Building2, RefreshCw } from 'lucide-react';
 import { useTenantAdmin } from '@/hooks/useTenantAdmin';
 import TenantTable from '@/components/tenants/TenantTable';
 import TenantFormDialog from '@/components/tenants/TenantFormDialog';
