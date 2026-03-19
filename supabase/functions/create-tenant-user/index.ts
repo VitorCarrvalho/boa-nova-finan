@@ -167,7 +167,7 @@ serve(async (req) => {
 
     console.log(`Creating user for tenant: ${tenant.name} (${tenantId})`)
 
-    // Step 1: Auto-detect if tenant has access profiles, create if not
+    // Step 1: Ensure tenant has access profiles — MANDATORY
     let adminProfileId: string | null = null
     let profilesCreated = 0
 
@@ -178,21 +178,20 @@ serve(async (req) => {
       .eq('is_active', true)
 
     if (profilesCheckError) {
-      console.error('Error checking existing profiles:', profilesCheckError)
+      throw new Error(`Failed to check existing profiles: ${profilesCheckError.message}`)
     }
 
-    // Find existing Admin profile
+    // Find existing Admin profile for this tenant
     const existingAdmin = existingProfiles?.find(p => p.name === 'Admin')
     
     if (existingAdmin) {
       adminProfileId = existingAdmin.id
       console.log(`Found existing Admin profile: ${adminProfileId}`)
     } else {
-      // No Admin profile exists - create all default profiles for this tenant
-      console.log('No access profiles found for tenant, creating defaults...')
+      // Create default profiles for this tenant
+      console.log('Creating default access profiles for tenant...')
       
       for (const profile of defaultProfiles) {
-        // Check if this specific profile already exists
         const alreadyExists = existingProfiles?.find(p => p.name === profile.name)
         if (alreadyExists) {
           if (profile.name === 'Admin') adminProfileId = alreadyExists.id
@@ -212,16 +211,24 @@ serve(async (req) => {
           .single()
 
         if (profileError) {
-          console.error(`Error creating profile ${profile.name}:`, profileError)
-        } else {
-          console.log(`Profile created: ${profileData.name} (${profileData.id})`)
-          profilesCreated++
-          if (profile.name === 'Admin') {
-            adminProfileId = profileData.id
-          }
+          // FATAL: profile creation must succeed
+          throw new Error(`Failed to create profile "${profile.name}": ${profileError.message}`)
+        }
+
+        console.log(`Profile created: ${profileData.name} (${profileData.id})`)
+        profilesCreated++
+        if (profile.name === 'Admin') {
+          adminProfileId = profileData.id
         }
       }
     }
+
+    // MANDATORY: adminProfileId must exist
+    if (!adminProfileId) {
+      throw new Error('FATAL: Admin profile could not be created or found for this tenant. Cannot proceed.')
+    }
+
+    console.log(`Admin profile ID: ${adminProfileId}`)
 
     // Step 2: Ensure tenant has modules config with all modules enabled
     const { data: existingModules } = await supabaseAdmin
@@ -232,7 +239,7 @@ serve(async (req) => {
       .maybeSingle()
 
     if (!existingModules) {
-      console.log('No modules config found, creating with all modules enabled...')
+      console.log('Creating modules config with all modules enabled...')
       const allModulesEnabled: Record<string, boolean> = {
         dashboard: true,
         membros: true,
@@ -263,7 +270,7 @@ serve(async (req) => {
       if (modulesError) {
         console.error('Error creating modules config:', modulesError)
       } else {
-        console.log('Modules config created with all modules enabled')
+        console.log('Modules config created')
       }
     }
 
@@ -286,22 +293,17 @@ serve(async (req) => {
     const newUser = authData.user
     console.log(`Auth user created: ${newUser.id}`)
 
-    // Step 4: Update the profile with tenant_id, active status, and admin profile
-    const profileUpdate: Record<string, unknown> = {
-      name,
-      email,
-      tenant_id: tenantId,
-      approval_status: 'ativo',
-      role: 'admin',
-    }
-
-    if (adminProfileId) {
-      profileUpdate.profile_id = adminProfileId
-    }
-
+    // Step 4: Update profile with tenant_id, active status, and TENANT-SPECIFIC admin profile
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .update(profileUpdate)
+      .update({
+        name,
+        email,
+        tenant_id: tenantId,
+        approval_status: 'ativo',
+        role: 'admin',
+        profile_id: adminProfileId,
+      })
       .eq('id', newUser.id)
 
     if (profileError) {
@@ -310,7 +312,7 @@ serve(async (req) => {
       throw new Error('Failed to update user profile')
     }
 
-    console.log('Profile updated successfully')
+    console.log(`Profile updated with admin profile_id: ${adminProfileId}`)
 
     // Step 5: Create tenant_admin record
     const { error: adminError } = await supabaseAdmin
@@ -328,22 +330,20 @@ serve(async (req) => {
       throw new Error('Failed to create tenant admin record')
     }
 
-    // Step 6: Create profile assignment if we have an admin profile
-    if (adminProfileId) {
-      const { error: assignError } = await supabaseAdmin
-        .from('user_profile_assignments')
-        .insert({
-          user_id: newUser.id,
-          profile_id: adminProfileId,
-          assigned_by: caller.id,
-          is_active: true,
-        })
+    // Step 6: Create profile assignment
+    const { error: assignError } = await supabaseAdmin
+      .from('user_profile_assignments')
+      .insert({
+        user_id: newUser.id,
+        profile_id: adminProfileId,
+        assigned_by: caller.id,
+        is_active: true,
+      })
 
-      if (assignError) {
-        console.error('Profile assignment failed (non-critical):', assignError)
-      } else {
-        console.log('Admin profile assigned to user')
-      }
+    if (assignError) {
+      console.error('Profile assignment failed (non-critical):', assignError)
+    } else {
+      console.log('Admin profile assigned to user')
     }
 
     console.log(`Tenant admin created with role: ${role}`)
