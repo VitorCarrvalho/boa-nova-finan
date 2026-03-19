@@ -11,8 +11,6 @@ import { TenantProvider } from "@/contexts/TenantContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Import all pages
-import Index from "@/pages/Index";
-import Home from "@/pages/Home";
 import Auth from "@/pages/Auth";
 import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
