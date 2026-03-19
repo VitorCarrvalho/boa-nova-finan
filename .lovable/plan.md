@@ -1,119 +1,101 @@
 
-# Plano: Correção Definitiva do Multi-Tenant
 
-## Problemas Identificados
+# Plano: White-Label com Subdominio - Abordagem Hibrida
 
-### Problema 1: Políticas RLS Duplicadas
-Existem **DUAS** políticas SELECT na tabela `members`:
-- `Tenant users can view their tenant members` → filtra por tenant
-- `Usuários com permissão podem ver membros` → **NÃO filtra por tenant**
-
-Como RLS policies são **OR**, a política antiga permite ver tudo!
-
-O mesmo problema existe em TODAS as tabelas de dados.
-
-### Problema 2: Dados Existentes sem tenant_id
-Todos os membros, eventos, etc. têm `tenant_id = NULL`. Precisam ser associados ao tenant correto (IPTM Global).
-
-### Problema 3: TenantContext não carrega corretamente
-O `fetchTenantData` pode ter race condition com `currentUserId`.
+Manter `tenant_id` no banco e codigo. Renomear apenas na interface para "Organizacao". Configurar deteccao de subdominio para `igrejamoove.com.br`.
 
 ---
 
-## Solução
+## Etapa 1 — Deteccao de Subdominio
 
-### Parte 1: Migração SQL para Remover Políticas Antigas
+**Arquivo:** `src/contexts/TenantContext.tsx`
 
-Remover TODAS as políticas antigas que não filtram por tenant:
+Atualizar `getTenantIdentifier` para detectar subdominios em `igrejamoove.com.br`:
 
-```sql
--- MEMBERS
-DROP POLICY IF EXISTS "Usuários com permissão podem ver membros" ON members;
-DROP POLICY IF EXISTS "Usuários com permissão podem criar membros" ON members;
-DROP POLICY IF EXISTS "Usuários com permissão podem editar membros" ON members;
-DROP POLICY IF EXISTS "Users can view members for dropdowns" ON members;
-
--- CHURCH_EVENTS  
-DROP POLICY IF EXISTS "Usuários com permissão podem ver eventos" ON church_events;
-DROP POLICY IF EXISTS "Usuários com permissão podem criar eventos" ON church_events;
-DROP POLICY IF EXISTS "Usuários com permissão podem atualizar eventos" ON church_events;
-DROP POLICY IF EXISTS "Usuários com permissão podem deletar eventos" ON church_events;
-DROP POLICY IF EXISTS "Public can view active events" ON church_events;
-
--- CONGREGATIONS
-DROP POLICY IF EXISTS "Public can view basic congregation info for registration" ON congregations;
-DROP POLICY IF EXISTS "Usuários com permissão podem criar congregações" ON congregations;
-DROP POLICY IF EXISTS "Usuários com permissão podem editar congregações" ON congregations;
-DROP POLICY IF EXISTS "Usuários com permissão podem deletar congregações" ON congregations;
-DROP POLICY IF EXISTS "Usuários com permissão podem ver congregações" ON congregations;
-
--- ... e todas as outras tabelas
+```text
+mica.igrejamoove.com.br → slug = "mica"
+lagoinha.igrejamoove.com.br → slug = "lagoinha"
+igrejamoove.com.br (sem sub) → plataforma admin
 ```
 
-### Parte 2: Atualizar Dados Existentes
-
-Associar todos os dados sem tenant_id ao IPTM Global:
-
-```sql
--- O ID do IPTM Global é 846fa096-6e2c-4f36-bb2c-3d807c4e4939
-UPDATE members SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-UPDATE church_events SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-UPDATE congregations SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-UPDATE ministries SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-UPDATE departments SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-UPDATE suppliers SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-UPDATE financial_records SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-UPDATE reconciliations SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-UPDATE accounts_payable SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-```
-
-### Parte 3: Corrigir TenantContext
-
-Garantir que `fetchTenantData` é re-executado quando `currentUserId` muda:
-
-```typescript
-// Adicionar currentUserId como dependência explícita do useEffect
-useEffect(() => {
-  // Só executar se loading terminou ou userId mudou
-  if (currentUserId !== undefined) {
-    fetchTenantData();
-  }
-}, [currentUserId, tenantIdentifier]);
-```
+Adicionar `igrejamoove.com.br` na lista de dominios reconhecidos.
 
 ---
 
-## Tabelas Afetadas
+## Etapa 2 — Redirecionar Raiz para /auth
 
-| Tabela | Políticas a Remover | Dados a Migrar |
-|--------|---------------------|----------------|
-| members | 4 políticas antigas | ~7 registros |
-| church_events | 5 políticas antigas | X registros |
-| congregations | 5 políticas antigas | X registros |
-| ministries | 5 políticas antigas | X registros |
-| departments | 4 políticas antigas | X registros |
-| suppliers | 4 políticas antigas | X registros |
-| financial_records | 3 políticas antigas | X registros |
-| reconciliations | 4 políticas antigas | X registros |
-| accounts_payable | 4 políticas antigas | X registros |
-| expense_categories | 2 políticas antigas | X registros |
-| access_profiles | 2 políticas antigas | Manter NULL para perfis globais |
+**Arquivos:** `src/App.tsx`, remover `src/pages/Home.tsx` e `src/pages/Index.tsx` das rotas
+
+- Rota `/` passa a ser `<Navigate to="/auth" replace />`
+- Manter arquivos Home/widgets no repositorio (uso futuro PWA) mas desconectar das rotas
 
 ---
 
-## Resultado Esperado
+## Etapa 3 — Renomear Interface: Tenants → Organizacoes
 
-Após a correção:
+**Arquivos afetados (~8):**
 
-1. **admin@mica.com** → Vê apenas dados da Mica (tenant_id = bf9bb59f)
-2. **admin@iptm.com** → Vê apenas dados do IPTM Global (tenant_id = 846fa096)
-3. **Super Admin** → Vê dados de todos os tenants
-4. **Tela de Configurações** → Mostra abas Branding/Home/Módulos para usuários com tenant
+- `src/components/layout/SuperAdminSidebar.tsx` — menu "Tenants" → "Organizacoes"
+- `src/pages/admin/AdminTenants.tsx` — titulo "Gestao de Tenants" → "Gestao de Organizacoes"
+- `src/components/tenants/TenantTable.tsx` — labels da tabela
+- `src/components/tenants/TenantFormDialog.tsx` — labels do formulario
+- `src/components/tenants/TenantUsersDialog.tsx` — labels
+- `src/components/tenants/TenantBrandingDialog.tsx` — labels
+- `src/components/tenants/TenantHomeConfigDialog.tsx` — labels
+- `src/components/tenants/TenantModulesDialog.tsx` — labels
+
+Rota `/admin/tenants` → `/admin/organizacoes` (manter redirect de compatibilidade)
 
 ---
 
-## Arquivos a Modificar
+## Etapa 4 — Renomear IPTM → Igreja Moove
 
-1. **Nova migração SQL** - Remover políticas duplicadas e migrar dados
-2. **src/contexts/TenantContext.tsx** - Corrigir race condition no carregamento
+**Arquivos afetados (~10):**
+
+- `src/pages/ConectaIPTM.tsx` — "Conecta IPTM" → "Conecta Moove"
+- `src/pages/ConectaManagement.tsx` — "Gestao Conecta IPTM" → "Gestao Conecta Moove"
+- `src/pages/ConectaProviderProfile.tsx` — mensagem WhatsApp
+- `src/pages/admin/AdminSettings.tsx` — placeholder "IPTM" → "Igreja Moove"
+- `src/components/home/widgets/PastoresWidget.tsx` — alt text
+- `src/utils/moduleStructure.ts` — label "Conecta IPTM" → "Conecta Moove"
+- `src/contexts/TenantContext.tsx` — comentarios e nomes default
+- `src/hooks/useTenantModules.ts` — comentarios
+- `src/components/layout/SuperAdminSidebar.tsx` — qualquer referencia IPTM
+
+---
+
+## Etapa 5 — Remover Rota /tenants Duplicada
+
+**Arquivo:** `src/App.tsx`
+
+- Remover rota `/tenants` (pagina `TenantManagement.tsx`)
+- Manter apenas `/admin/organizacoes` como ponto unico de gestao
+
+---
+
+## Etapa 6 — Remover Rota /tenants da Pagina de Gestao Legada
+
+Arquivo `src/pages/TenantManagement.tsx` pode ser mantido mas desconectado das rotas.
+
+---
+
+## Resumo
+
+| O que muda | Onde |
+|---|---|
+| Deteccao subdominio igrejamoove.com.br | TenantContext |
+| `/` → `/auth` | App.tsx |
+| Labels "Tenant" → "Organizacao" | ~8 componentes UI |
+| "IPTM" → "Igreja Moove" / "Conecta Moove" | ~10 arquivos |
+| Remover rota `/tenants` duplicada | App.tsx |
+
+| O que NAO muda |
+|---|
+| Tabelas do banco (tenants, tenant_id, tenant_settings) |
+| RLS policies |
+| Funcoes SQL (get_user_tenant_id, etc) |
+| Hooks internos (useTenantAdmin, TenantContext) |
+| Edge Functions |
+
+**Estimativa:** ~20 arquivos modificados, zero migracao SQL.
 
