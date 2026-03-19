@@ -169,9 +169,9 @@ const AdminTenants = () => {
 
         <Card className="bg-slate-900 border-slate-800">
           <CardHeader>
-            <CardTitle className="text-white">Tenants Cadastrados</CardTitle>
-            <CardDescription className="text-slate-400">
-              {tenants.length} tenant(s) na plataforma
+            <CardTitle className="text-white">Organizações Cadastradas</CardTitle>
+             <CardDescription className="text-slate-400">
+               {tenants.length} organização(ões) na plataforma
             </CardDescription>
           </CardHeader>
           <CardContent>
