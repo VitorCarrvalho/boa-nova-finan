@@ -53,6 +53,21 @@
 - "Ver como Organização" — navega para /dashboard?tenant=slug
 - Link externo na tabela atualizado para igrejamoove.com.br
 
+### Etapa 8 — Wizard de Onboarding Self-Service ✅
+- Edge Function pública `onboard-tenant` (verify_jwt=false)
+  - Cria tenant, tenant_settings (branding/home/modules), access_profiles, auth user, profile, tenant_admins
+  - Rollback automático em caso de falha
+  - Validação de slug e email únicos
+  - Branding padrão com paleta azul+âmbar (217 91% 45% / 35 92% 50%)
+- Página `/onboarding` com wizard de 4 etapas:
+  - Step 1: Dados da Igreja (nome, cidade, estado, slug auto-gerado)
+  - Step 2: Conta do Administrador (nome, email, senha)
+  - Step 3: Escolha do Plano (Free/Basic/Pro com trial 14 dias)
+  - Step 4: Resumo e confirmação
+- Rota pública `/onboarding` no App.tsx
+- CTA "Cadastre-se agora" na tela de login (AuthPage)
+- Cores padrão corrigidas no useTenantAdmin.ts
+
 ## O que NÃO mudou (por design)
 - Tabelas do banco (tenants, tenant_id, tenant_settings)
 - RLS policies
