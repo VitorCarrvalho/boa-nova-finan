@@ -518,6 +518,41 @@ export function useTenantAdmin() {
     }
   };
 
+  const checkTenantDns = async (tenantId: string, subdomain: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('check-tenant-dns', {
+        body: { tenant_id: tenantId, subdomain },
+      });
+
+      if (error) throw error;
+
+      // Update local state
+      setTenants(prev =>
+        prev.map(t =>
+          t.id === tenantId
+            ? { ...t, dnsStatus: data.status, dnsCheckedAt: new Date().toISOString() }
+            : t
+        )
+      );
+
+      return data.status;
+    } catch (error: any) {
+      console.error('Error checking DNS:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível verificar o DNS.',
+        variant: 'destructive',
+      });
+      return null;
+    }
+  };
+
+  const checkAllDns = async () => {
+    for (const tenant of tenants) {
+      await checkTenantDns(tenant.id, tenant.subdomain);
+    }
+  };
+
   useEffect(() => {
     fetchTenants();
   }, [fetchTenants]);
@@ -533,6 +568,8 @@ export function useTenantAdmin() {
     updateTenantHomeConfig,
     updateTenantModules,
     deleteTenant,
+    checkTenantDns,
+    checkAllDns,
   };
 }
 

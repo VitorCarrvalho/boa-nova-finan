@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -16,7 +16,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Edit, Trash2, Palette, Layout, Users, ExternalLink, Puzzle, Globe, Eye } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { MoreHorizontal, Edit, Trash2, Palette, Layout, Users, ExternalLink, Puzzle, Globe, Eye, RefreshCw, CheckCircle2, XCircle, Clock, AlertTriangle, Loader2 } from 'lucide-react';
 import { Tenant, TenantBranding, TenantHomeConfig, TenantModulesConfig } from '@/contexts/TenantContext';
 
 interface TenantWithSettings extends Tenant {
@@ -25,6 +26,8 @@ interface TenantWithSettings extends Tenant {
   modulesConfig?: TenantModulesConfig;
   adminsCount?: number;
   usersCount?: number;
+  dnsStatus?: string;
+  dnsCheckedAt?: string | null;
 }
 
 interface TenantTableProps {
@@ -37,6 +40,7 @@ interface TenantTableProps {
   onDelete: (tenant: TenantWithSettings) => void;
   onViewDns?: (tenant: TenantWithSettings) => void;
   onViewAsTenant?: (tenant: TenantWithSettings) => void;
+  onCheckDns?: (tenantId: string, subdomain: string) => Promise<string | null>;
 }
 
 const planBadgeVariant: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
@@ -54,6 +58,84 @@ const statusBadgeVariant: Record<string, 'default' | 'secondary' | 'outline' | '
   cancelled: 'destructive',
 };
 
+function DnsStatusBadge({ status, checkedAt, onCheck, loading }: {
+  status: string;
+  checkedAt?: string | null;
+  onCheck: () => void;
+  loading: boolean;
+}) {
+  const config: Record<string, { icon: React.ReactNode; label: string; className: string }> = {
+    active: {
+      icon: <CheckCircle2 className="h-3 w-3" />,
+      label: 'Online',
+      className: 'bg-green-600 text-white border-transparent hover:bg-green-700',
+    },
+    partial: {
+      icon: <AlertTriangle className="h-3 w-3" />,
+      label: 'Parcial',
+      className: 'bg-yellow-500 text-white border-transparent hover:bg-yellow-600',
+    },
+    offline: {
+      icon: <XCircle className="h-3 w-3" />,
+      label: 'Offline',
+      className: 'bg-destructive text-destructive-foreground border-transparent',
+    },
+    pending: {
+      icon: <Clock className="h-3 w-3" />,
+      label: 'Pendente',
+      className: 'bg-muted text-muted-foreground border-transparent',
+    },
+  };
+
+  const { icon, label, className } = config[status] || config.pending;
+
+  const timeAgo = checkedAt
+    ? (() => {
+        const diff = Date.now() - new Date(checkedAt).getTime();
+        const mins = Math.floor(diff / 60000);
+        if (mins < 1) return 'agora';
+        if (mins < 60) return `${mins}min atrás`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return `${hrs}h atrás`;
+        return `${Math.floor(hrs / 24)}d atrás`;
+      })()
+    : 'nunca verificado';
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex items-center gap-1">
+            <Badge className={`gap-1 text-[10px] px-1.5 py-0.5 ${className}`}>
+              {icon}
+              {label}
+            </Badge>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCheck();
+              }}
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3 w-3" />
+              )}
+            </Button>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Última verificação: {timeAgo}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 export function TenantTable({
   tenants,
   onEdit,
@@ -64,7 +146,20 @@ export function TenantTable({
   onDelete,
   onViewDns,
   onViewAsTenant,
+  onCheckDns,
 }: TenantTableProps) {
+  const [checkingDns, setCheckingDns] = useState<Record<string, boolean>>({});
+
+  const handleCheckDns = async (tenantId: string, subdomain: string) => {
+    if (!onCheckDns) return;
+    setCheckingDns(prev => ({ ...prev, [tenantId]: true }));
+    try {
+      await onCheckDns(tenantId, subdomain);
+    } finally {
+      setCheckingDns(prev => ({ ...prev, [tenantId]: false }));
+    }
+  };
+
   if (tenants.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -82,6 +177,7 @@ export function TenantTable({
             <TableHead>Subdomínio</TableHead>
             <TableHead>Plano</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="text-center">DNS</TableHead>
             <TableHead className="text-center">Usuários</TableHead>
             <TableHead className="text-center">Ativo</TableHead>
             <TableHead className="w-[80px]">Ações</TableHead>
@@ -119,6 +215,14 @@ export function TenantTable({
                 <Badge variant={statusBadgeVariant[tenant.subscriptionStatus] || 'outline'}>
                   {tenant.subscriptionStatus}
                 </Badge>
+              </TableCell>
+              <TableCell className="text-center">
+                <DnsStatusBadge
+                  status={tenant.dnsStatus || 'pending'}
+                  checkedAt={tenant.dnsCheckedAt}
+                  onCheck={() => handleCheckDns(tenant.id, tenant.subdomain)}
+                  loading={!!checkingDns[tenant.id]}
+                />
               </TableCell>
               <TableCell className="text-center">
                 <span className="text-sm">{tenant.usersCount || 0}</span>
