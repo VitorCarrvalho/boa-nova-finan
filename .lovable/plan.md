@@ -1,119 +1,46 @@
 
-# Plano: Correção Definitiva do Multi-Tenant
+# Plano: White-Label com Subdomínio - Abordagem Híbrida
 
-## Problemas Identificados
+## ✅ IMPLEMENTADO
 
-### Problema 1: Políticas RLS Duplicadas
-Existem **DUAS** políticas SELECT na tabela `members`:
-- `Tenant users can view their tenant members` → filtra por tenant
-- `Usuários com permissão podem ver membros` → **NÃO filtra por tenant**
+### Etapa 1 — Detecção de Subdomínio ✅
+- `getTenantIdentifier` atualizado para detectar subdomínios em `igrejamoove.com.br` e `igrejamoove.app`
+- `mica.igrejamoove.com.br` → slug "mica"
+- Domínio raiz sem subdomínio → plataforma admin (retorna null)
 
-Como RLS policies são **OR**, a política antiga permite ver tudo!
+### Etapa 2 — Redirecionar Raiz para /auth ✅
+- Rota `/` agora redireciona para `/auth`
+- Imports de Home e Index removidos do App.tsx
+- Arquivos Home/widgets mantidos no repositório para uso futuro
 
-O mesmo problema existe em TODAS as tabelas de dados.
+### Etapa 3 — Renomear Interface: Tenants → Organizações ✅
+- SuperAdminSidebar: "Tenants" → "Organizações"
+- AdminTenants: "Gestão de Tenants" → "Gestão de Organizações"
+- TenantTable: labels atualizados
+- TenantFormDialog: "Novo Tenant" → "Nova Organização"
+- TenantUsersDialog: labels atualizados
+- TenantModulesDialog: labels atualizados
+- AdminSettings: "Auto-aprovação de Tenants" → "Auto-aprovação de Organizações"
+- Rota `/admin/tenants` → `/admin/organizacoes` (com redirect de compatibilidade)
 
-### Problema 2: Dados Existentes sem tenant_id
-Todos os membros, eventos, etc. têm `tenant_id = NULL`. Precisam ser associados ao tenant correto (IPTM Global).
+### Etapa 4 — Renomear IPTM → Igreja Moove ✅
+- ConectaIPTM: "Conecta IPTM" → "Conecta Moove"
+- ConectaManagement: "Gestão Conecta IPTM" → "Gestão Conecta Moove"
+- ConectaProviderProfile: mensagem WhatsApp atualizada
+- AdminSettings: placeholder "Sistema IPTM" → "Igreja Moove"
+- PastoresWidget: alt text atualizado
+- moduleStructure.ts: label "Conecta IPTM" → "Conecta Moove"
+- TenantContext: comentários atualizados
+- useTenantModules: comentários atualizados
 
-### Problema 3: TenantContext não carrega corretamente
-O `fetchTenantData` pode ter race condition com `currentUserId`.
+### Etapa 5 — Remover Rota /tenants Duplicada ✅
+- Rota `/tenants` removida e redirecionada para `/admin/organizacoes`
+- Import de TenantManagement removido
 
----
-
-## Solução
-
-### Parte 1: Migração SQL para Remover Políticas Antigas
-
-Remover TODAS as políticas antigas que não filtram por tenant:
-
-```sql
--- MEMBERS
-DROP POLICY IF EXISTS "Usuários com permissão podem ver membros" ON members;
-DROP POLICY IF EXISTS "Usuários com permissão podem criar membros" ON members;
-DROP POLICY IF EXISTS "Usuários com permissão podem editar membros" ON members;
-DROP POLICY IF EXISTS "Users can view members for dropdowns" ON members;
-
--- CHURCH_EVENTS  
-DROP POLICY IF EXISTS "Usuários com permissão podem ver eventos" ON church_events;
-DROP POLICY IF EXISTS "Usuários com permissão podem criar eventos" ON church_events;
-DROP POLICY IF EXISTS "Usuários com permissão podem atualizar eventos" ON church_events;
-DROP POLICY IF EXISTS "Usuários com permissão podem deletar eventos" ON church_events;
-DROP POLICY IF EXISTS "Public can view active events" ON church_events;
-
--- CONGREGATIONS
-DROP POLICY IF EXISTS "Public can view basic congregation info for registration" ON congregations;
-DROP POLICY IF EXISTS "Usuários com permissão podem criar congregações" ON congregations;
-DROP POLICY IF EXISTS "Usuários com permissão podem editar congregações" ON congregations;
-DROP POLICY IF EXISTS "Usuários com permissão podem deletar congregações" ON congregations;
-DROP POLICY IF EXISTS "Usuários com permissão podem ver congregações" ON congregations;
-
--- ... e todas as outras tabelas
-```
-
-### Parte 2: Atualizar Dados Existentes
-
-Associar todos os dados sem tenant_id ao IPTM Global:
-
-```sql
--- O ID do IPTM Global é 846fa096-6e2c-4f36-bb2c-3d807c4e4939
-UPDATE members SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-UPDATE church_events SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-UPDATE congregations SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-UPDATE ministries SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-UPDATE departments SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-UPDATE suppliers SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-UPDATE financial_records SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-UPDATE reconciliations SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-UPDATE accounts_payable SET tenant_id = '846fa096-6e2c-4f36-bb2c-3d807c4e4939' WHERE tenant_id IS NULL;
-```
-
-### Parte 3: Corrigir TenantContext
-
-Garantir que `fetchTenantData` é re-executado quando `currentUserId` muda:
-
-```typescript
-// Adicionar currentUserId como dependência explícita do useEffect
-useEffect(() => {
-  // Só executar se loading terminou ou userId mudou
-  if (currentUserId !== undefined) {
-    fetchTenantData();
-  }
-}, [currentUserId, tenantIdentifier]);
-```
-
----
-
-## Tabelas Afetadas
-
-| Tabela | Políticas a Remover | Dados a Migrar |
-|--------|---------------------|----------------|
-| members | 4 políticas antigas | ~7 registros |
-| church_events | 5 políticas antigas | X registros |
-| congregations | 5 políticas antigas | X registros |
-| ministries | 5 políticas antigas | X registros |
-| departments | 4 políticas antigas | X registros |
-| suppliers | 4 políticas antigas | X registros |
-| financial_records | 3 políticas antigas | X registros |
-| reconciliations | 4 políticas antigas | X registros |
-| accounts_payable | 4 políticas antigas | X registros |
-| expense_categories | 2 políticas antigas | X registros |
-| access_profiles | 2 políticas antigas | Manter NULL para perfis globais |
-
----
-
-## Resultado Esperado
-
-Após a correção:
-
-1. **admin@mica.com** → Vê apenas dados da Mica (tenant_id = bf9bb59f)
-2. **admin@iptm.com** → Vê apenas dados do IPTM Global (tenant_id = 846fa096)
-3. **Super Admin** → Vê dados de todos os tenants
-4. **Tela de Configurações** → Mostra abas Branding/Home/Módulos para usuários com tenant
-
----
-
-## Arquivos a Modificar
-
-1. **Nova migração SQL** - Remover políticas duplicadas e migrar dados
-2. **src/contexts/TenantContext.tsx** - Corrigir race condition no carregamento
-
+## O que NÃO mudou (por design)
+- Tabelas do banco (tenants, tenant_id, tenant_settings)
+- RLS policies
+- Funções SQL (get_user_tenant_id, etc.)
+- Hooks internos (useTenantAdmin, TenantContext)
+- Edge Functions
+- Nomes de arquivos de componentes (TenantTable.tsx, etc.)
