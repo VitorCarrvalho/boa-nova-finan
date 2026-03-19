@@ -68,10 +68,10 @@ const ConectaIPTM = () => {
   return (
     <>
       <Helmet>
-        <title>Conecta IPTM - Rede de Serviços da Comunidade</title>
-        <meta name="description" content="Encontre prestadores de serviços da comunidade IPTM Global. Conecte-se com profissionais qualificados da nossa igreja." />
-        <meta property="og:title" content="Conecta IPTM - Rede de Serviços da Comunidade" />
-        <meta property="og:description" content="Encontre prestadores de serviços da comunidade IPTM Global. Conecte-se com profissionais qualificados da nossa igreja." />
+        <title>Conecta Moove - Rede de Serviços da Comunidade</title>
+         <meta name="description" content="Encontre prestadores de serviços da comunidade Igreja Moove. Conecte-se com profissionais qualificados da nossa igreja." />
+         <meta property="og:title" content="Conecta Moove - Rede de Serviços da Comunidade" />
+         <meta property="og:description" content="Encontre prestadores de serviços da comunidade Igreja Moove. Conecte-se com profissionais qualificados da nossa igreja." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://jryifbcsifodvocshvuo.supabase.co/conecta" />
       </Helmet>
