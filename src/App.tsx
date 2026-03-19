@@ -260,7 +260,7 @@ const App = () => (
                   <AdminDashboard />
                 </ProtectedRoute>
               } />
-              <Route path="/admin/tenants" element={
+              <Route path="/admin/organizacoes" element={
                 <ProtectedRoute>
                   <AdminTenants />
                 </ProtectedRoute>
