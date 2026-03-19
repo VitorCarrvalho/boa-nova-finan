@@ -140,7 +140,7 @@ const ConectaProviderProfile = () => {
     if (!provider) return;
     
     const phoneNumber = provider.whatsapp.replace(/\D/g, '');
-    const message = encodeURIComponent(`Olá! Vi seu perfil no Conecta IPTM e gostaria de saber mais sobre seus serviços.`);
+    const message = encodeURIComponent(`Olá! Vi seu perfil no Conecta Moove e gostaria de saber mais sobre seus serviços.`);
     const whatsappUrl = `https://wa.me/55${phoneNumber}?text=${message}`;
     
     handleContactClick('whatsapp', whatsappUrl);
