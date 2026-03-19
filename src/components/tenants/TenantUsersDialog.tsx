@@ -99,7 +99,7 @@ const TenantUsersDialog: React.FC<TenantUsersDialogProps> = ({
               Usuários - {tenantName}
             </DialogTitle>
             <DialogDescription className="text-slate-400">
-              Gerencie os administradores deste tenant
+              Gerencie os administradores desta organização
             </DialogDescription>
           </DialogHeader>
 
