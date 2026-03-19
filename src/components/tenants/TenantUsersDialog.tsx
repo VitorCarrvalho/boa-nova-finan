@@ -99,7 +99,7 @@ const TenantUsersDialog: React.FC<TenantUsersDialogProps> = ({
               Usuários - {tenantName}
             </DialogTitle>
             <DialogDescription className="text-slate-400">
-              Gerencie os administradores deste tenant
+              Gerencie os administradores desta organização
             </DialogDescription>
           </DialogHeader>
 
@@ -215,8 +215,8 @@ const TenantUsersDialog: React.FC<TenantUsersDialogProps> = ({
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">Remover Usuário</AlertDialogTitle>
             <AlertDialogDescription className="text-slate-400">
-              Tem certeza que deseja remover <strong className="text-white">{selectedUser?.user.name}</strong> do tenant?
-              Esta ação removerá apenas o acesso administrativo ao tenant, não excluirá a conta do usuário.
+               Tem certeza que deseja remover <strong className="text-white">{selectedUser?.user.name}</strong> da organização?
+               Esta ação removerá apenas o acesso administrativo à organização, não excluirá a conta do usuário.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

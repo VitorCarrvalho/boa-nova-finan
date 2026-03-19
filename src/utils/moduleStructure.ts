@@ -304,7 +304,7 @@ export const MODULE_STRUCTURE: Module[] = [
   },
   {
     key: 'conecta',
-    label: 'Conecta IPTM',
+    label: 'Conecta Moove',
     icon: 'Network',
     actions: [
       { key: 'view', label: 'Visualizar', applicable: true },

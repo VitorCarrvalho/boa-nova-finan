@@ -106,8 +106,8 @@ const AdminSettings = () => {
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-300">Nome de Exibição</Label>
-                <Input 
-                  placeholder="Sistema IPTM"
+                 <Input 
+                   placeholder="Igreja Moove"
                   className="bg-slate-800 border-slate-700 text-white"
                 />
               </div>
@@ -133,7 +133,7 @@ const AdminSettings = () => {
               Padrões da Plataforma
             </CardTitle>
             <CardDescription className="text-slate-400">
-              Configure os valores padrão para novos tenants
+              Configure os valores padrão para novas organizações
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -157,7 +157,7 @@ const AdminSettings = () => {
             </div>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label className="text-slate-300">Auto-aprovação de Tenants</Label>
+                <Label className="text-slate-300">Auto-aprovação de Organizações</Label>
                 <p className="text-xs text-slate-500">Aprovar automaticamente novos cadastros</p>
               </div>
               <Switch />

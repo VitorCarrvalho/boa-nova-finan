@@ -153,25 +153,25 @@ const AdminTenants = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Building2 className="h-7 w-7" />
-              Gestão de Tenants
-            </h1>
-            <p className="text-slate-400 mt-1">
-              Gerencie as organizações (igrejas) que utilizam a plataforma
-            </p>
-          </div>
-          <Button onClick={handleCreate} className="bg-orange-500 hover:bg-orange-600 text-white">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Tenant
+             <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+               <Building2 className="h-7 w-7" />
+               Gestão de Organizações
+             </h1>
+             <p className="text-slate-400 mt-1">
+               Gerencie as organizações (igrejas) que utilizam a plataforma
+             </p>
+           </div>
+           <Button onClick={handleCreate} className="bg-orange-500 hover:bg-orange-600 text-white">
+             <Plus className="mr-2 h-4 w-4" />
+             Nova Organização
           </Button>
         </div>
 
         <Card className="bg-slate-900 border-slate-800">
           <CardHeader>
-            <CardTitle className="text-white">Tenants Cadastrados</CardTitle>
-            <CardDescription className="text-slate-400">
-              {tenants.length} tenant(s) na plataforma
+            <CardTitle className="text-white">Organizações Cadastradas</CardTitle>
+             <CardDescription className="text-slate-400">
+               {tenants.length} organização(ões) na plataforma
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -241,10 +241,10 @@ const AdminTenants = () => {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="bg-slate-900 border-slate-800">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Excluir Tenant</AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-400">
-              Tem certeza que deseja excluir <strong className="text-white">{selectedTenant?.name}</strong>?
-              Esta ação não pode ser desfeita e todos os dados do tenant serão perdidos.
+            <AlertDialogTitle className="text-white">Excluir Organização</AlertDialogTitle>
+             <AlertDialogDescription className="text-slate-400">
+               Tem certeza que deseja excluir <strong className="text-white">{selectedTenant?.name}</strong>?
+               Esta ação não pode ser desfeita e todos os dados da organização serão perdidos.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

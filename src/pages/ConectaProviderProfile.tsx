@@ -140,7 +140,7 @@ const ConectaProviderProfile = () => {
     if (!provider) return;
     
     const phoneNumber = provider.whatsapp.replace(/\D/g, '');
-    const message = encodeURIComponent(`Olá! Vi seu perfil no Conecta IPTM e gostaria de saber mais sobre seus serviços.`);
+    const message = encodeURIComponent(`Olá! Vi seu perfil no Conecta Moove e gostaria de saber mais sobre seus serviços.`);
     const whatsappUrl = `https://wa.me/55${phoneNumber}?text=${message}`;
     
     handleContactClick('whatsapp', whatsappUrl);
@@ -284,7 +284,7 @@ const ConectaProviderProfile = () => {
               O prestador que você está procurando não foi encontrado ou não está mais disponível.
             </p>
             <Button onClick={() => navigate('/conecta')}>
-              Voltar para Conecta IPTM
+              Voltar para Conecta Moove
             </Button>
           </CardContent>
         </Card>
@@ -297,9 +297,9 @@ const ConectaProviderProfile = () => {
   return (
     <>
       <Helmet>
-        <title>{provider.name} - Conecta IPTM</title>
+        <title>{provider.name} - Conecta Moove</title>
         <meta name="description" content={provider.description.substring(0, 160)} />
-        <meta property="og:title" content={`${provider.name} - Conecta IPTM`} />
+        <meta property="og:title" content={`${provider.name} - Conecta Moove`} />
         <meta property="og:description" content={provider.description.substring(0, 160)} />
         <meta property="og:image" content={provider.photo_url} />
         <meta property="og:type" content="profile" />

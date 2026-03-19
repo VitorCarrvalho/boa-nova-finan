@@ -11,8 +11,6 @@ import { TenantProvider } from "@/contexts/TenantContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Import all pages
-import Index from "@/pages/Index";
-import Home from "@/pages/Home";
 import Auth from "@/pages/Auth";
 import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
@@ -55,13 +53,11 @@ import ApprovedAccounts from "@/pages/accounts-payable/ApprovedAccounts";
 import PaidAccounts from "@/pages/accounts-payable/PaidAccounts";
 import TestDropdowns from "@/pages/TestDropdowns";
 
-// Import Conecta IPTM pages
+// Import Conecta Moove pages
 import ConectaIPTM from "@/pages/ConectaIPTM";
 import ConectaProviderProfile from "@/pages/ConectaProviderProfile";
 import ConectaManagement from "@/pages/ConectaManagement";
 
-// Import Tenant Management
-import TenantManagement from "@/pages/TenantManagement";
 
 // Import Super Admin pages
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -93,9 +89,9 @@ const App = () => (
               <AuthProvider>
                 <ReportsProvider>
               <Routes>
-                <Route path="/" element={<Home />} />
+                <Route path="/" element={<Navigate to="/auth" replace />} />
                 
-                {/* Conecta IPTM - Public Routes */}
+                {/* Conecta Moove - Public Routes */}
                 <Route path="/conecta" element={<ConectaIPTM />} />
                 <Route path="/conecta/perfil/:slug" element={<ConectaProviderProfile />} />
                 
@@ -258,20 +254,13 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              {/* Tenant Management - Super Admin Only */}
-              <Route path="/tenants" element={
-                <ProtectedRoute>
-                  <TenantManagement />
-                </ProtectedRoute>
-              } />
-              
               {/* Super Admin Routes */}
               <Route path="/admin" element={
                 <ProtectedRoute>
                   <AdminDashboard />
                 </ProtectedRoute>
               } />
-              <Route path="/admin/tenants" element={
+              <Route path="/admin/organizacoes" element={
                 <ProtectedRoute>
                   <AdminTenants />
                 </ProtectedRoute>
@@ -341,6 +330,8 @@ const App = () => (
               } />
               
               {/* Legacy routes for compatibility */}
+              <Route path="/admin/tenants" element={<Navigate to="/admin/organizacoes" replace />} />
+              <Route path="/tenants" element={<Navigate to="/admin/organizacoes" replace />} />
               <Route path="/settings" element={<Navigate to="/configuracoes" replace />} />
               <Route path="/access-management" element={<Navigate to="/gestao-acessos" replace />} />
               <Route path="/accounts-payable/new" element={<Navigate to="/contas-pagar/nova" replace />} />

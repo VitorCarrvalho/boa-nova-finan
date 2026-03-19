@@ -115,7 +115,7 @@ export function TenantFormDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? 'Editar Tenant' : 'Novo Tenant'}
+            {isEditing ? 'Editar Organização' : 'Nova Organização'}
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>
@@ -231,9 +231,9 @@ export function TenantFormDialog({
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">Tenant Ativo</FormLabel>
-                      <p className="text-sm text-muted-foreground">
-                        Desativar impede o acesso ao tenant
+                     <FormLabel className="text-base">Organização Ativa</FormLabel>
+                       <p className="text-sm text-muted-foreground">
+                         Desativar impede o acesso à organização
                       </p>
                     </div>
                     <FormControl>

@@ -68,10 +68,10 @@ const ConectaIPTM = () => {
   return (
     <>
       <Helmet>
-        <title>Conecta IPTM - Rede de Serviços da Comunidade</title>
-        <meta name="description" content="Encontre prestadores de serviços da comunidade IPTM Global. Conecte-se com profissionais qualificados da nossa igreja." />
-        <meta property="og:title" content="Conecta IPTM - Rede de Serviços da Comunidade" />
-        <meta property="og:description" content="Encontre prestadores de serviços da comunidade IPTM Global. Conecte-se com profissionais qualificados da nossa igreja." />
+        <title>Conecta Moove - Rede de Serviços da Comunidade</title>
+         <meta name="description" content="Encontre prestadores de serviços da comunidade Igreja Moove. Conecte-se com profissionais qualificados da nossa igreja." />
+         <meta property="og:title" content="Conecta Moove - Rede de Serviços da Comunidade" />
+         <meta property="og:description" content="Encontre prestadores de serviços da comunidade Igreja Moove. Conecte-se com profissionais qualificados da nossa igreja." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://jryifbcsifodvocshvuo.supabase.co/conecta" />
       </Helmet>
@@ -91,7 +91,7 @@ const ConectaIPTM = () => {
                   <span className="hidden sm:inline">Voltar</span>
                 </Button>
                 <div>
-                  <h1 className="text-2xl font-bold text-slate-800">Conecta IPTM</h1>
+                  <h1 className="text-2xl font-bold text-slate-800">Conecta Moove</h1>
                   <p className="text-sm text-slate-600">Rede de Serviços da Comunidade</p>
                 </div>
               </div>

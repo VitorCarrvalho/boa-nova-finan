@@ -905,6 +905,39 @@ export type Database = {
         }
         Relationships: []
       }
+      leads_plamev_vendas_online: {
+        Row: {
+          created_at: string | null
+          id: number
+          nome: string | null
+          possui_thread: boolean | null
+          remoteJid: string | null
+          response_id: string | null
+          thread_id: string | null
+          total_tokens: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          nome?: string | null
+          possui_thread?: boolean | null
+          remoteJid?: string | null
+          response_id?: string | null
+          thread_id?: string | null
+          total_tokens?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          nome?: string | null
+          possui_thread?: boolean | null
+          remoteJid?: string | null
+          response_id?: string | null
+          thread_id?: string | null
+          total_tokens?: string | null
+        }
+        Relationships: []
+      }
       "leads-filipe": {
         Row: {
           cep: string | null
