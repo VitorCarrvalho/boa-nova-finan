@@ -53,7 +53,7 @@ import ApprovedAccounts from "@/pages/accounts-payable/ApprovedAccounts";
 import PaidAccounts from "@/pages/accounts-payable/PaidAccounts";
 import TestDropdowns from "@/pages/TestDropdowns";
 
-// Import Conecta IPTM pages
+// Import Conecta Moove pages
 import ConectaIPTM from "@/pages/ConectaIPTM";
 import ConectaProviderProfile from "@/pages/ConectaProviderProfile";
 import ConectaManagement from "@/pages/ConectaManagement";
