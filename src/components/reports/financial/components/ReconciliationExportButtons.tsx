@@ -13,7 +13,7 @@ const ReconciliationExportButtons = ({ canDownloadPDF, onGeneratePDF, onExportCS
   return (
     <div className="flex justify-end space-x-2">
       {canDownloadPDF && (
-        <Button onClick={onGeneratePDF} className="bg-red-600 hover:bg-red-700">
+        <Button onClick={onGeneratePDF} className="bg-primary hover:bg-primary/90">
           <FileText className="mr-2 h-4 w-4" />
           Relatório Comparativo (PDF)
         </Button>

@@ -94,7 +94,7 @@ const EventTable = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -114,7 +114,7 @@ const EventTable = () => {
               </CardDescription>
             </div>
             {canInsert && (
-              <Button onClick={handleNewEvent} className="bg-red-600 hover:bg-red-700">
+              <Button onClick={handleNewEvent} className="bg-primary hover:bg-primary/90">
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Evento
               </Button>
@@ -251,7 +251,7 @@ const EventTable = () => {
                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                     <AlertDialogAction
                                       onClick={() => handleDelete(event.id)}
-                                      className="bg-red-600 hover:bg-red-700"
+                                      className="bg-primary hover:bg-primary/90"
                                     >
                                       Excluir
                                     </AlertDialogAction>

@@ -241,7 +241,7 @@ const ScheduledMessages = () => {
           <CardContent>
             {isLoading ? (
               <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                 <p className="mt-2 text-gray-600">Carregando notificações...</p>
               </div>
             ) : notifications.length === 0 ? (
@@ -312,7 +312,7 @@ const ScheduledMessages = () => {
                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                 <AlertDialogAction 
                                   onClick={() => handleCancel(notification.id)}
-                                  className="bg-red-600 hover:bg-red-700"
+                                  className="bg-primary hover:bg-primary/90"
                                 >
                                   Confirmar
                                 </AlertDialogAction>

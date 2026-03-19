@@ -139,7 +139,7 @@ const RecurringMessages = () => {
           <CardContent>
             {isLoading ? (
               <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                 <p className="mt-2 text-gray-600">Carregando mensagens...</p>
               </div>
             ) : recurringMessages.length === 0 ? (
@@ -236,7 +236,7 @@ const RecurringMessages = () => {
                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
                               <AlertDialogAction 
                                 onClick={() => handleDelete(message.id)}
-                                className="bg-red-600 hover:bg-red-700"
+                                className="bg-primary hover:bg-primary/90"
                               >
                                 Excluir
                               </AlertDialogAction>

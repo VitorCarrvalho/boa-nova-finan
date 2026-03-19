@@ -298,7 +298,7 @@ const MobileSidebar = () => {
                       src={profileData.photo_url || undefined} 
                       alt={profileData.name}
                     />
-                    <AvatarFallback className="bg-red-100 text-red-600 text-sm">
+                    <AvatarFallback className="bg-primary/10 text-primary text-sm">
                       {getInitials(profileData.name)}
                     </AvatarFallback>
                   </Avatar>

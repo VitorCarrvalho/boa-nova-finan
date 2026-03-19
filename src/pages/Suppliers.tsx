@@ -36,7 +36,7 @@ const Suppliers = () => {
           {canInsert && (
             <Button 
               onClick={() => setShowForm(true)}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-primary hover:bg-primary/90"
             >
               <Plus className="h-4 w-4 mr-2" />
               Novo Fornecedor

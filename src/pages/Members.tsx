@@ -79,7 +79,7 @@ const Members = () => {
           {canManageMembers && (
             <Button
               onClick={handleNewMember}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-primary hover:bg-primary/90"
             >
               <Plus className="mr-2 h-4 w-4" />
               {showForm ? 'Cancelar' : 'Novo Membro'}
@@ -89,7 +89,7 @@ const Members = () => {
 
         {statsLoading ? (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
             <p className="mt-4 text-gray-600">Carregando estatísticas...</p>
           </div>
         ) : (

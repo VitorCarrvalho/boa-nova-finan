@@ -311,7 +311,7 @@ const Sidebar = () => {
   if (!user || !profileData) {
     return (
       <div className="w-64 bg-white border-r border-gray-200 min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -330,7 +330,7 @@ const Sidebar = () => {
                 src={profileData.photo_url || undefined} 
                 alt={profileData.name}
               />
-              <AvatarFallback className="bg-red-100 text-red-600">
+              <AvatarFallback className="bg-primary/10 text-primary">
                 {getInitials(profileData.name)}
               </AvatarFallback>
             </Avatar>
@@ -380,7 +380,7 @@ const Sidebar = () => {
                   variant={isActive ? "default" : "ghost"}
                   className={`w-full justify-start ${
                     isActive 
-                      ? 'bg-red-600 text-white hover:bg-red-700' 
+                      ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
@@ -399,7 +399,7 @@ const Sidebar = () => {
                   <Button
                     variant="ghost"
                     className={`w-full justify-start text-gray-700 hover:bg-gray-100 ${
-                      location.pathname.startsWith('/accounts-payable') ? 'bg-red-50 text-red-600' : ''
+                      location.pathname.startsWith('/accounts-payable') ? 'bg-primary/10 text-primary' : ''
                     }`}
                   >
                     <Icon className="mr-3 h-4 w-4" />
@@ -423,7 +423,7 @@ const Sidebar = () => {
                             size="sm"
                             className={`w-full justify-start text-sm ${
                               isActive 
-                                ? 'bg-red-600 text-white hover:bg-red-700' 
+                                ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
                                 : 'text-gray-600 hover:bg-gray-50'
                             }`}
                           >
@@ -443,7 +443,7 @@ const Sidebar = () => {
                 variant={isActive ? "default" : "ghost"}
                 className={`w-full justify-start ${
                   isActive 
-                    ? 'bg-red-600 text-white hover:bg-red-700' 
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
@@ -461,7 +461,7 @@ const Sidebar = () => {
               <Button
                 variant="ghost"
                 className={`w-full justify-start text-gray-700 hover:bg-gray-100 ${
-                  location.pathname.startsWith('/relatorios') ? 'bg-red-50 text-red-600' : ''
+                  location.pathname.startsWith('/relatorios') ? 'bg-primary/10 text-primary' : ''
                 }`}
               >
                 <BarChart3 className="mr-3 h-4 w-4" />
@@ -483,7 +483,7 @@ const Sidebar = () => {
                       size="sm"
                       className={`w-full justify-start text-sm ${
                         isActive 
-                          ? 'bg-red-600 text-white hover:bg-red-700' 
+                          ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
                           : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
@@ -503,7 +503,7 @@ const Sidebar = () => {
               <Button
                 variant="ghost"
                 className={`w-full justify-start text-gray-700 hover:bg-gray-100 ${
-                  location.pathname.startsWith('/notificacoes') ? 'bg-red-50 text-red-600' : ''
+                  location.pathname.startsWith('/notificacoes') ? 'bg-primary/10 text-primary' : ''
                 }`}
               >
                 <Bell className="mr-3 h-4 w-4" />
@@ -526,7 +526,7 @@ const Sidebar = () => {
                       size="sm"
                       className={`w-full justify-start text-sm ${
                         isActive 
-                          ? 'bg-red-600 text-white hover:bg-red-700' 
+                          ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
                           : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
@@ -548,7 +548,7 @@ const Sidebar = () => {
             variant="ghost"
             className={`w-full justify-start ${
               location.pathname.startsWith('/documentacao')
-                ? 'bg-red-600 text-white hover:bg-red-700' 
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
@@ -563,7 +563,7 @@ const Sidebar = () => {
               variant="ghost"
               className={`w-full justify-start ${
                 location.pathname.startsWith('/gestao-acessos') 
-                  ? 'bg-red-600 text-white hover:bg-red-700' 
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -579,7 +579,7 @@ const Sidebar = () => {
               variant="ghost"
               className={`w-full justify-start ${
                 location.pathname.startsWith('/conecta-gestao') 
-                  ? 'bg-red-600 text-white hover:bg-red-700' 
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -595,7 +595,7 @@ const Sidebar = () => {
               variant="ghost"
               className={`w-full justify-start ${
                 location.pathname.startsWith('/configuracoes') 
-                  ? 'bg-red-600 text-white hover:bg-red-700' 
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -607,7 +607,7 @@ const Sidebar = () => {
         
         <Button
           variant="ghost"
-          className="w-full justify-start text-red-600 hover:bg-red-50"
+          className="w-full justify-start text-destructive hover:bg-destructive/10"
           onClick={() => { signOut(); }}
         >
           <LogOut className="mr-3 h-4 w-4" />

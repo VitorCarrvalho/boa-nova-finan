@@ -136,7 +136,7 @@ const FinancialForm: React.FC<FinancialFormProps> = ({ onSuccess }) => {
 
           <Button 
             type="submit" 
-            className="w-full bg-red-600 hover:bg-red-700"
+            className="w-full bg-primary hover:bg-primary/90"
             disabled={loading}
           >
             {loading ? 'Salvando...' : 'Salvar Registro'}

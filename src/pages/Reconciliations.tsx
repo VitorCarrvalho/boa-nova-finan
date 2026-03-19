@@ -67,7 +67,7 @@ const Reconciliations = () => {
           {canSubmit && (
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-red-600 hover:bg-red-700">
+                <Button className="bg-primary hover:bg-primary/90">
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Conciliação
                 </Button>

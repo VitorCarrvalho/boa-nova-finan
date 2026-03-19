@@ -306,7 +306,7 @@ const MemberForm: React.FC<MemberFormProps> = ({ onSuccess, member }) => {
 
           <Button 
             type="submit" 
-            className="w-full bg-red-600 hover:bg-red-700"
+            className="w-full bg-primary hover:bg-primary/90"
             disabled={loading}
           >
             {loading ? 'Salvando...' : member ? 'Atualizar Membro' : 'Cadastrar Membro'}
