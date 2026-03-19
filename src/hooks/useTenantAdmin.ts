@@ -16,6 +16,11 @@ interface CreateTenantInput {
   slug: string;
   subdomain: string;
   planType?: 'free' | 'basic' | 'pro' | 'enterprise';
+  admin?: {
+    name: string;
+    email: string;
+    password: string;
+  };
 }
 
 interface UpdateTenantInput {
@@ -26,6 +31,26 @@ interface UpdateTenantInput {
   planType?: 'free' | 'basic' | 'pro' | 'enterprise';
   subscriptionStatus?: 'trial' | 'active' | 'pending' | 'suspended' | 'cancelled';
 }
+
+// Default modules - all enabled for new orgs
+const defaultModulesConfig: TenantModulesConfig = {
+  dashboard: true,
+  membros: true,
+  congregacoes: true,
+  departamentos: true,
+  ministerios: true,
+  eventos: true,
+  financeiro: true,
+  conciliacoes: true,
+  fornecedores: true,
+  'contas-pagar': true,
+  relatorios: true,
+  notificacoes: true,
+  'gestao-acessos': true,
+  documentacao: true,
+  configuracoes: true,
+  conecta: true,
+};
 
 export function useTenantAdmin() {
   const [tenants, setTenants] = useState<TenantWithSettings[]>([]);
@@ -71,13 +96,11 @@ export function useTenantAdmin() {
 
       const tenantsWithSettings: TenantWithSettings[] = await Promise.all(
         (tenantsData || []).map(async (t) => {
-          // Fetch settings for each tenant
           const { data: settingsData } = await supabase
             .from('tenant_settings')
             .select('category, settings')
             .eq('tenant_id', t.id);
 
-          // Fetch counts
           const { count: adminsCount } = await supabase
             .from('tenant_admins')
             .select('*', { count: 'exact', head: true })
@@ -128,7 +151,7 @@ export function useTenantAdmin() {
       console.error('Error fetching tenants:', error);
       toast({
         title: 'Erro',
-        description: 'Não foi possível carregar os tenants.',
+        description: 'Não foi possível carregar as organizações.',
         variant: 'destructive',
       });
     } finally {
@@ -136,11 +159,39 @@ export function useTenantAdmin() {
     }
   }, [checkSuperAdminStatus, toast]);
 
+  const validateSlugUniqueness = async (slug: string, subdomain: string, excludeId?: string): Promise<string | null> => {
+    let query = supabase
+      .from('tenants')
+      .select('id, slug, subdomain')
+      .or(`slug.eq.${slug},subdomain.eq.${subdomain}`);
+
+    if (excludeId) {
+      query = query.neq('id', excludeId);
+    }
+
+    const { data } = await query;
+    
+    if (data && data.length > 0) {
+      const conflictSlug = data.find(t => t.slug === slug);
+      const conflictSub = data.find(t => t.subdomain === subdomain);
+      
+      if (conflictSlug) return `O slug "${slug}" já está em uso por outra organização.`;
+      if (conflictSub) return `O subdomínio "${subdomain}" já está em uso por outra organização.`;
+    }
+    
+    return null;
+  };
+
   const createTenant = async (input: CreateTenantInput): Promise<boolean> => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
+      // Validate slug/subdomain uniqueness
+      const uniquenessError = await validateSlugUniqueness(input.slug, input.subdomain);
+      if (uniquenessError) throw new Error(uniquenessError);
+
+      // Step 1: Create the tenant
       const { data, error } = await supabase
         .from('tenants')
         .insert({
@@ -155,9 +206,11 @@ export function useTenantAdmin() {
 
       if (error) throw error;
 
-      // Create default branding settings
+      const tenantId = data.id;
+
+      // Step 2: Create default branding settings
       await supabase.from('tenant_settings').insert({
-        tenant_id: data.id,
+        tenant_id: tenantId,
         category: 'branding',
         settings: {
           primaryColor: '222.2 47.4% 11.2%',
@@ -172,9 +225,9 @@ export function useTenantAdmin() {
         updated_by: user.id,
       });
 
-      // Create default home settings
+      // Step 3: Create default home settings
       await supabase.from('tenant_settings').insert({
-        tenant_id: data.id,
+        tenant_id: tenantId,
         category: 'home',
         settings: {
           widgets: {
@@ -193,9 +246,41 @@ export function useTenantAdmin() {
         updated_by: user.id,
       });
 
+      // Step 4: Create default modules settings
+      await supabase.from('tenant_settings').insert({
+        tenant_id: tenantId,
+        category: 'modules',
+        settings: defaultModulesConfig,
+        updated_by: user.id,
+      });
+
+      // Step 5: Create admin user with default profiles via Edge Function
+      if (input.admin) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error('Sessão expirada');
+
+        const { data: fnData, error: fnError } = await supabase.functions.invoke('create-tenant-user', {
+          body: {
+            tenantId,
+            name: input.admin.name,
+            email: input.admin.email,
+            password: input.admin.password,
+            role: 'owner',
+            createDefaultProfiles: true,
+          },
+        });
+
+        if (fnError) throw fnError;
+        if (!fnData?.success) {
+          throw new Error(fnData?.error || 'Erro ao criar administrador');
+        }
+      }
+
       toast({
-        title: 'Sucesso',
-        description: 'Tenant criado com sucesso!',
+        title: 'Organização criada!',
+        description: input.admin 
+          ? `${input.name} foi criada com sucesso. O administrador ${input.admin.name} já pode acessar o sistema.`
+          : `${input.name} foi criada com sucesso.`,
       });
 
       await fetchTenants();
@@ -203,8 +288,8 @@ export function useTenantAdmin() {
     } catch (error: any) {
       console.error('Error creating tenant:', error);
       toast({
-        title: 'Erro',
-        description: error.message || 'Não foi possível criar o tenant.',
+        title: 'Erro ao criar organização',
+        description: error.message || 'Não foi possível criar a organização.',
         variant: 'destructive',
       });
       return false;
@@ -213,6 +298,15 @@ export function useTenantAdmin() {
 
   const updateTenant = async (tenantId: string, input: UpdateTenantInput): Promise<boolean> => {
     try {
+      // Validate slug/subdomain uniqueness if changed
+      if (input.slug || input.subdomain) {
+        const current = tenants.find(t => t.id === tenantId);
+        const slug = input.slug || current?.slug || '';
+        const subdomain = input.subdomain || current?.subdomain || '';
+        const uniquenessError = await validateSlugUniqueness(slug, subdomain, tenantId);
+        if (uniquenessError) throw new Error(uniquenessError);
+      }
+
       const updateData: Record<string, unknown> = {};
       if (input.name !== undefined) updateData.name = input.name;
       if (input.slug !== undefined) updateData.slug = input.slug;
@@ -230,7 +324,7 @@ export function useTenantAdmin() {
 
       toast({
         title: 'Sucesso',
-        description: 'Tenant atualizado com sucesso!',
+        description: 'Organização atualizada com sucesso!',
       });
 
       await fetchTenants();
@@ -239,7 +333,7 @@ export function useTenantAdmin() {
       console.error('Error updating tenant:', error);
       toast({
         title: 'Erro',
-        description: error.message || 'Não foi possível atualizar o tenant.',
+        description: error.message || 'Não foi possível atualizar a organização.',
         variant: 'destructive',
       });
       return false;
@@ -357,7 +451,7 @@ export function useTenantAdmin() {
 
       toast({
         title: 'Sucesso',
-        description: 'Tenant excluído com sucesso!',
+        description: 'Organização excluída com sucesso!',
       });
 
       await fetchTenants();
@@ -366,7 +460,7 @@ export function useTenantAdmin() {
       console.error('Error deleting tenant:', error);
       toast({
         title: 'Erro',
-        description: error.message || 'Não foi possível excluir o tenant.',
+        description: error.message || 'Não foi possível excluir a organização.',
         variant: 'destructive',
       });
       return false;
