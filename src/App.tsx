@@ -67,6 +67,7 @@ import AdminMetrics from "@/pages/admin/AdminMetrics";
 import AdminAuditoria from "@/pages/admin/AdminAuditoria";
 import AdminSettings from "@/pages/admin/AdminSettings";
 
+import Onboarding from "@/pages/Onboarding";
 import NotFound from "@/pages/NotFound";
 import VerifyRedirect from "@/components/VerifyRedirect";
 
