@@ -133,7 +133,7 @@ const AdminSettings = () => {
               Padrões da Plataforma
             </CardTitle>
             <CardDescription className="text-slate-400">
-              Configure os valores padrão para novos tenants
+              Configure os valores padrão para novas organizações
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
