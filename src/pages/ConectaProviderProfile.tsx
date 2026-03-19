@@ -297,7 +297,7 @@ const ConectaProviderProfile = () => {
   return (
     <>
       <Helmet>
-        <title>{provider.name} - Conecta IPTM</title>
+        <title>{provider.name} - Conecta Moove</title>
         <meta name="description" content={provider.description.substring(0, 160)} />
         <meta property="og:title" content={`${provider.name} - Conecta IPTM`} />
         <meta property="og:description" content={provider.description.substring(0, 160)} />
