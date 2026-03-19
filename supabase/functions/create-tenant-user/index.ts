@@ -3,7 +3,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
 interface CreateTenantUserRequest {
@@ -12,16 +12,102 @@ interface CreateTenantUserRequest {
   email: string
   password: string
   role: 'owner' | 'admin' | 'manager'
+  createDefaultProfiles?: boolean
 }
 
+const defaultProfiles = [
+  {
+    name: 'Admin',
+    description: 'Acesso total à organização',
+    permissions: {
+      dashboard: { view: true, export: true },
+      membros: { view: true, insert: true, edit: true, delete: true, export: true },
+      congregacoes: { view: true, insert: true, edit: true, delete: true, export: true },
+      departamentos: { view: true, insert: true, edit: true, delete: true, export: true },
+      ministerios: { view: true, insert: true, edit: true, delete: true, export: true },
+      eventos: { view: true, insert: true, edit: true, delete: true, export: true },
+      financeiro: { view: true, insert: true, edit: true, delete: true, export: true },
+      conciliacoes: { view: true, insert: true, edit: true, delete: true, approve: true, export: true },
+      fornecedores: { view: true, insert: true, edit: true, delete: true, export: true },
+      'contas-pagar': { view: true, insert: true, edit: true, delete: true, approve: true, export: true },
+      relatorios: { view: true, export: true },
+      notificacoes: { view: true, insert: true, edit: true, delete: true, send: true },
+      'gestao-acessos': { view: true, insert: true, edit: true, delete: true, approve: true },
+      documentacao: { view: true, insert: true, edit: true, delete: true, export: true },
+      configuracoes: { view: true, edit: true },
+    },
+  },
+  {
+    name: 'Pastor',
+    description: 'Gestão da congregação com acesso financeiro',
+    permissions: {
+      dashboard: { view: true, export: true },
+      membros: { view: true, insert: true, edit: true, delete: false, export: true },
+      congregacoes: { view: true, insert: false, edit: false, delete: false, export: true },
+      departamentos: { view: true, insert: true, edit: true, delete: false, export: true },
+      ministerios: { view: true, insert: true, edit: true, delete: false, export: true },
+      eventos: { view: true, insert: true, edit: true, delete: false, export: true },
+      financeiro: { view: true, insert: true, edit: true, delete: false, export: true },
+      conciliacoes: { view: true, insert: true, edit: true, delete: false, approve: false, export: true },
+      fornecedores: { view: true, insert: true, edit: true, delete: false, export: true },
+      'contas-pagar': { view: true, insert: true, edit: true, delete: false, approve: false, export: true },
+      relatorios: { view: true, export: true },
+      notificacoes: { view: true, insert: false, edit: false, delete: false, send: false },
+      'gestao-acessos': { view: false, insert: false, edit: false, delete: false, approve: false },
+      documentacao: { view: true, insert: false, edit: false, delete: false, export: true },
+      configuracoes: { view: false, edit: false },
+    },
+  },
+  {
+    name: 'Gerente Financeiro',
+    description: 'Gestão financeira completa com aprovações',
+    permissions: {
+      dashboard: { view: true, export: true },
+      membros: { view: true, insert: false, edit: false, delete: false, export: false },
+      congregacoes: { view: true, insert: false, edit: false, delete: false, export: false },
+      departamentos: { view: true, insert: false, edit: false, delete: false, export: false },
+      ministerios: { view: true, insert: false, edit: false, delete: false, export: false },
+      eventos: { view: true, insert: false, edit: false, delete: false, export: false },
+      financeiro: { view: true, insert: true, edit: true, delete: false, export: true },
+      conciliacoes: { view: true, insert: true, edit: true, delete: false, approve: true, export: true },
+      fornecedores: { view: true, insert: true, edit: true, delete: false, export: true },
+      'contas-pagar': { view: true, insert: true, edit: true, delete: false, approve: true, export: true },
+      relatorios: { view: true, export: true },
+      notificacoes: { view: false, insert: false, edit: false, delete: false, send: false },
+      'gestao-acessos': { view: false, insert: false, edit: false, delete: false, approve: false },
+      documentacao: { view: true, insert: false, edit: false, delete: false, export: true },
+      configuracoes: { view: false, edit: false },
+    },
+  },
+  {
+    name: 'Membro',
+    description: 'Acesso básico de visualização',
+    permissions: {
+      dashboard: { view: true, export: false },
+      membros: { view: false, insert: false, edit: false, delete: false, export: false },
+      congregacoes: { view: false, insert: false, edit: false, delete: false, export: false },
+      departamentos: { view: false, insert: false, edit: false, delete: false, export: false },
+      ministerios: { view: false, insert: false, edit: false, delete: false, export: false },
+      eventos: { view: true, insert: false, edit: false, delete: false, export: false },
+      financeiro: { view: false, insert: false, edit: false, delete: false, export: false },
+      conciliacoes: { view: false, insert: false, edit: false, delete: false, approve: false, export: false },
+      fornecedores: { view: false, insert: false, edit: false, delete: false, export: false },
+      'contas-pagar': { view: false, insert: false, edit: false, delete: false, approve: false, export: false },
+      relatorios: { view: false, export: false },
+      notificacoes: { view: false, insert: false, edit: false, delete: false, send: false },
+      'gestao-acessos': { view: false, insert: false, edit: false, delete: false, approve: false },
+      documentacao: { view: true, insert: false, edit: false, delete: false, export: false },
+      configuracoes: { view: false, edit: false },
+    },
+  },
+]
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Create admin client with service role key
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -47,7 +133,6 @@ serve(async (req) => {
       throw new Error('Invalid authorization token')
     }
 
-    // Check if caller is a super admin
     const { data: superAdmin, error: superAdminError } = await supabaseAdmin
       .from('super_admins')
       .select('id')
@@ -59,14 +144,12 @@ serve(async (req) => {
       throw new Error('Only super admins can create tenant users')
     }
 
-    // Parse request body
-    const { tenantId, name, email, password, role }: CreateTenantUserRequest = await req.json()
+    const { tenantId, name, email, password, role, createDefaultProfiles }: CreateTenantUserRequest = await req.json()
 
     if (!tenantId || !name || !email || !password || !role) {
       throw new Error('Missing required fields: tenantId, name, email, password, role')
     }
 
-    // Validate role
     if (!['owner', 'admin', 'manager'].includes(role)) {
       throw new Error('Invalid role. Must be owner, admin, or manager')
     }
@@ -85,11 +168,55 @@ serve(async (req) => {
 
     console.log(`Creating user for tenant: ${tenant.name} (${tenantId})`)
 
-    // Create user in Supabase Auth
+    // Step 1: Create default access profiles for this tenant if requested
+    let adminProfileId: string | null = null
+
+    if (createDefaultProfiles) {
+      console.log('Creating default access profiles for tenant...')
+      
+      for (const profile of defaultProfiles) {
+        const { data: profileData, error: profileError } = await supabaseAdmin
+          .from('access_profiles')
+          .insert({
+            name: profile.name,
+            description: profile.description,
+            permissions: profile.permissions,
+            tenant_id: tenantId,
+            is_active: true,
+          })
+          .select('id, name')
+          .single()
+
+        if (profileError) {
+          console.error(`Error creating profile ${profile.name}:`, profileError)
+          // Continue creating other profiles
+        } else {
+          console.log(`Profile created: ${profileData.name} (${profileData.id})`)
+          if (profile.name === 'Admin') {
+            adminProfileId = profileData.id
+          }
+        }
+      }
+    } else {
+      // Try to find existing Admin profile for this tenant
+      const { data: existingAdmin } = await supabaseAdmin
+        .from('access_profiles')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .eq('name', 'Admin')
+        .eq('is_active', true)
+        .single()
+
+      if (existingAdmin) {
+        adminProfileId = existingAdmin.id
+      }
+    }
+
+    // Step 2: Create user in Supabase Auth
     const { data: authData, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // Auto-confirm email
+      email_confirm: true,
       user_metadata: {
         name,
         tenant_id: tenantId,
@@ -104,29 +231,33 @@ serve(async (req) => {
     const newUser = authData.user
     console.log(`Auth user created: ${newUser.id}`)
 
-    // Update the profile with tenant_id and active status
-    // The handle_new_user trigger already created the profile, we just need to update it
+    // Step 3: Update the profile with tenant_id, active status, and admin profile
+    const profileUpdate: Record<string, unknown> = {
+      name,
+      email,
+      tenant_id: tenantId,
+      approval_status: 'ativo',
+      role: 'admin',
+    }
+
+    if (adminProfileId) {
+      profileUpdate.profile_id = adminProfileId
+    }
+
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .update({
-        name,
-        email,
-        tenant_id: tenantId,
-        approval_status: 'ativo',
-        role: 'admin',
-      })
+      .update(profileUpdate)
       .eq('id', newUser.id)
 
     if (profileError) {
       console.error('Profile update failed:', profileError)
-      // Rollback: delete the auth user
       await supabaseAdmin.auth.admin.deleteUser(newUser.id)
       throw new Error('Failed to update user profile')
     }
 
     console.log('Profile updated successfully')
 
-    // Create tenant_admin record
+    // Step 4: Create tenant_admin record
     const { error: adminError } = await supabaseAdmin
       .from('tenant_admins')
       .insert({
@@ -138,9 +269,26 @@ serve(async (req) => {
 
     if (adminError) {
       console.error('Tenant admin creation failed:', adminError)
-      // Rollback: delete the auth user
       await supabaseAdmin.auth.admin.deleteUser(newUser.id)
       throw new Error('Failed to create tenant admin record')
+    }
+
+    // Step 5: Create profile assignment if we have an admin profile
+    if (adminProfileId) {
+      const { error: assignError } = await supabaseAdmin
+        .from('user_profile_assignments')
+        .insert({
+          user_id: newUser.id,
+          profile_id: adminProfileId,
+          assigned_by: caller.id,
+          is_active: true,
+        })
+
+      if (assignError) {
+        console.error('Profile assignment failed (non-critical):', assignError)
+      } else {
+        console.log('Admin profile assigned to user')
+      }
     }
 
     console.log(`Tenant admin created with role: ${role}`)
@@ -154,6 +302,7 @@ serve(async (req) => {
           name,
           role,
         },
+        profilesCreated: createDefaultProfiles ? defaultProfiles.length : 0,
         message: 'User created successfully'
       }),
       {
