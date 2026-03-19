@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SuperAdminLayout from '@/components/layout/SuperAdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import TenantBrandingDialog from '@/components/tenants/TenantBrandingDialog';
 import TenantHomeConfigDialog from '@/components/tenants/TenantHomeConfigDialog';
 import TenantModulesDialog from '@/components/tenants/TenantModulesDialog';
 import TenantUsersDialog from '@/components/tenants/TenantUsersDialog';
+import TenantDnsDialog from '@/components/tenants/TenantDnsDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +33,7 @@ interface TenantWithSettings extends Tenant {
 }
 
 const AdminTenants = () => {
+  const navigate = useNavigate();
   const {
     tenants,
     loading,
@@ -47,6 +50,7 @@ const AdminTenants = () => {
   const [homeConfigOpen, setHomeConfigOpen] = useState(false);
   const [modulesOpen, setModulesOpen] = useState(false);
   const [usersOpen, setUsersOpen] = useState(false);
+  const [dnsOpen, setDnsOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<TenantWithSettings | null>(null);
   const [formLoading, setFormLoading] = useState(false);
@@ -79,6 +83,16 @@ const AdminTenants = () => {
   const handleManageUsers = (tenant: TenantWithSettings) => {
     setSelectedTenant(tenant);
     setUsersOpen(true);
+  };
+
+  const handleViewDns = (tenant: TenantWithSettings) => {
+    setSelectedTenant(tenant);
+    setDnsOpen(true);
+  };
+
+  const handleViewAsTenant = (tenant: TenantWithSettings) => {
+    // Navigate to dashboard with tenant context
+    navigate(`/dashboard?tenant=${tenant.slug}`);
   };
 
   const handleDeleteClick = (tenant: TenantWithSettings) => {
@@ -189,6 +203,8 @@ const AdminTenants = () => {
                 onEditModules={handleEditModules}
                 onManageUsers={handleManageUsers}
                 onDelete={handleDeleteClick}
+                onViewDns={handleViewDns}
+                onViewAsTenant={handleViewAsTenant}
               />
             )}
           </CardContent>
@@ -237,6 +253,13 @@ const AdminTenants = () => {
         onOpenChange={setUsersOpen}
         tenantId={selectedTenant?.id || ''}
         tenantName={selectedTenant?.name || ''}
+      />
+
+      <TenantDnsDialog
+        open={dnsOpen}
+        onOpenChange={setDnsOpen}
+        tenantName={selectedTenant?.name || ''}
+        subdomain={selectedTenant?.subdomain || ''}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
