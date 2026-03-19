@@ -12,7 +12,6 @@ interface CreateTenantUserRequest {
   email: string
   password: string
   role: 'owner' | 'admin' | 'manager'
-  createDefaultProfiles?: boolean
 }
 
 const defaultProfiles = [
@@ -144,7 +143,7 @@ serve(async (req) => {
       throw new Error('Only super admins can create tenant users')
     }
 
-    const { tenantId, name, email, password, role, createDefaultProfiles }: CreateTenantUserRequest = await req.json()
+    const { tenantId, name, email, password, role }: CreateTenantUserRequest = await req.json()
 
     if (!tenantId || !name || !email || !password || !role) {
       throw new Error('Missing required fields: tenantId, name, email, password, role')
@@ -168,13 +167,38 @@ serve(async (req) => {
 
     console.log(`Creating user for tenant: ${tenant.name} (${tenantId})`)
 
-    // Step 1: Create default access profiles for this tenant if requested
+    // Step 1: Auto-detect if tenant has access profiles, create if not
     let adminProfileId: string | null = null
+    let profilesCreated = 0
 
-    if (createDefaultProfiles) {
-      console.log('Creating default access profiles for tenant...')
+    const { data: existingProfiles, error: profilesCheckError } = await supabaseAdmin
+      .from('access_profiles')
+      .select('id, name')
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+
+    if (profilesCheckError) {
+      console.error('Error checking existing profiles:', profilesCheckError)
+    }
+
+    // Find existing Admin profile
+    const existingAdmin = existingProfiles?.find(p => p.name === 'Admin')
+    
+    if (existingAdmin) {
+      adminProfileId = existingAdmin.id
+      console.log(`Found existing Admin profile: ${adminProfileId}`)
+    } else {
+      // No Admin profile exists - create all default profiles for this tenant
+      console.log('No access profiles found for tenant, creating defaults...')
       
       for (const profile of defaultProfiles) {
+        // Check if this specific profile already exists
+        const alreadyExists = existingProfiles?.find(p => p.name === profile.name)
+        if (alreadyExists) {
+          if (profile.name === 'Admin') adminProfileId = alreadyExists.id
+          continue
+        }
+
         const { data: profileData, error: profileError } = await supabaseAdmin
           .from('access_profiles')
           .insert({
@@ -189,30 +213,61 @@ serve(async (req) => {
 
         if (profileError) {
           console.error(`Error creating profile ${profile.name}:`, profileError)
-          // Continue creating other profiles
         } else {
           console.log(`Profile created: ${profileData.name} (${profileData.id})`)
+          profilesCreated++
           if (profile.name === 'Admin') {
             adminProfileId = profileData.id
           }
         }
       }
-    } else {
-      // Try to find existing Admin profile for this tenant
-      const { data: existingAdmin } = await supabaseAdmin
-        .from('access_profiles')
-        .select('id')
-        .eq('tenant_id', tenantId)
-        .eq('name', 'Admin')
-        .eq('is_active', true)
-        .single()
+    }
 
-      if (existingAdmin) {
-        adminProfileId = existingAdmin.id
+    // Step 2: Ensure tenant has modules config with all modules enabled
+    const { data: existingModules } = await supabaseAdmin
+      .from('tenant_settings')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .eq('category', 'modules')
+      .maybeSingle()
+
+    if (!existingModules) {
+      console.log('No modules config found, creating with all modules enabled...')
+      const allModulesEnabled: Record<string, boolean> = {
+        dashboard: true,
+        membros: true,
+        congregacoes: true,
+        departamentos: true,
+        ministerios: true,
+        eventos: true,
+        financeiro: true,
+        conciliacoes: true,
+        fornecedores: true,
+        'contas-pagar': true,
+        relatorios: true,
+        notificacoes: true,
+        'gestao-acessos': true,
+        documentacao: true,
+        configuracoes: true,
+        conecta: true,
+      }
+
+      const { error: modulesError } = await supabaseAdmin
+        .from('tenant_settings')
+        .insert({
+          tenant_id: tenantId,
+          category: 'modules',
+          settings: allModulesEnabled,
+        })
+
+      if (modulesError) {
+        console.error('Error creating modules config:', modulesError)
+      } else {
+        console.log('Modules config created with all modules enabled')
       }
     }
 
-    // Step 2: Create user in Supabase Auth
+    // Step 3: Create user in Supabase Auth
     const { data: authData, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -231,7 +286,7 @@ serve(async (req) => {
     const newUser = authData.user
     console.log(`Auth user created: ${newUser.id}`)
 
-    // Step 3: Update the profile with tenant_id, active status, and admin profile
+    // Step 4: Update the profile with tenant_id, active status, and admin profile
     const profileUpdate: Record<string, unknown> = {
       name,
       email,
@@ -257,7 +312,7 @@ serve(async (req) => {
 
     console.log('Profile updated successfully')
 
-    // Step 4: Create tenant_admin record
+    // Step 5: Create tenant_admin record
     const { error: adminError } = await supabaseAdmin
       .from('tenant_admins')
       .insert({
@@ -273,7 +328,7 @@ serve(async (req) => {
       throw new Error('Failed to create tenant admin record')
     }
 
-    // Step 5: Create profile assignment if we have an admin profile
+    // Step 6: Create profile assignment if we have an admin profile
     if (adminProfileId) {
       const { error: assignError } = await supabaseAdmin
         .from('user_profile_assignments')
@@ -302,7 +357,7 @@ serve(async (req) => {
           name,
           role,
         },
-        profilesCreated: createDefaultProfiles ? defaultProfiles.length : 0,
+        profilesCreated,
         message: 'User created successfully'
       }),
       {

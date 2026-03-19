@@ -55,10 +55,10 @@ export function useTenantModules() {
       return true;
     }
 
-    // Se não há configuração de módulos, usar padrão do plano
+    // Se não há configuração de módulos, habilitar todos por padrão
+    // (tenants novos devem ter acesso total até serem configurados)
     if (!modulesConfig || Object.keys(modulesConfig).length === 0) {
-      const planModules = PLAN_DEFAULT_MODULES[tenant.planType] || PLAN_DEFAULT_MODULES.free;
-      return planModules.includes(moduleKey);
+      return true;
     }
 
     // Módulos core sempre habilitados
