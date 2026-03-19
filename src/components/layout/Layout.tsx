@@ -83,7 +83,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   }
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full bg-background">
         <DesktopSidebar />
         
@@ -91,6 +91,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <header className="bg-card border-b border-border px-4 py-4 sticky top-0 z-40">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
+                <SidebarTrigger />
                 <img 
                   src={displayLogo} 
                   alt={displayName} 
