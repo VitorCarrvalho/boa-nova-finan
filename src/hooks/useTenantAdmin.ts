@@ -217,9 +217,9 @@ export function useTenantAdmin() {
         tenant_id: tenantId,
         category: 'branding',
         settings: {
-          primaryColor: '222.2 47.4% 11.2%',
-          secondaryColor: '210 40% 96.1%',
-          accentColor: '210 40% 96.1%',
+          primaryColor: '217 91% 45%',
+          secondaryColor: '35 92% 50%',
+          accentColor: '35 92% 50%',
           logoUrl: null,
           faviconUrl: null,
           fontFamily: 'Inter, sans-serif',

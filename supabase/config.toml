@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions."create-tenant-user"]
 verify_jwt = false
+
+[functions."onboard-tenant"]
+verify_jwt = false

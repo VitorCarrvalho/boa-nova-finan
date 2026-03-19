@@ -97,6 +97,7 @@ const App = () => (
                 <Route path="/conecta/perfil/:slug" element={<ConectaProviderProfile />} />
                 
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/verify" element={<VerifyRedirect />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
               

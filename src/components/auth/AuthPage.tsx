@@ -404,6 +404,15 @@ const AuthPage = () => {
           </Tabs>
         </CardContent>
       </Card>
+      
+      <div className="text-center mt-4">
+        <p className="text-sm text-muted-foreground">
+          Sua igreja ainda não está na plataforma?{' '}
+          <Link to="/onboarding" className="text-primary font-semibold hover:underline">
+            Cadastre-se agora
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };
