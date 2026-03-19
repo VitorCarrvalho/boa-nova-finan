@@ -63,7 +63,7 @@ export function TenantTable({
   if (tenants.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        Nenhum tenant cadastrado ainda.
+        Nenhuma organização cadastrada ainda.
       </div>
     );
   }

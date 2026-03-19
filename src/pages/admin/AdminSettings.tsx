@@ -157,7 +157,7 @@ const AdminSettings = () => {
             </div>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label className="text-slate-300">Auto-aprovação de Tenants</Label>
+                <Label className="text-slate-300">Auto-aprovação de Organizações</Label>
                 <p className="text-xs text-slate-500">Aprovar automaticamente novos cadastros</p>
               </div>
               <Switch />

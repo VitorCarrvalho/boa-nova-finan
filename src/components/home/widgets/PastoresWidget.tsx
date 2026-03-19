@@ -19,7 +19,7 @@ const PastoresWidget = () => {
       <div className="relative h-full rounded-xl overflow-hidden">
         <img 
           src={pastoresImageUrl} 
-          alt="Pastores IPTM Global" 
+          alt="Pastores" 
           className="w-full h-full object-cover min-h-[260px]"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20" />

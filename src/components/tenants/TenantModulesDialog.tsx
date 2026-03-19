@@ -111,8 +111,8 @@ export function TenantModulesDialog({
       <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Configurar Módulos - {tenantName}</DialogTitle>
-          <DialogDescription>
-            Habilite ou desabilite módulos para este tenant. Módulos desabilitados não aparecerão na interface.
+           <DialogDescription>
+             Habilite ou desabilite módulos para esta organização. Módulos desabilitados não aparecerão na interface.
           </DialogDescription>
         </DialogHeader>
 

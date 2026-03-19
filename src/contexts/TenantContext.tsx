@@ -294,7 +294,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // No tenant found - use defaults (main IPTM Global instance)
+      // No tenant found - use defaults (instância principal Igreja Moove)
       setTenant(null);
       setBranding(defaultBranding);
       setHomeConfig(defaultHomeConfig);

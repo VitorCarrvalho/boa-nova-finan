@@ -299,7 +299,7 @@ const ConectaProviderProfile = () => {
       <Helmet>
         <title>{provider.name} - Conecta Moove</title>
         <meta name="description" content={provider.description.substring(0, 160)} />
-        <meta property="og:title" content={`${provider.name} - Conecta IPTM`} />
+        <meta property="og:title" content={`${provider.name} - Conecta Moove`} />
         <meta property="og:description" content={provider.description.substring(0, 160)} />
         <meta property="og:image" content={provider.photo_url} />
         <meta property="og:type" content="profile" />

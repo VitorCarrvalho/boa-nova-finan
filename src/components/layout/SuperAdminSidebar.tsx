@@ -32,9 +32,9 @@ const menuItems = [
     href: '/admin',
   },
   {
-    title: 'Tenants',
+    title: 'Organizações',
     icon: Building2,
-    href: '/admin/tenants',
+    href: '/admin/organizacoes',
   },
   {
     title: 'Billing',

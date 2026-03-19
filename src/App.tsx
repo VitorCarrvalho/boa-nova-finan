@@ -330,6 +330,8 @@ const App = () => (
               } />
               
               {/* Legacy routes for compatibility */}
+              <Route path="/admin/tenants" element={<Navigate to="/admin/organizacoes" replace />} />
+              <Route path="/tenants" element={<Navigate to="/admin/organizacoes" replace />} />
               <Route path="/settings" element={<Navigate to="/configuracoes" replace />} />
               <Route path="/access-management" element={<Navigate to="/gestao-acessos" replace />} />
               <Route path="/accounts-payable/new" element={<Navigate to="/contas-pagar/nova" replace />} />

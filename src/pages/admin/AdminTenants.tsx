@@ -241,10 +241,10 @@ const AdminTenants = () => {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="bg-slate-900 border-slate-800">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Excluir Tenant</AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-400">
-              Tem certeza que deseja excluir <strong className="text-white">{selectedTenant?.name}</strong>?
-              Esta ação não pode ser desfeita e todos os dados do tenant serão perdidos.
+            <AlertDialogTitle className="text-white">Excluir Organização</AlertDialogTitle>
+             <AlertDialogDescription className="text-slate-400">
+               Tem certeza que deseja excluir <strong className="text-white">{selectedTenant?.name}</strong>?
+               Esta ação não pode ser desfeita e todos os dados da organização serão perdidos.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

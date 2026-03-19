@@ -50,7 +50,7 @@ export function useTenantModules() {
    * Na instância principal (sem tenant), todos os módulos estão habilitados
    */
   const isModuleEnabled = (moduleKey: string): boolean => {
-    // Se não há tenant (instância principal IPTM Global), todos os módulos estão habilitados
+    // Se não há tenant (instância principal), todos os módulos estão habilitados
     if (!tenant) {
       return true;
     }

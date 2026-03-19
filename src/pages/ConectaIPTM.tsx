@@ -91,7 +91,7 @@ const ConectaIPTM = () => {
                   <span className="hidden sm:inline">Voltar</span>
                 </Button>
                 <div>
-                  <h1 className="text-2xl font-bold text-slate-800">Conecta IPTM</h1>
+                  <h1 className="text-2xl font-bold text-slate-800">Conecta Moove</h1>
                   <p className="text-sm text-slate-600">Rede de Serviços da Comunidade</p>
                 </div>
               </div>
