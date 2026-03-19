@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import SuperAdminLayout from '@/components/layout/SuperAdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Building2 } from 'lucide-react';
+import { Plus, Building2, RefreshCw } from 'lucide-react';
 import { useTenantAdmin } from '@/hooks/useTenantAdmin';
 import TenantTable from '@/components/tenants/TenantTable';
 import TenantFormDialog from '@/components/tenants/TenantFormDialog';
@@ -43,6 +43,8 @@ const AdminTenants = () => {
     updateTenantHomeConfig,
     updateTenantModules,
     deleteTenant,
+    checkTenantDns,
+    checkAllDns,
   } = useTenantAdmin();
 
   const [formOpen, setFormOpen] = useState(false);
@@ -176,10 +178,16 @@ const AdminTenants = () => {
                Gerencie as organizações (igrejas) que utilizam a plataforma
              </p>
            </div>
-           <Button onClick={handleCreate} className="bg-orange-500 hover:bg-orange-600 text-white">
-             <Plus className="mr-2 h-4 w-4" />
-             Nova Organização
-          </Button>
+           <div className="flex gap-2">
+             <Button variant="outline" onClick={checkAllDns} className="border-slate-700 text-slate-300 hover:bg-slate-800">
+               <RefreshCw className="mr-2 h-4 w-4" />
+               Verificar DNS
+             </Button>
+             <Button onClick={handleCreate} className="bg-orange-500 hover:bg-orange-600 text-white">
+               <Plus className="mr-2 h-4 w-4" />
+               Nova Organização
+             </Button>
+           </div>
         </div>
 
         <Card className="bg-slate-900 border-slate-800">
@@ -203,9 +211,10 @@ const AdminTenants = () => {
                 onEditModules={handleEditModules}
                 onManageUsers={handleManageUsers}
                 onDelete={handleDeleteClick}
-                onViewDns={handleViewDns}
-                onViewAsTenant={handleViewAsTenant}
-              />
+                 onViewDns={handleViewDns}
+                 onViewAsTenant={handleViewAsTenant}
+                 onCheckDns={checkTenantDns}
+               />
             )}
           </CardContent>
         </Card>
