@@ -104,6 +104,7 @@ const AdminTenants = () => {
           slug: values.slug,
           subdomain: values.subdomain,
           planType: values.planType,
+          admin: values.admin,
         });
       }
     } finally {
