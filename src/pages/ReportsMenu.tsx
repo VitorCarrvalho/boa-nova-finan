@@ -46,7 +46,7 @@ export default function ReportsMenu() {
       description: "Relatórios de pagamentos e análises de fornecedores",
       icon: Truck,
       link: "/relatorios/fornecedores",
-      color: "text-red-600",
+      color: "text-primary",
       permission: "relatorios"
     }
   ];

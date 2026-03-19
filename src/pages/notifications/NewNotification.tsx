@@ -239,7 +239,7 @@ const NewNotification = () => {
               Voltar
             </Button>
           </Link>
-          <MessageSquare className="h-8 w-8 text-red-600" />
+          <MessageSquare className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Nova Notificação</h1>
             <p className="text-gray-600">Criar e enviar uma nova mensagem</p>

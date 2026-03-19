@@ -188,7 +188,7 @@ const SentHistory = () => {
               Voltar
             </Button>
           </Link>
-          <Send className="h-8 w-8 text-red-600" />
+          <Send className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Histórico Enviado</h1>
             <p className="text-gray-600">Visualize mensagens já enviadas</p>

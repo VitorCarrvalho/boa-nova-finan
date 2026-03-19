@@ -121,7 +121,7 @@ const VideoLibrary = () => {
               Voltar
             </Button>
           </Link>
-          <Video className="h-8 w-8 text-red-600" />
+          <Video className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Biblioteca de Vídeos</h1>
             <p className="text-gray-600">Gerencie os vídeos disponíveis para notificações</p>
@@ -216,7 +216,7 @@ const VideoLibrary = () => {
                 {videos.map((video) => (
                   <div key={video.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center gap-3">
-                      <Video className="h-8 w-8 text-red-600" />
+                      <Video className="h-8 w-8 text-primary" />
                       <div>
                         <h3 className="font-medium">{video.title}</h3>
                         <div className="space-y-1">
