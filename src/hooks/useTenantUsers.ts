@@ -201,6 +201,34 @@ export function useTenantUsers(tenantId: string | null) {
     }
   };
 
+  const resetPassword = async (userId: string, newPassword: string): Promise<boolean> => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Sessão expirada. Faça login novamente.');
+
+      const { data, error } = await supabase.functions.invoke('reset-tenant-user-password', {
+        body: { userId, newPassword },
+      });
+
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error || 'Erro ao redefinir senha');
+
+      toast({
+        title: 'Sucesso',
+        description: 'Senha redefinida com sucesso!',
+      });
+      return true;
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      toast({
+        title: 'Erro',
+        description: error.message || 'Não foi possível redefinir a senha.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
   return {
     users,
     loading,
@@ -209,5 +237,6 @@ export function useTenantUsers(tenantId: string | null) {
     createUser,
     updateUserRole,
     removeUser,
+    resetPassword,
   };
 }
