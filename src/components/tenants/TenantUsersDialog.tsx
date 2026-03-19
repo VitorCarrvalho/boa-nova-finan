@@ -5,9 +5,12 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -32,7 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, MoreHorizontal, Trash2, Shield, Users } from 'lucide-react';
+import { Plus, MoreHorizontal, Trash2, Shield, Users, KeyRound, Loader2 } from 'lucide-react';
 import { useTenantUsers, TenantUser } from '@/hooks/useTenantUsers';
 import TenantUserFormDialog from './TenantUserFormDialog';
 
@@ -61,10 +64,14 @@ const TenantUsersDialog: React.FC<TenantUsersDialogProps> = ({
   tenantId,
   tenantName,
 }) => {
-  const { users, loading, fetchUsers, updateUserRole, removeUser } = useTenantUsers(tenantId);
+  const { users, loading, fetchUsers, updateUserRole, removeUser, resetPassword } = useTenantUsers(tenantId);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<TenantUser | null>(null);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [passwordUser, setPasswordUser] = useState<TenantUser | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     if (open && tenantId) {
@@ -86,6 +93,25 @@ const TenantUsersDialog: React.FC<TenantUsersDialogProps> = ({
       await removeUser(selectedUser.user_id);
       setDeleteDialogOpen(false);
       setSelectedUser(null);
+    }
+  };
+
+  const handlePasswordClick = (user: TenantUser) => {
+    setPasswordUser(user);
+    setNewPassword('');
+    setPasswordDialogOpen(true);
+  };
+
+  const handlePasswordConfirm = async () => {
+    if (passwordUser && newPassword.length >= 6) {
+      setResetting(true);
+      const success = await resetPassword(passwordUser.user_id, newPassword);
+      setResetting(false);
+      if (success) {
+        setPasswordDialogOpen(false);
+        setPasswordUser(null);
+        setNewPassword('');
+      }
     }
   };
 
@@ -157,6 +183,13 @@ const TenantUsersDialog: React.FC<TenantUsersDialogProps> = ({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
                             <DropdownMenuItem
+                              onClick={() => handlePasswordClick(user)}
+                              className="text-white hover:bg-slate-700"
+                            >
+                              <KeyRound className="mr-2 h-4 w-4" />
+                              Redefinir Senha
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
                               onClick={() => handleRoleChange(user.user_id, 'owner')}
                               className="text-white hover:bg-slate-700"
                               disabled={user.role === 'owner'}
@@ -210,6 +243,61 @@ const TenantUsersDialog: React.FC<TenantUsersDialogProps> = ({
         }}
       />
 
+      {/* Password Reset Dialog */}
+      <Dialog open={passwordDialogOpen} onOpenChange={(v) => { if (!resetting) setPasswordDialogOpen(v); }}>
+        <DialogContent className="bg-slate-900 border-slate-800">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <KeyRound className="h-5 w-5" />
+              Redefinir Senha
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Definir nova senha para <strong className="text-white">{passwordUser?.user.name}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password" className="text-slate-300">Nova Senha</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                minLength={6}
+                disabled={resetting}
+                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setPasswordDialogOpen(false)}
+              disabled={resetting}
+              className="border-slate-700 text-slate-300 hover:bg-slate-800"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handlePasswordConfirm}
+              disabled={resetting || newPassword.length < 6}
+              className="bg-orange-500 hover:bg-orange-600 text-white"
+            >
+              {resetting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                'Salvar Nova Senha'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="bg-slate-900 border-slate-800">
           <AlertDialogHeader>
