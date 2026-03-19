@@ -37,10 +37,25 @@
 - Rota `/tenants` removida e redirecionada para `/admin/organizacoes`
 - Import de TenantManagement removido
 
+### Etapa 6 — Provisioning Automático de Organização ✅
+- Wizard de criação com 2 etapas (dados + admin)
+- Criação automática de perfis de acesso padrão (Admin, Pastor, Gerente Financeiro, Membro)
+- Criação automática de config de módulos padrão (todos habilitados)
+- Criação automática de settings de branding e home
+- Primeiro admin criado via Edge Function com perfil Admin atribuído
+- Validação de unicidade de slug/subdomínio
+- Toasts corrigidos: "Tenant" → "Organização"
+
+### Etapa 7 — DNS e Visualização ✅
+- Dialog de instruções DNS com registros CNAME e A copiáveis
+- Informações sobre propagação e SSL
+- URLs de acesso (produção e teste/preview)
+- "Ver como Organização" — navega para /dashboard?tenant=slug
+- Link externo na tabela atualizado para igrejamoove.com.br
+
 ## O que NÃO mudou (por design)
 - Tabelas do banco (tenants, tenant_id, tenant_settings)
 - RLS policies
 - Funções SQL (get_user_tenant_id, etc.)
 - Hooks internos (useTenantAdmin, TenantContext)
-- Edge Functions
 - Nomes de arquivos de componentes (TenantTable.tsx, etc.)
