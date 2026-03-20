@@ -261,6 +261,12 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
+              <Route path="/pedidos-oracao" element={
+                <ProtectedRoute>
+                  <PedidosOracao />
+                </ProtectedRoute>
+              } />
+              
               {/* Super Admin Routes */}
               <Route path="/admin" element={
                 <ProtectedRoute>
