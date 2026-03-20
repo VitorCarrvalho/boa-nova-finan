@@ -59,6 +59,7 @@ import ConectaIPTM from "@/pages/ConectaIPTM";
 import ConectaProviderProfile from "@/pages/ConectaProviderProfile";
 import ConectaManagement from "@/pages/ConectaManagement";
 import MemberRegistration from "@/pages/MemberRegistration";
+import PedidosOracao from "@/pages/PedidosOracao";
 
 
 // Import Super Admin pages
@@ -257,6 +258,12 @@ const App = () => (
               <Route path="/documentacao" element={
                 <ProtectedRoute>
                   <Documentation />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/pedidos-oracao" element={
+                <ProtectedRoute>
+                  <PedidosOracao />
                 </ProtectedRoute>
               } />
               
