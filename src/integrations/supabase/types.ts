@@ -1485,6 +1485,7 @@ export type Database = {
           slug: string
           state: string
           status: Database["public"]["Enums"]["service_provider_status"]
+          tenant_id: string | null
           terms_accepted: boolean
           updated_at: string
           website: string | null
@@ -1508,6 +1509,7 @@ export type Database = {
           slug: string
           state: string
           status?: Database["public"]["Enums"]["service_provider_status"]
+          tenant_id?: string | null
           terms_accepted?: boolean
           updated_at?: string
           website?: string | null
@@ -1531,6 +1533,7 @@ export type Database = {
           slug?: string
           state?: string
           status?: Database["public"]["Enums"]["service_provider_status"]
+          tenant_id?: string | null
           terms_accepted?: boolean
           updated_at?: string
           website?: string | null
@@ -1556,6 +1559,13 @@ export type Database = {
             columns: ["congregation_id"]
             isOneToOne: false
             referencedRelation: "congregations_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_providers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
