@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,8 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Camera, X } from 'lucide-react';
 import { useCreateMember, useUpdateMember } from '@/hooks/useMemberData';
 import { useCongregations } from '@/hooks/useCongregationData';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { Database } from '@/integrations/supabase/types';
 
 type MemberRole = Database['public']['Enums']['member_role'];
@@ -22,7 +26,11 @@ const MemberForm: React.FC<MemberFormProps> = ({ onSuccess, member }) => {
   const createMember = useCreateMember();
   const updateMember = useUpdateMember();
   const { data: congregations, isLoading: congregationsLoading } = useCongregations();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(member?.photo_url || null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
     name: member?.name || '',
@@ -42,23 +50,38 @@ const MemberForm: React.FC<MemberFormProps> = ({ onSuccess, member }) => {
   });
 
   const availableMinistries = [
-    'Louvor e Adoração',
-    'Ministério Infantil',
-    'Juventude',
-    'Mulheres',
-    'Homens',
-    'Evangelismo',
-    'Intercessão',
-    'Mídia',
-    'Recepção',
-    'Limpeza',
-    'Segurança'
+    'Louvor e Adoração', 'Ministério Infantil', 'Juventude', 'Mulheres',
+    'Homens', 'Evangelismo', 'Intercessão', 'Mídia', 'Recepção', 'Limpeza', 'Segurança'
   ];
 
   const memberRoleDisplayNames = {
     'member': 'Membro',
     'worker': 'Obreiro',
     'pastor': 'Pastor'
+  };
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast({ title: 'Formato inválido', description: 'Apenas JPG, PNG ou WEBP.', variant: 'destructive' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: 'Arquivo muito grande', description: 'Máximo 5MB.', variant: 'destructive' });
+      return;
+    }
+
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const removePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,8 +95,26 @@ const MemberForm: React.FC<MemberFormProps> = ({ onSuccess, member }) => {
     setLoading(true);
 
     try {
+      let photoUrl = member?.photo_url || null;
+
+      if (photoFile) {
+        const ext = photoFile.name.split('.').pop();
+        const filePath = `${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from('member-photos')
+          .upload(filePath, photoFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from('member-photos')
+          .getPublicUrl(filePath);
+        photoUrl = urlData.publicUrl;
+      }
+
       const memberData = {
         ...formData,
+        photo_url: photoUrl,
         date_of_baptism: formData.date_of_baptism || null,
         date_of_joining: formData.date_of_joining || null,
         rg: formData.rg || null,
@@ -128,6 +169,41 @@ const MemberForm: React.FC<MemberFormProps> = ({ onSuccess, member }) => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Photo Upload */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="relative">
+              <Avatar
+                className="h-24 w-24 cursor-pointer border-2 border-dashed border-muted-foreground/30 hover:border-primary transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {photoPreview ? (
+                  <AvatarImage src={photoPreview} alt="Foto" />
+                ) : (
+                  <AvatarFallback className="bg-muted">
+                    <Camera className="h-8 w-8 text-muted-foreground" />
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              {photoPreview && (
+                <button
+                  type="button"
+                  onClick={removePhoto}
+                  className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            <Label className="text-xs text-muted-foreground">Foto (opcional)</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handlePhotoSelect}
+            />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nome Completo *</Label>
