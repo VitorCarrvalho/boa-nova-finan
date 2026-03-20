@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { usePedidosOracao } from '@/hooks/usePedidosOracao';
+import { useTenant } from '@/contexts/TenantContext';
 
 const pedidoSchema = z.object({
   nome: z.string().optional(),
@@ -22,6 +23,7 @@ type PedidoForm = z.infer<typeof pedidoSchema>;
 
 const PedidoOracaoWidget = () => {
   const { createPedido } = usePedidosOracao();
+  const { tenant } = useTenant();
   
   const form = useForm<PedidoForm>({
     resolver: zodResolver(pedidoSchema),
@@ -40,7 +42,8 @@ const PedidoOracaoWidget = () => {
       
       await createPedido.mutateAsync({
         nome: data.nome,
-        texto: data.texto
+        texto: data.texto,
+        tenantId: tenant?.id || null,
       });
       form.reset();
     } catch (error) {

@@ -6,6 +6,7 @@ import { toast } from '@/hooks/use-toast';
 interface PedidoOracao {
   nome?: string;
   texto: string;
+  tenantId?: string | null;
 }
 
 export const usePedidosOracao = () => {
@@ -40,7 +41,8 @@ export const usePedidosOracao = () => {
       // Preparar dados para inserção
       const dados = {
         nome: pedido.nome?.trim() || null,
-        texto: pedido.texto.trim()
+        texto: pedido.texto.trim(),
+        tenant_id: pedido.tenantId || null,
       };
 
       console.log('📤 Enviando dados para Supabase:', dados);
