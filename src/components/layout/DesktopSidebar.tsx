@@ -61,7 +61,12 @@ interface SubmenuItemType {
   module: string;
 }
 
-const DesktopSidebar = () => {
+interface DesktopSidebarProps {
+  displayLogo: string;
+  displayName: string;
+}
+
+const DesktopSidebar = ({ displayLogo, displayName }: DesktopSidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut } = useAuth();
