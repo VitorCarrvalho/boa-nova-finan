@@ -45,6 +45,7 @@ const ConectaSubmitForm: React.FC<ConectaSubmitFormProps> = ({ isOpen, onClose }
   const [isSuccess, setIsSuccess] = useState(false);
   const { data: categories } = useConectaCategories();
   const { data: congregations } = useConectaCongregations();
+  const { tenant } = useTenant();
 
   const form = useForm<SubmitFormData>({
     resolver: zodResolver(submitFormSchema),
