@@ -78,7 +78,8 @@ const DesktopSidebar = ({ displayLogo, displayName }: DesktopSidebarProps) => {
     canViewAuthorizeAccounts,
     canViewApprovedAccounts,
     canViewNewAccount,
-    isSuperAdmin
+    isSuperAdmin,
+    isFullAccess
   } = usePermissions();
   const { data: congregationAccess } = useUserCongregationAccess();
   const hasAccessToAnyCongregation = congregationAccess?.hasAccess || false;
