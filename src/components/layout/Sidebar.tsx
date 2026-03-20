@@ -537,7 +537,24 @@ const Sidebar = () => {
                 );
               })}
             </CollapsibleContent>
-          </Collapsible>
+        </Collapsible>
+        )}
+
+        {/* Pedidos de Oração */}
+        {canAccessAccessManagement && (
+          <Link to="/pedidos-oracao">
+            <Button
+              variant={location.pathname === '/pedidos-oracao' ? "default" : "ghost"}
+              className={`w-full justify-start ${
+                location.pathname === '/pedidos-oracao'
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <Heart className="mr-3 h-4 w-4" />
+              Pedidos de Oração
+            </Button>
+          </Link>
         )}
       </nav>
 
