@@ -21,6 +21,7 @@ const MemberRegistration = () => {
   const { toast } = useToast();
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantName, setTenantName] = useState('');
+  const [tenantLogo, setTenantLogo] = useState<string | null>(null);
   const [congregations, setCongregations] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
