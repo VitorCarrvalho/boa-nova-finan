@@ -1,45 +1,72 @@
 
 
-# Isolar prestadores do Conecta Moove por organização (tenant)
+# Cadastro Público de Membros com Aprovação
 
-## Problema
+## Resumo
 
-A tabela `service_providers` não possui coluna `tenant_id`. Todos os prestadores cadastrados são visíveis para qualquer admin de qualquer organização. Os 2 registros que aparecem na screenshot não pertencem à organização atual.
+Criar uma página pública (`/cadastro-membro/:slug`) onde novos membros preenchem todos os campos do cadastro. Após envio, recebem confirmação de que está em análise. Na tela de Membros, uma nova aba "Pendentes de Aprovação" permite ao admin aprovar (membro vira ativo) ou rejeitar (registro excluído).
 
-## Solução
+## Alterações
 
-### 1. Migração SQL: Adicionar `tenant_id` à `service_providers`
+### 1. Migração SQL: Adicionar campo `approval_status` à tabela `members`
 
-- Adicionar coluna `tenant_id uuid REFERENCES tenants(id)` à tabela
-- Atualizar as policies RLS do admin para filtrar por `tenant_id = get_user_tenant_id(auth.uid())`
-- A policy pública de leitura (`status = 'approved'`) pode continuar global (marketplace aberto) ou ser filtrada — depende da decisão abaixo
-- A policy de INSERT deve setar `tenant_id` do caller
+- Adicionar coluna `approval_status text NOT NULL DEFAULT 'approved'` (para manter compatibilidade com membros existentes)
+- Valores possíveis: `pending`, `approved`, `rejected`
+- Adicionar policy RLS para `anon` INSERT: permitir inserção com `status = 'pending'` e `terms_accepted` (ou sem autenticação, dado que é público)
+- Nova policy: `Anon can submit member registration` — INSERT para `anon` com `WITH CHECK (approval_status = 'pending')`
+- Atualizar a query de `useMembers` para filtrar `approval_status = 'approved'` por padrão
 
-### 2. `src/pages/ConectaManagement.tsx` — Filtrar por tenant
+### 2. Nova página: `src/pages/MemberRegistration.tsx`
 
-- Na query de fetch (linha 72), não precisa de filtro manual pois a RLS já cuidará do isolamento
-- No submit de novos providers, incluir `tenant_id` no payload
+- URL pública: `/cadastro-membro/:slug`
+- Resolve o `slug` para buscar o `tenant_id` da tabela `tenants` (via query pública)
+- Formulário completo: Nome, CPF, RG, Email, Telefone, Endereço, Escolaridade, Instagram, Congregação (dropdown público filtrado pelo tenant), Ministérios (checkboxes)
+- Insere na tabela `members` com `is_active = false`, `approval_status = 'pending'`, `tenant_id` do slug
+- Após envio: tela de sucesso com mensagem "Cadastro recebido! Seu cadastro está em análise e será avaliado pela administração."
+- Layout limpo sem sidebar, sem autenticação
 
-### 3. `src/components/conecta/ConectaSubmitForm.tsx` — Incluir tenant_id
+### 3. RLS: Permitir `anon` acessar congregações pelo tenant
 
-- Ao inserir novo prestador, incluir o `tenant_id` do usuário logado
+- Criar nova policy SELECT `anon` na tabela `congregations` para que o formulário público consiga listar congregações: `USING (is_active = true AND tenant_id = <tenant do slug>)`
+- Alternativa mais simples: usar a view `congregations_public` já existente (que não tem RLS)
 
-### 4. Dados existentes
+### 4. Rota no `src/App.tsx`
 
-- Os 2 registros existentes (SP e João Silva) provavelmente foram criados sem tenant_id. A migração pode atribuí-los ao tenant principal (Igreja Moove) ou deixá-los como `NULL` — nesse caso a RLS os excluirá automaticamente da visualização de tenants específicos.
+- Adicionar rota pública `/cadastro-membro/:slug` sem `ProtectedRoute`
 
-## Decisão necessária
+### 5. Aba "Pendentes" na página `src/pages/Members.tsx`
 
-O marketplace Conecta é **global** (todos veem todos os aprovados) ou **por organização** (cada igreja vê só seus prestadores)?
+- Adicionar `Tabs` com duas abas: "Membros" (lista atual) e "Pendentes de Aprovação"
+- Na aba pendentes: lista de membros com `approval_status = 'pending'`
+- Cada item tem botões "Aprovar" e "Rejeitar"
+- Aprovar: atualiza `approval_status = 'approved'` e `is_active = true`
+- Rejeitar: deleta o registro da tabela `members`
+- Badge com contagem de pendentes na aba
 
-- Se **global**: a policy SELECT pública permanece sem filtro de tenant. Apenas a gestão (admin) é isolada por tenant.
-- Se **por organização**: a policy SELECT pública também filtra por tenant.
+### 6. Hook `src/hooks/usePendingMembers.ts`
+
+- Query: `members` WHERE `approval_status = 'pending'` AND tenant do usuário
+- Mutations: `approveMember` (UPDATE status), `rejectMember` (DELETE)
+
+### 7. Atualizar `src/hooks/useMemberData.ts`
+
+- `useMembers`: adicionar filtro `.eq('approval_status', 'approved')` para não misturar pendentes na listagem principal
 
 ## Arquivos
 
 | Arquivo | Alteração |
 |---|---|
-| Migração SQL | Adicionar `tenant_id`, atualizar RLS admin |
-| `src/pages/ConectaManagement.tsx` | Nenhuma mudança manual necessária (RLS resolve) |
-| `src/components/conecta/ConectaSubmitForm.tsx` | Incluir `tenant_id` no insert |
+| Migração SQL | Adicionar `approval_status`, policy anon INSERT |
+| `src/pages/MemberRegistration.tsx` | Nova página pública |
+| `src/App.tsx` | Rota `/cadastro-membro/:slug` |
+| `src/pages/Members.tsx` | Adicionar sistema de abas com "Pendentes" |
+| `src/hooks/usePendingMembers.ts` | Novo hook para pendentes |
+| `src/hooks/useMemberData.ts` | Filtrar approved na listagem |
+
+## Segurança
+
+- Formulário público aceita apenas INSERT com `approval_status = 'pending'`
+- Anon não pode alterar status nem ver membros existentes
+- Aprovação/rejeição restrita a admins via RLS existente
+- `tenant_id` resolvido pelo slug no servidor, não manipulável pelo cliente
 
