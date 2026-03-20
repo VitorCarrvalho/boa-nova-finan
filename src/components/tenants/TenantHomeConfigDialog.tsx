@@ -65,6 +65,43 @@ export function TenantHomeConfigDialog({
   const [instagram, setInstagram] = React.useState(homeConfig?.instagram || { handle: '', url: '' });
   const [address, setAddress] = React.useState(homeConfig?.address || { street: '', neighborhood: '', city: '', cep: '' });
   const [pastoresImageUrl, setPastoresImageUrl] = React.useState(homeConfig?.pastoresImageUrl || '');
+  const [uploadingImage, setUploadingImage] = React.useState(false);
+  const pastoresFileRef = useRef<HTMLInputElement>(null);
+
+  const handlePastoresImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 5MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `pastores-${Date.now()}.${fileExt}`;
+
+      const { data, error } = await supabase.storage
+        .from('tenant-logos')
+        .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('tenant-logos')
+        .getPublicUrl(data.path);
+
+      setPastoresImageUrl(publicUrl);
+      toast.success('Imagem enviada com sucesso');
+    } catch (error) {
+      console.error('Erro no upload:', error);
+      toast.error('Erro ao enviar imagem');
+    } finally {
+      setUploadingImage(false);
+      if (pastoresFileRef.current) pastoresFileRef.current.value = '';
+    }
+  };
 
   React.useEffect(() => {
     if (homeConfig) {
