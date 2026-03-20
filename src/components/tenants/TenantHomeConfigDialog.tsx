@@ -244,16 +244,47 @@ export function TenantHomeConfigDialog({
               <h4 className="font-medium">Imagem dos Pastores</h4>
             </div>
             <div>
-              <Label htmlFor="pastores-image">URL da Imagem</Label>
-              <Input
-                id="pastores-image"
-                placeholder="https://exemplo.com/imagem.jpg"
-                value={pastoresImageUrl}
-                onChange={(e) => setPastoresImageUrl(e.target.value)}
+              {pastoresImageUrl ? (
+                <div className="relative inline-block">
+                  <img
+                    src={pastoresImageUrl}
+                    alt="Pastores"
+                    className="w-full max-h-48 object-cover rounded-lg border"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-7 w-7"
+                    onClick={() => setPastoresImageUrl('')}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div
+                  className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={() => pastoresFileRef.current?.click()}
+                >
+                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Clique para enviar a foto dos pastores
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    JPG, PNG ou WEBP (máx. 5MB)
+                  </p>
+                </div>
+              )}
+              <input
+                ref={pastoresFileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handlePastoresImageUpload}
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Cole a URL de uma imagem hospedada (ex: Supabase Storage)
-              </p>
+              {uploadingImage && (
+                <p className="text-sm text-muted-foreground mt-2">Enviando imagem...</p>
+              )}
             </div>
           </div>
         </div>
