@@ -18,6 +18,9 @@ import MobileUserManagement from '@/components/access-management/MobileUserManag
 
 const Settings = () => {
   const { tenant, isMultiTenant, loading: tenantLoading } = useTenant();
+  const { canViewModule } = usePermissions();
+  const isMobile = useIsMobile();
+  const showAccessManagement = canViewModule('gestao-acessos');
   
   // Show loading while tenant data is being resolved
   if (tenantLoading) {
