@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,9 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TenantHomeConfig } from '@/contexts/TenantContext';
-import { GripVertical, Instagram, MapPin, Users } from 'lucide-react';
+import { GripVertical, Instagram, MapPin, Users, Upload, X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface TenantHomeConfigDialogProps {
   open: boolean;
@@ -63,6 +65,43 @@ export function TenantHomeConfigDialog({
   const [instagram, setInstagram] = React.useState(homeConfig?.instagram || { handle: '', url: '' });
   const [address, setAddress] = React.useState(homeConfig?.address || { street: '', neighborhood: '', city: '', cep: '' });
   const [pastoresImageUrl, setPastoresImageUrl] = React.useState(homeConfig?.pastoresImageUrl || '');
+  const [uploadingImage, setUploadingImage] = React.useState(false);
+  const pastoresFileRef = useRef<HTMLInputElement>(null);
+
+  const handlePastoresImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 5MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `pastores-${Date.now()}.${fileExt}`;
+
+      const { data, error } = await supabase.storage
+        .from('tenant-logos')
+        .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('tenant-logos')
+        .getPublicUrl(data.path);
+
+      setPastoresImageUrl(publicUrl);
+      toast.success('Imagem enviada com sucesso');
+    } catch (error) {
+      console.error('Erro no upload:', error);
+      toast.error('Erro ao enviar imagem');
+    } finally {
+      setUploadingImage(false);
+      if (pastoresFileRef.current) pastoresFileRef.current.value = '';
+    }
+  };
 
   React.useEffect(() => {
     if (homeConfig) {
@@ -242,16 +281,47 @@ export function TenantHomeConfigDialog({
               <h4 className="font-medium">Imagem dos Pastores</h4>
             </div>
             <div>
-              <Label htmlFor="pastores-image">URL da Imagem</Label>
-              <Input
-                id="pastores-image"
-                placeholder="https://exemplo.com/imagem.jpg"
-                value={pastoresImageUrl}
-                onChange={(e) => setPastoresImageUrl(e.target.value)}
+              {pastoresImageUrl ? (
+                <div className="relative inline-block">
+                  <img
+                    src={pastoresImageUrl}
+                    alt="Pastores"
+                    className="w-full max-h-48 object-cover rounded-lg border"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-7 w-7"
+                    onClick={() => setPastoresImageUrl('')}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div
+                  className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={() => pastoresFileRef.current?.click()}
+                >
+                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Clique para enviar a foto dos pastores
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    JPG, PNG ou WEBP (máx. 5MB)
+                  </p>
+                </div>
+              )}
+              <input
+                ref={pastoresFileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handlePastoresImageUpload}
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Cole a URL de uma imagem hospedada (ex: Supabase Storage)
-              </p>
+              {uploadingImage && (
+                <p className="text-sm text-muted-foreground mt-2">Enviando imagem...</p>
+              )}
             </div>
           </div>
         </div>
