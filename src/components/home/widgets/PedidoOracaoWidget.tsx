@@ -42,7 +42,8 @@ const PedidoOracaoWidget = () => {
       
       await createPedido.mutateAsync({
         nome: data.nome,
-        texto: data.texto
+        texto: data.texto,
+        tenantId: tenant?.id || null,
       });
       form.reset();
     } catch (error) {

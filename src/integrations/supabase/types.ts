@@ -1205,21 +1205,32 @@ export type Database = {
           created_at: string
           id: string
           nome: string | null
+          tenant_id: string | null
           texto: string
         }
         Insert: {
           created_at?: string
           id?: string
           nome?: string | null
+          tenant_id?: string | null
           texto: string
         }
         Update: {
           created_at?: string
           id?: string
           nome?: string | null
+          tenant_id?: string | null
           texto?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_oracao_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pre_inscricoes: {
         Row: {
