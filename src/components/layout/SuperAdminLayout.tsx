@@ -46,9 +46,6 @@ const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({ children }) => {
     await signOut();
   };
 
-  const handleSwitchToTenantView = () => {
-    navigate('/dashboard');
-  };
 
   return (
     <SidebarProvider defaultOpen={!isMobile}>
