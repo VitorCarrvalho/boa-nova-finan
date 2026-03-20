@@ -1,25 +1,54 @@
 
 
-# Adicionar campo de foto no formulário de membro (admin)
+# Implementar Home pública por organização
 
-## Contexto
+## Situação atual
 
-O `MemberForm.tsx` (usado por admins para criar/editar membros) não possui campo de upload de foto. O campo `photo_url` já existe na tabela `members` e o bucket `member-photos` já está configurado com policies. Basta adicionar o upload no formulário.
+- `Home.tsx` existe com toda a lógica de widgets (pastores, versículo, eventos, etc.) mas **não está registrada em nenhuma rota** no `App.tsx`
+- O `TenantContext` já resolve tenant por subdomínio (`mica.igrejamoove.com.br`) ou query param (`?tenant=slug`)
+- A RLS de `tenant_settings` já permite leitura anônima de branding e home config para tenants ativos
+- Os widgets (versículo, eventos, pedido de oração) já funcionam sem autenticação
+- A rota `/` redireciona para `/auth`
 
-## Alterações
+## Problema
 
-### `src/components/members/MemberForm.tsx`
+Não há rota pública que renderize a Home com os widgets da organização. Precisamos de uma URL pública por organização.
 
-- Adicionar estados `photoFile` e `photoPreview` (similar ao que já existe em `MemberRegistration.tsx`)
-- Inicializar `photoPreview` com `member?.photo_url` quando editando
-- Adicionar campo de upload com preview circular (Avatar) no topo do formulário, antes dos campos
-- No `handleSubmit`: se há foto nova, fazer upload para `member-photos/{timestamp}.ext` e incluir `photo_url` no payload
-- Usar o bucket `member-photos` existente (já tem policies para authenticated via `Tenant users can insert their tenant members`)
-- Aceitar JPG, PNG, WEBP, máximo 5MB
+## Solução
 
-### `src/components/members/MemberTable.tsx`
+### 1. Adicionar rota `/home` pública no `App.tsx`
 
-- Exibir miniatura da foto (Avatar) na coluna do nome na tabela de membros
+- Importar `Home` de `@/pages/Home`
+- Adicionar `<Route path="/home" element={<Home />} />` como rota pública (sem `ProtectedRoute`)
+- Alterar a rota `/` para redirecionar para `/home` ao invés de `/auth`
 
-Nenhuma migração SQL necessária — o bucket e a coluna `photo_url` já existem.
+Assim, ao acessar `mica.igrejamoove.com.br/home` (ou `?tenant=mica`), o `TenantContext` resolve o tenant pelo subdomínio e carrega branding + home config automaticamente.
+
+### 2. Ajustar `Home.tsx` para não depender de `useAuth`
+
+- Remover `useAuth()` do Home (não deve exigir autenticação)
+- Manter `FloatingLoginButton` para redirecionar ao login
+
+### 3. Ajustar rota `/` no `App.tsx`
+
+- Mudar de `<Navigate to="/auth" />` para `<Navigate to="/home" />`
+- Isso garante que `mica.igrejamoove.com.br` → `/home` → carrega home pública da organização
+
+### 4. Garantir que widgets funcionem para `anon`
+
+- **Versículo**: usa API externa, já funciona sem auth
+- **Pastores**: usa `homeConfig.pastoresImageUrl` do TenantContext, já funciona
+- **Eventos**: usa query em `church_events` — já tem policy `anon` SELECT para eventos ativos
+- **Pedido de oração**: INSERT já tem policy para `anon`
+- **Mapa/Instagram/Conecta**: dados estáticos do config, funcionam sem auth
+- **Calendário**: derivado dos eventos, funciona com a policy anon existente
+
+Nenhuma migração SQL necessária — as policies já suportam acesso anon.
+
+## Arquivos
+
+| Arquivo | Alteração |
+|---|---|
+| `src/App.tsx` | Importar Home, adicionar rota `/home` pública, mudar `/` → `/home` |
+| `src/pages/Home.tsx` | Remover dependência de `useAuth` |
 
