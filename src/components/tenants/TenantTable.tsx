@@ -191,18 +191,15 @@ export function TenantTable({
                 </div>
               </TableCell>
               <TableCell>
-                <div className="flex items-center gap-1">
-                  <span className="text-sm">{tenant.subdomain}</span>
-                  <span className="text-xs text-muted-foreground">.igrejamoove.com.br</span>
-                  <a
-                    href={`https://${tenant.subdomain}.igrejamoove.com.br`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-primary ml-1"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                </div>
+                <a
+                  href={`https://${tenant.subdomain}.igrejamoove.com.br`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-sm text-primary hover:underline"
+                >
+                  {tenant.subdomain}.igrejamoove.com.br
+                  <ExternalLink className="h-3 w-3" />
+                </a>
               </TableCell>
               <TableCell>
                 <Badge variant={planBadgeVariant[tenant.planType] || 'outline'}>
