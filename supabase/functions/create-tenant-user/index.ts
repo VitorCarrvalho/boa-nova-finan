@@ -318,8 +318,7 @@ serve(async (req) => {
       newUser = authData.user
     }
 
-    const newUser = authData.user
-    console.log(`Auth user created: ${newUser.id}`)
+    console.log(`Auth user ready: ${newUser.id}`)
 
     // Step 4: Update profile with tenant_id, active status, and TENANT-SPECIFIC admin profile
     const { error: profileError } = await supabaseAdmin
