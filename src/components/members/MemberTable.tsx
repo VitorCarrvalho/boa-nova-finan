@@ -214,14 +214,20 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
                     value: formatDate(member.date_of_joining)
                   }
                 ]}
-                actions={canEdit ? [
-                  {
+                actions={[
+                  ...(canEdit ? [{
                     label: 'Editar',
                     icon: <Edit className="h-3 w-3" />,
                     onClick: () => onEditMember(member),
-                    variant: 'outline'
-                  }
-                ] : []}
+                    variant: 'outline' as const
+                  }] : []),
+                  ...(canDelete ? [{
+                    label: 'Remover',
+                    icon: <Trash2 className="h-3 w-3" />,
+                    onClick: () => deleteMember.mutate(member.id),
+                    variant: 'destructive' as const
+                  }] : [])
+                ]}
               />
             ))}
             {filteredMembers.length === 0 && (
