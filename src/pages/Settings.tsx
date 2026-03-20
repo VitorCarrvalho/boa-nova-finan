@@ -2,11 +2,19 @@ import React from 'react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Database, Palette, Home, LayoutGrid } from 'lucide-react';
+import { Shield, Database, Palette, Home, LayoutGrid, Users } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
+import { usePermissions } from '@/hooks/usePermissions';
+import { useIsMobile } from '@/hooks/use-mobile';
 import TenantBrandingTab from '@/components/settings/TenantBrandingTab';
 import TenantHomeTab from '@/components/settings/TenantHomeTab';
 import TenantModulesTab from '@/components/settings/TenantModulesTab';
+import PendingApprovals from '@/components/access-management/PendingApprovals';
+import ProfileConfiguration from '@/components/access-management/ProfileConfiguration';
+import UserManagement from '@/components/settings/UserManagement';
+import MobilePendingApprovals from '@/components/access-management/MobilePendingApprovals';
+import MobileProfileConfiguration from '@/components/access-management/MobileProfileConfiguration';
+import MobileUserManagement from '@/components/access-management/MobileUserManagement';
 
 const Settings = () => {
   const { tenant, isMultiTenant, loading: tenantLoading } = useTenant();
