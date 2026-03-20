@@ -145,23 +145,15 @@ const PendingApprovals = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => handleApprove(user.id, true)}
-                          className="bg-green-600 hover:bg-green-700"
-                          disabled={approveUser.isPending}
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                        </Button>
-                        
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button
                               size="sm"
-                              variant="outline"
+                              className="bg-green-600 hover:bg-green-700"
                               onClick={() => openEditDialog(user)}
                             >
-                              <Edit className="h-4 w-4" />
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Aprovar
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="max-w-md">
