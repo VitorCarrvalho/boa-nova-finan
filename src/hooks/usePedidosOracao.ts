@@ -39,10 +39,10 @@ export const usePedidosOracao = () => {
       }
       
       // Preparar dados para inserção
-      const dados: Record<string, unknown> = {
+      const dados = {
         nome: pedido.nome?.trim() || null,
         texto: pedido.texto.trim(),
-        ...(pedido.tenantId ? { tenant_id: pedido.tenantId } : {}),
+        tenant_id: pedido.tenantId || null,
       };
 
       console.log('📤 Enviando dados para Supabase:', dados);
