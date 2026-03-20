@@ -29,7 +29,8 @@ interface MemberTableProps {
 
 const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
   const { data: members, isLoading } = useMembers();
-  const { canEditModule, canExportModule } = usePermissions();
+  const deleteMember = useDeleteMember();
+  const { canEditModule, canExportModule, canDeleteModule } = usePermissions();
   const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -37,6 +38,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
   
   const canEdit = canEditModule('membros');
   const canExport = canExportModule('membros');
+  const canDelete = canDeleteModule('membros');
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-';
