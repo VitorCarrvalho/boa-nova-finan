@@ -165,9 +165,16 @@ const MemberRegistration = () => {
     <div className="min-h-screen bg-muted/30 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-            <Church className="h-7 w-7 text-primary" />
-          </div>
+          {tenantLogo ? (
+            <Avatar className="mx-auto mb-4 h-16 w-16">
+              <AvatarImage src={tenantLogo} alt={tenantName} />
+              <AvatarFallback><Church className="h-7 w-7 text-primary" /></AvatarFallback>
+            </Avatar>
+          ) : (
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+              <Church className="h-7 w-7 text-primary" />
+            </div>
+          )}
           <h1 className="text-2xl font-bold text-foreground">{tenantName}</h1>
           <p className="text-muted-foreground mt-1">Formulário de Cadastro de Membro</p>
         </div>
