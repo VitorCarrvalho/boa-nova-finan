@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useConectaCategories, useConectaCongregations } from '@/hooks/useConectaProviders';
+import { useTenant } from '@/contexts/TenantContext';
 import { Upload, Check } from 'lucide-react';
 
 const submitFormSchema = z.object({
@@ -44,6 +45,7 @@ const ConectaSubmitForm: React.FC<ConectaSubmitFormProps> = ({ isOpen, onClose }
   const [isSuccess, setIsSuccess] = useState(false);
   const { data: categories } = useConectaCategories();
   const { data: congregations } = useConectaCongregations();
+  const { tenant } = useTenant();
 
   const form = useForm<SubmitFormData>({
     resolver: zodResolver(submitFormSchema),
@@ -109,7 +111,8 @@ const ConectaSubmitForm: React.FC<ConectaSubmitFormProps> = ({ isOpen, onClose }
           congregation_name: congregation?.name,
           photo_url: publicUrl,
           status: 'pending' as any,
-          terms_accepted: true
+          terms_accepted: true,
+          tenant_id: tenant?.id || null
         } as any);
 
       if (insertError) {
