@@ -1,76 +1,112 @@
 
-# Plano: White-Label com Subdomínio - Abordagem Híbrida
 
-## ✅ IMPLEMENTADO
+# Plano de Correção: Gestão de Acesso Completa (2 Etapas)
 
-### Etapa 1 — Detecção de Subdomínio ✅
-- `getTenantIdentifier` atualizado para detectar subdomínios em `igrejamoove.com.br` e `igrejamoove.app`
-- `mica.igrejamoove.com.br` → slug "mica"
-- Domínio raiz sem subdomínio → plataforma admin (retorna null)
+## Resumo das Decisões do Usuário
 
-### Etapa 2 — Redirecionar Raiz para /auth ✅
-- Rota `/` agora redireciona para `/auth`
-- Imports de Home e Index removidos do App.tsx
-- Arquivos Home/widgets mantidos no repositório para uso futuro
+| Decisão | Resposta |
+|---|---|
+| Super Admin "Ver como Org" | **Remover** funcionalidade |
+| Deleção por admin da org | **Admin pode deletar tudo** na sua org |
+| Cadastro de novos usuários | **Precisa aprovação** do admin |
+| Controle de módulos | **Admin da org também controla** |
+| Perfil Admin | **Fixo com acesso total** |
+| Role vs Access Profile | **Migrar tudo para access_profiles** (em 2 etapas) |
+| Componentes de debug | **Manter como está** |
+| Rota /admin bloqueada | **Mostrar página 403** |
+| Perfis customizados | **Toggle simples** (ativo/inativo por módulo) |
+| Aprovação de usuário | **Escolher perfil + congregação** |
 
-### Etapa 3 — Renomear Interface: Tenants → Organizações ✅
-- SuperAdminSidebar: "Tenants" → "Organizações"
-- AdminTenants: "Gestão de Tenants" → "Gestão de Organizações"
-- TenantTable: labels atualizados
-- TenantFormDialog: "Novo Tenant" → "Nova Organização"
-- TenantUsersDialog: labels atualizados
-- TenantModulesDialog: labels atualizados
-- AdminSettings: "Auto-aprovação de Tenants" → "Auto-aprovação de Organizações"
-- Rota `/admin/tenants` → `/admin/organizacoes` (com redirect de compatibilidade)
+---
 
-### Etapa 4 — Renomear IPTM → Igreja Moove ✅
-- ConectaIPTM: "Conecta IPTM" → "Conecta Moove"
-- ConectaManagement: "Gestão Conecta IPTM" → "Gestão Conecta Moove"
-- ConectaProviderProfile: mensagem WhatsApp atualizada
-- AdminSettings: placeholder "Sistema IPTM" → "Igreja Moove"
-- PastoresWidget: alt text atualizado
-- moduleStructure.ts: label "Conecta IPTM" → "Conecta Moove"
-- TenantContext: comentários atualizados
-- useTenantModules: comentários atualizados
+## ETAPA 1 — Frontend: Sidebar, Rotas e Permissões (esta implementação)
 
-### Etapa 5 — Remover Rota /tenants Duplicada ✅
-- Rota `/tenants` removida e redirecionada para `/admin/organizacoes`
-- Import de TenantManagement removido
+### 1.1 — Esconder "Gestão de Tenants" do sidebar (somente Super Admin)
 
-### Etapa 6 — Provisioning Automático de Organização ✅
-- Wizard de criação com 2 etapas (dados + admin)
-- Criação automática de perfis de acesso padrão (Admin, Pastor, Gerente Financeiro, Membro)
-- Criação automática de config de módulos padrão (todos habilitados)
-- Criação automática de settings de branding e home
-- Primeiro admin criado via Edge Function com perfil Admin atribuído
-- Validação de unicidade de slug/subdomínio
-- Toasts corrigidos: "Tenant" → "Organização"
+**Arquivo:** `src/components/layout/DesktopSidebar.tsx`
+- Importar `useSuperAdmin`
+- Linha 323: trocar `canViewModule('gestao-acessos')` por `isSuperAdmin`
+- Remover o item de menu "Gestão de Tenants" para qualquer usuário que não seja Super Admin
 
-### Etapa 7 — DNS e Visualização ✅
-- Dialog de instruções DNS com registros CNAME e A copiáveis
-- Informações sobre propagação e SSL
-- URLs de acesso (produção e teste/preview)
-- "Ver como Organização" — navega para /dashboard?tenant=slug
-- Link externo na tabela atualizado para igrejamoove.com.br
+**Arquivo:** `src/components/layout/Sidebar.tsx`
+- Mesma verificação: garantir que nenhum link para `/tenants` ou `/admin` apareça para não-superadmins
 
-### Etapa 8 — Wizard de Onboarding Self-Service ✅
-- Edge Function pública `onboard-tenant` (verify_jwt=false)
-  - Cria tenant, tenant_settings (branding/home/modules), access_profiles, auth user, profile, tenant_admins
-  - Rollback automático em caso de falha
-  - Validação de slug e email únicos
-  - Branding padrão com paleta azul+âmbar (217 91% 45% / 35 92% 50%)
-- Página `/onboarding` com wizard de 4 etapas:
-  - Step 1: Dados da Igreja (nome, cidade, estado, slug auto-gerado)
-  - Step 2: Conta do Administrador (nome, email, senha)
-  - Step 3: Escolha do Plano (Free/Basic/Pro com trial 14 dias)
-  - Step 4: Resumo e confirmação
-- Rota pública `/onboarding` no App.tsx
-- CTA "Cadastre-se agora" na tela de login (AuthPage)
-- Cores padrão corrigidas no useTenantAdmin.ts
+### 1.2 — Remover botão "Ver como Organização"
 
-## O que NÃO mudou (por design)
-- Tabelas do banco (tenants, tenant_id, tenant_settings)
-- RLS policies
-- Funções SQL (get_user_tenant_id, etc.)
-- Hooks internos (useTenantAdmin, TenantContext)
-- Nomes de arquivos de componentes (TenantTable.tsx, etc.)
+**Arquivo:** `src/components/tenants/TenantTable.tsx`
+- Remover prop `onViewAsTenant` da interface e do componente
+- Remover o `DropdownMenuItem` "Ver como Organização"
+
+**Arquivo:** `src/pages/admin/AdminTenants.tsx`
+- Remover a função `handleViewAsTenant` e a prop passada ao TenantTable
+
+### 1.3 — Bloquear rotas `/admin/*` com página 403
+
+**Arquivo:** `src/components/ProtectedRoute.tsx`
+- Adicionar verificação: se `location.pathname.startsWith('/admin')` e `!isSuperAdmin`, renderizar componente 403 (mensagem "Acesso não autorizado" + botão voltar)
+- Expandir lista `isTenantRoute` para incluir todas as rotas de organização: `/conciliacoes`, `/fornecedores`, `/gestao-acessos`, `/contas-pagar`, `/relatorios`, `/notificacoes`, `/ministerios`, `/departamentos`, `/congregacoes`, `/membros`, `/conecta`, `/documentacao`, `/configuracoes`, `/financeiro`, `/dashboard`
+
+### 1.4 — Super Admin bypass total nas permissões
+
+**Arquivo:** `src/hooks/usePermissions.ts`
+- Importar `useSuperAdmin`
+- Se `isSuperAdmin === true`, todas as funções (`canViewModule`, `canInsertModule`, `canEditModule`, `canDeleteModule`, etc.) retornam `true` automaticamente
+
+### 1.5 — Perfil Admin fixo com acesso total
+
+**Arquivo:** `src/hooks/usePermissions.ts`
+- Adicionar lógica: se o `userAccessProfile === 'Admin'`, todas as permissões retornam `true` dentro da organização (sem consultar `access_profiles.permissions`)
+
+### 1.6 — Admin da org pode deletar registros
+
+**Arquivos de migração SQL:**
+- Alterar RLS policies de `members` e `financial_records` que atualmente restringem DELETE a `superadmin`, para também permitir `admin` com `tenant_id` correspondente
+- Policies afetadas:
+  - `members`: "Apenas superadmins podem deletar membros" → adicionar `OR (get_current_user_role() = 'admin' AND tenant_id = get_user_tenant_id(auth.uid()))`
+  - `financial_records`: "Apenas superadmins podem deletar registros financeiros" → mesma lógica
+
+### 1.7 — Admin da org pode controlar módulos
+
+A tela de Configurações já tem a aba de módulos (`TenantModulesTab`). Verificar que:
+- O admin da org consegue salvar `tenant_settings` com `category = 'modules'` para seu próprio `tenant_id`
+- O `useTenantModules` lê corretamente essa config
+
+### 1.8 — Gestão de Acessos: perfis com toggle simples
+
+**Arquivo:** `src/components/access-management/ProfileConfiguration.tsx`
+- Na criação/edição de perfil, exibir lista de módulos com toggle simples (ativo/inativo) ao invés de granular por ação
+- Quando ativo, setar todas as ações do módulo como `true` (view, insert, edit, delete, approve, export)
+- Quando inativo, setar todas como `false`
+- Perfil "Admin" não pode ser editado (fixo)
+
+### 1.9 — Aprovação de usuário: perfil + congregação
+
+Verificar que a tela de aprovação (aba "Contas a Aprovar") já permite selecionar perfil e congregação. Se não, adicionar dropdown de congregação no dialog de aprovação.
+
+---
+
+## ETAPA 2 — Backend: Migrar RLS de `role` para `access_profiles` (implementação futura)
+
+Esta etapa será feita separadamente para reduzir risco:
+
+- Criar nova função `get_current_user_access_profile_name()` que retorna o nome do access_profile do usuário
+- Atualizar todas as RLS policies que usam `get_current_user_role()` para usar a nova função
+- Remover dependência do campo `profiles.role` nas policies
+- Manter campo `role` na tabela para compatibilidade mas sem uso em RLS
+- Atualizar `get_current_user_role()` para derivar 100% do `access_profiles.name`
+
+---
+
+## Arquivos a Modificar (Etapa 1)
+
+| Arquivo | Alteração |
+|---|---|
+| `src/components/layout/DesktopSidebar.tsx` | Menu "Gestão de Tenants" só para Super Admin |
+| `src/components/layout/Sidebar.tsx` | Idem (mobile) |
+| `src/components/ProtectedRoute.tsx` | Página 403 para `/admin/*` + expandir rotas tenant |
+| `src/hooks/usePermissions.ts` | Bypass para Super Admin + Admin fixo com acesso total |
+| `src/components/tenants/TenantTable.tsx` | Remover "Ver como Organização" |
+| `src/pages/admin/AdminTenants.tsx` | Remover handler de "Ver como Organização" |
+| `src/components/access-management/ProfileConfiguration.tsx` | Toggle simples por módulo |
+| Migração SQL | RLS de DELETE em members e financial_records |
+
