@@ -1,42 +1,26 @@
 
 
-# Remover tema dark + Substituir logo oficial
+# Mover logo do header para o topo do sidebar
 
 ## Alterações
 
-### 1. Substituir logo
-Copiar `logo-azul.png`, `logo-branco.png` e `logo-preto.png` para `src/assets/`. Substituir todas as referências a `logoIM` pelo novo `logo-azul.png` nos 3 arquivos:
-- `src/components/layout/Layout.tsx`
-- `src/components/auth/AuthPage.tsx`
-- `src/pages/Onboarding.tsx`
+### 1. `src/components/layout/DesktopSidebar.tsx`
+- Receber `displayLogo` e `displayName` como props
+- Adicionar no topo do Sidebar (antes do `SidebarContent`) um `SidebarHeader` com o logo centralizado
+- Quando collapsed: mostrar logo menor centralizado
+- Quando expanded: mostrar logo maior centralizado
 
-### 2. Remover ThemeToggle do header
-- `src/components/layout/HeaderProfile.tsx`: Remover import e uso de `<ThemeToggle />`
+### 2. `src/components/layout/Layout.tsx` (desktop, linhas 85-112)
+- Passar `displayLogo` e `displayName` como props para `DesktopSidebar`
+- Remover `<img>` do logo e `<h1>` do nome da organização do header desktop
+- Manter apenas `SidebarTrigger` e `HeaderProfile` no header
 
-### 3. Forçar tema claro
-- `src/App.tsx`: Alterar `<ThemeProvider>` para `defaultTheme="light"` e adicionar `forcedTheme="light"` (isso desabilita a troca de tema)
+### 3. `src/components/layout/MobileSidebar.tsx`
+- Aplicar a mesma lógica: adicionar logo no topo do sidebar mobile
+- Remover logo do header mobile no `Layout.tsx` (linhas 54-82)
 
-### 4. Remover `.dark` do CSS
-- `src/index.css`: Remover todo o bloco `.dark { ... }` (linhas ~55-85) pois nunca será usado
-
-### 5. Sonner (toaster)
-- `src/components/ui/sonner.tsx`: Remover `useTheme` e fixar `theme="light"`
-
-### 6. Manter o arquivo `theme-toggle.tsx`
-Pode ser deletado, mas como não causa impacto, apenas remover o uso dele. O arquivo fica sem referências.
-
-## Arquivos Modificados
-
-| Arquivo | Alteração |
-|---|---|
-| `src/assets/logo-azul.png` | Novo logo (copiar upload) |
-| `src/assets/logo-branco.png` | Logo contraste branco (copiar upload) |
-| `src/assets/logo-preto.png` | Logo contraste preto (copiar upload) |
-| `src/components/layout/Layout.tsx` | `logoIM` -> `logoAzul` |
-| `src/components/auth/AuthPage.tsx` | `logoIM` -> `logoAzul` |
-| `src/pages/Onboarding.tsx` | `logoIM` -> `logoAzul` |
-| `src/components/layout/HeaderProfile.tsx` | Remover `ThemeToggle` |
-| `src/App.tsx` | Forçar tema claro |
-| `src/index.css` | Remover bloco `.dark` |
-| `src/components/ui/sonner.tsx` | Fixar `theme="light"` |
+## Resultado
+- Logo aparece centralizado no topo do sidebar (desktop e mobile)
+- Header fica mais limpo, com apenas o trigger e o perfil do usuário
+- Quando sidebar recolhida, logo fica em versão compacta
 
