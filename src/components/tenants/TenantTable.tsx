@@ -240,12 +240,6 @@ export function TenantTable({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    {onViewAsTenant && (
-                      <DropdownMenuItem onClick={() => onViewAsTenant(tenant)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        Ver como Organização
-                      </DropdownMenuItem>
-                    )}
                     <DropdownMenuItem onClick={() => onEdit(tenant)}>
                       <Edit className="mr-2 h-4 w-4" />
                       Editar

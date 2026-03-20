@@ -321,12 +321,12 @@ const DesktopSidebar = () => {
                 </SidebarMenuItem>
               )}
 
-              {canViewModule('gestao-acessos') && (
+              {isSuperAdmin && (
                 <SidebarMenuItem key="tenants">
                   <MenuItemComponent item={{
                     title: 'Gestão de Tenants',
                     icon: Building,
-                    route: '/tenants',
+                    route: '/admin/organizacoes',
                     module: 'gestao-acessos'
                   }} />
                 </SidebarMenuItem>
