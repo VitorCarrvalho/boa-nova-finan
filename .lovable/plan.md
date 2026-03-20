@@ -1,42 +1,47 @@
 
 
-# Criar tela de visualização de Pedidos de Oração (área logada)
+# Funcionalidades para Pedidos de Oração
 
-## Problema
+## Situação atual
 
-Os pedidos de oração são enviados pela Home pública e salvos no banco com `tenant_id`, mas não existe nenhuma tela na área logada para os admins visualizarem esses pedidos.
+A tabela `pedidos_oracao` possui apenas: `id`, `nome`, `texto`, `created_at`, `tenant_id`. A página é uma listagem simples sem nenhuma ação.
 
-## Solução
+## Plano
 
-Criar uma página de listagem de pedidos de oração acessível para admins da organização no menu lateral.
+### 1. Migração SQL: Adicionar colunas de gestão
 
-### 1. `src/pages/PedidosOracao.tsx` — Nova página
+Adicionar à tabela `pedidos_oracao`:
+- `is_read boolean NOT NULL DEFAULT false` — marcar como visto
+- `is_followed boolean NOT NULL DEFAULT false` — flag de acompanhar
+- `read_at timestamptz` — quando foi lido
+- `read_by uuid` — quem leu
 
-- Layout padrão com `<Layout>`
-- Query para listar pedidos de oração filtrados por `tenant_id` do usuário logado (a RLS já filtra)
-- Tabela/cards com colunas: Nome (ou "Anônimo"), Texto do pedido, Data de envio
-- Ordenação por data decrescente (mais recentes primeiro)
-- Busca por nome ou texto
+Adicionar policy de UPDATE e DELETE para admins autenticados do tenant:
+- UPDATE: `is_current_user_org_admin() AND tenant_id = get_user_tenant_id(auth.uid())`
+- DELETE: mesma condição
 
-### 2. `src/hooks/usePedidosOracao.ts` — Adicionar query de listagem
+### 2. `src/hooks/usePedidosOracao.ts` — Adicionar mutations
 
-- Adicionar `useQuery` para buscar pedidos com `supabase.from('pedidos_oracao').select('*').order('created_at', { ascending: false })`
-- A RLS existente (`Admins can view tenant prayer requests`) já garante isolamento por tenant
+- `markAsRead(id)` — UPDATE `is_read = true, read_at = now(), read_by = auth.uid()`
+- `toggleFollow(id, value)` — UPDATE `is_followed = value`
+- `deletePedido(id)` — DELETE por id
+- Cada mutation invalida `queryKey: ['pedidos-oracao']`
 
-### 3. `src/App.tsx` — Adicionar rota
+### 3. `src/pages/PedidosOracao.tsx` — UI completa
 
-- Rota protegida `/pedidos-oracao` apontando para a nova página
-
-### 4. `src/components/layout/Sidebar.tsx` — Adicionar item no menu
-
-- Novo item "Pedidos de Oração" com ícone `Heart` no menu lateral
+- Adicionar colunas na tabela: Status (visto/não visto), Acompanhar (flag), Ações
+- Botão "Marcar como visto" (ícone Eye/EyeOff) com toggle
+- Botão estrela/bookmark para "Acompanhar" com toggle
+- Botão de deletar com confirmação via AlertDialog
+- Filtros por tabs: Todos / Não lidos / Acompanhados
+- Badge com contagem de não lidos no header
+- Linha com destaque visual (bg diferente) para pedidos não lidos
 
 ## Arquivos
 
 | Arquivo | Alteração |
 |---|---|
-| `src/pages/PedidosOracao.tsx` | Nova página com listagem |
-| `src/hooks/usePedidosOracao.ts` | Adicionar query de listagem |
-| `src/App.tsx` | Adicionar rota protegida |
-| `src/components/layout/Sidebar.tsx` (ou `DesktopSidebar`/`MobileSidebar`) | Adicionar item no menu |
+| Migração SQL | Adicionar colunas `is_read`, `is_followed`, `read_at`, `read_by`; policies UPDATE/DELETE |
+| `src/hooks/usePedidosOracao.ts` | Mutations: markAsRead, toggleFollow, deletePedido |
+| `src/pages/PedidosOracao.tsx` | UI com ações, filtros por tab, badges, confirmação de exclusão |
 
