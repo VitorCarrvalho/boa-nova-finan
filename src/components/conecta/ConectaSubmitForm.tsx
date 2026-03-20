@@ -111,7 +111,8 @@ const ConectaSubmitForm: React.FC<ConectaSubmitFormProps> = ({ isOpen, onClose }
           congregation_name: congregation?.name,
           photo_url: publicUrl,
           status: 'pending' as any,
-          terms_accepted: true
+          terms_accepted: true,
+          tenant_id: tenant?.id || null
         } as any);
 
       if (insertError) {
