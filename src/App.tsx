@@ -57,6 +57,7 @@ import TestDropdowns from "@/pages/TestDropdowns";
 import ConectaIPTM from "@/pages/ConectaIPTM";
 import ConectaProviderProfile from "@/pages/ConectaProviderProfile";
 import ConectaManagement from "@/pages/ConectaManagement";
+import MemberRegistration from "@/pages/MemberRegistration";
 
 
 // Import Super Admin pages
