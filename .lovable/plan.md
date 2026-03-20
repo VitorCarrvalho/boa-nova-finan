@@ -1,112 +1,57 @@
 
 
-# Plano de Correção: Gestão de Acesso Completa (2 Etapas)
+# Plano: Isolar Super Admin exclusivamente nas rotas /admin
 
-## Resumo das Decisões do Usuário
+## Problema
 
-| Decisão | Resposta |
-|---|---|
-| Super Admin "Ver como Org" | **Remover** funcionalidade |
-| Deleção por admin da org | **Admin pode deletar tudo** na sua org |
-| Cadastro de novos usuários | **Precisa aprovação** do admin |
-| Controle de módulos | **Admin da org também controla** |
-| Perfil Admin | **Fixo com acesso total** |
-| Role vs Access Profile | **Migrar tudo para access_profiles** (em 2 etapas) |
-| Componentes de debug | **Manter como está** |
-| Rota /admin bloqueada | **Mostrar página 403** |
-| Perfis customizados | **Toggle simples** (ativo/inativo por módulo) |
-| Aprovação de usuário | **Escolher perfil + congregação** |
+1. **Super Admin vê sidebar de organização**: `usePermissions` retorna `isFullAccess = true` para super admins, fazendo `canViewModule` retornar `true` para todos os módulos de organização. O `Layout.tsx` só usa `SuperAdminLayout` em rotas `/admin/*` — nas demais, renderiza o sidebar normal com todos os módulos.
 
----
+2. **Botão "Ver como Tenant" ainda existe**: Em `SuperAdminLayout.tsx`, o botão redireciona para `/dashboard`, permitindo ao super admin acessar rotas de organização.
 
-## ETAPA 1 — Frontend: Sidebar, Rotas e Permissões (esta implementação)
+3. **Super Admin não é redirecionado**: O `ProtectedRoute` só redireciona super admin de `/` para `/admin`, mas permite acesso a qualquer outra rota de organização (`/dashboard`, `/membros`, etc.).
 
-### 1.1 — Esconder "Gestão de Tenants" do sidebar (somente Super Admin)
+## Correções
 
-**Arquivo:** `src/components/layout/DesktopSidebar.tsx`
-- Importar `useSuperAdmin`
-- Linha 323: trocar `canViewModule('gestao-acessos')` por `isSuperAdmin`
-- Remover o item de menu "Gestão de Tenants" para qualquer usuário que não seja Super Admin
-
-**Arquivo:** `src/components/layout/Sidebar.tsx`
-- Mesma verificação: garantir que nenhum link para `/tenants` ou `/admin` apareça para não-superadmins
-
-### 1.2 — Remover botão "Ver como Organização"
-
-**Arquivo:** `src/components/tenants/TenantTable.tsx`
-- Remover prop `onViewAsTenant` da interface e do componente
-- Remover o `DropdownMenuItem` "Ver como Organização"
-
-**Arquivo:** `src/pages/admin/AdminTenants.tsx`
-- Remover a função `handleViewAsTenant` e a prop passada ao TenantTable
-
-### 1.3 — Bloquear rotas `/admin/*` com página 403
+### 1. ProtectedRoute — Bloquear super admin em rotas de organização
 
 **Arquivo:** `src/components/ProtectedRoute.tsx`
-- Adicionar verificação: se `location.pathname.startsWith('/admin')` e `!isSuperAdmin`, renderizar componente 403 (mensagem "Acesso não autorizado" + botão voltar)
-- Expandir lista `isTenantRoute` para incluir todas as rotas de organização: `/conciliacoes`, `/fornecedores`, `/gestao-acessos`, `/contas-pagar`, `/relatorios`, `/notificacoes`, `/ministerios`, `/departamentos`, `/congregacoes`, `/membros`, `/conecta`, `/documentacao`, `/configuracoes`, `/financeiro`, `/dashboard`
 
-### 1.4 — Super Admin bypass total nas permissões
+Após o check de `isAdminRoute` (linha 55-70), adicionar:
 
-**Arquivo:** `src/hooks/usePermissions.ts`
-- Importar `useSuperAdmin`
-- Se `isSuperAdmin === true`, todas as funções (`canViewModule`, `canInsertModule`, `canEditModule`, `canDeleteModule`, etc.) retornam `true` automaticamente
+```
+// Super Admin só pode acessar rotas /admin/*
+if (isSuperAdmin && !isAdminRoute) {
+  return <Navigate to="/admin" replace />;
+}
+```
 
-### 1.5 — Perfil Admin fixo com acesso total
+Isso garante que qualquer tentativa de acessar `/dashboard`, `/membros`, etc. redireciona automaticamente para `/admin`.
 
-**Arquivo:** `src/hooks/usePermissions.ts`
-- Adicionar lógica: se o `userAccessProfile === 'Admin'`, todas as permissões retornam `true` dentro da organização (sem consultar `access_profiles.permissions`)
+### 2. SuperAdminLayout — Remover "Ver como Tenant"
 
-### 1.6 — Admin da org pode deletar registros
+**Arquivo:** `src/components/layout/SuperAdminLayout.tsx`
 
-**Arquivos de migração SQL:**
-- Alterar RLS policies de `members` e `financial_records` que atualmente restringem DELETE a `superadmin`, para também permitir `admin` com `tenant_id` correspondente
-- Policies afetadas:
-  - `members`: "Apenas superadmins podem deletar membros" → adicionar `OR (get_current_user_role() = 'admin' AND tenant_id = get_user_tenant_id(auth.uid()))`
-  - `financial_records`: "Apenas superadmins podem deletar registros financeiros" → mesma lógica
+- Remover o `Button` "Ver como Tenant" (linha 80-87)
+- Remover a função `handleSwitchToTenantView` e o `import useNavigate`
+- Remover o `DropdownMenuItem` "Ver como Tenant" do dropdown mobile (linha 107-112)
 
-### 1.7 — Admin da org pode controlar módulos
+### 3. Layout — Simplificar lógica de super admin
 
-A tela de Configurações já tem a aba de módulos (`TenantModulesTab`). Verificar que:
-- O admin da org consegue salvar `tenant_settings` com `category = 'modules'` para seu próprio `tenant_id`
-- O `useTenantModules` lê corretamente essa config
+**Arquivo:** `src/components/layout/Layout.tsx`
 
-### 1.8 — Gestão de Acessos: perfis com toggle simples
+Com o ProtectedRoute bloqueando rotas de org para super admin, a condição na linha 50 (`if (isSuperAdmin && isAdminRoute)`) se torna redundante, mas pode ser mantida como fallback seguro. Remover o comentário sobre "Ver como Tenant".
 
-**Arquivo:** `src/components/access-management/ProfileConfiguration.tsx`
-- Na criação/edição de perfil, exibir lista de módulos com toggle simples (ativo/inativo) ao invés de granular por ação
-- Quando ativo, setar todas as ações do módulo como `true` (view, insert, edit, delete, approve, export)
-- Quando inativo, setar todas como `false`
-- Perfil "Admin" não pode ser editado (fixo)
-
-### 1.9 — Aprovação de usuário: perfil + congregação
-
-Verificar que a tela de aprovação (aba "Contas a Aprovar") já permite selecionar perfil e congregação. Se não, adicionar dropdown de congregação no dialog de aprovação.
-
----
-
-## ETAPA 2 — Backend: Migrar RLS de `role` para `access_profiles` (implementação futura)
-
-Esta etapa será feita separadamente para reduzir risco:
-
-- Criar nova função `get_current_user_access_profile_name()` que retorna o nome do access_profile do usuário
-- Atualizar todas as RLS policies que usam `get_current_user_role()` para usar a nova função
-- Remover dependência do campo `profiles.role` nas policies
-- Manter campo `role` na tabela para compatibilidade mas sem uso em RLS
-- Atualizar `get_current_user_role()` para derivar 100% do `access_profiles.name`
-
----
-
-## Arquivos a Modificar (Etapa 1)
+### Arquivos Modificados
 
 | Arquivo | Alteração |
 |---|---|
-| `src/components/layout/DesktopSidebar.tsx` | Menu "Gestão de Tenants" só para Super Admin |
-| `src/components/layout/Sidebar.tsx` | Idem (mobile) |
-| `src/components/ProtectedRoute.tsx` | Página 403 para `/admin/*` + expandir rotas tenant |
-| `src/hooks/usePermissions.ts` | Bypass para Super Admin + Admin fixo com acesso total |
-| `src/components/tenants/TenantTable.tsx` | Remover "Ver como Organização" |
-| `src/pages/admin/AdminTenants.tsx` | Remover handler de "Ver como Organização" |
-| `src/components/access-management/ProfileConfiguration.tsx` | Toggle simples por módulo |
-| Migração SQL | RLS de DELETE em members e financial_records |
+| `src/components/ProtectedRoute.tsx` | Bloquear super admin em rotas não-admin |
+| `src/components/layout/SuperAdminLayout.tsx` | Remover botão/menu "Ver como Tenant" |
+
+### Resultado
+
+- Super Admin loga → vai para `/admin`
+- Super Admin tenta acessar `/dashboard` → redirecionado para `/admin`
+- Sidebar do super admin mostra apenas: Dashboard, Organizações, Billing, Métricas, Auditoria, Configurações
+- Botão "Ver como Tenant" não existe mais
 
