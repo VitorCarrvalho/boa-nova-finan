@@ -51,7 +51,12 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 
-const MobileSidebar = () => {
+interface MobileSidebarProps {
+  displayLogo?: string;
+  displayName?: string;
+}
+
+const MobileSidebar = ({ displayLogo, displayName }: MobileSidebarProps = {}) => {
   const { signOut, user } = useAuth();
   const { data: congregationAccess } = useUserCongregationAccess();
   const { canViewModule, canViewNewAccount, canViewPendingApproval, canViewAuthorizeAccounts, canViewApprovedAccounts, canViewPaidAccounts } = usePermissions();
