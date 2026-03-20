@@ -75,6 +75,12 @@ const Settings = () => {
               <Shield className="h-4 w-4" />
               Segurança
             </TabsTrigger>
+            {showAccessManagement && (
+              <TabsTrigger value="gestao-acessos" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Gestão de Acessos
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Branding Tab */}
