@@ -1,54 +1,62 @@
 
 
-# Implementar Home pública por organização
+# Correção: Dados da Config Home não refletem na Home pública
 
-## Situação atual
+## Causa raiz
 
-- `Home.tsx` existe com toda a lógica de widgets (pastores, versículo, eventos, etc.) mas **não está registrada em nenhuma rota** no `App.tsx`
-- O `TenantContext` já resolve tenant por subdomínio (`mica.igrejamoove.com.br`) ou query param (`?tenant=slug`)
-- A RLS de `tenant_settings` já permite leitura anônima de branding e home config para tenants ativos
-- Os widgets (versículo, eventos, pedido de oração) já funcionam sem autenticação
-- A rota `/` redireciona para `/auth`
+Três problemas identificados:
 
-## Problema
+### Bug 1 — TenantContext ignora campos extras do home config
+Em `loadTenantSettings` (TenantContext.tsx, linhas 212-219), ao processar a categoria `home`, apenas `widgets`, `widgetOrder` e `customBanners` são extraídos. Os campos `instagram`, `address` e `pastoresImageUrl` — que existem no banco — são descartados e nunca chegam ao estado do contexto.
 
-Não há rota pública que renderize a Home com os widgets da organização. Precisamos de uma URL pública por organização.
+**Dados no banco (confirmados):**
+- `address`: `{street: "Rua da Lagoa, 17", neighborhood: "Vila Lourdes", city: "Carapicuíba", cep: "06397280"}`
+- `pastoresImageUrl`: URL válida do storage
+- `instagram`: `null` (não foi salvo — ver Bug 3)
 
-## Solução
+### Bug 2 — MapaWidget com endereço hardcoded
+O componente `MapaWidget.tsx` calcula a variável `address` corretamente do config, mas nas linhas 56-57 exibe texto hardcoded ("Rua João Vicente, 741", "Osvaldo Cruz - Rio de Janeiro") em vez de usar a variável.
 
-### 1. Adicionar rota `/home` pública no `App.tsx`
+### Bug 3 — Instagram não salvo no banco
+O campo `instagram` está `null` no banco. Provavelmente o formulário de config home da organização (TenantHomeConfigDialog) não está salvando este campo no merge de settings.
 
-- Importar `Home` de `@/pages/Home`
-- Adicionar `<Route path="/home" element={<Home />} />` como rota pública (sem `ProtectedRoute`)
-- Alterar a rota `/` para redirecionar para `/home` ao invés de `/auth`
+## Correções
 
-Assim, ao acessar `mica.igrejamoove.com.br/home` (ou `?tenant=mica`), o `TenantContext` resolve o tenant pelo subdomínio e carrega branding + home config automaticamente.
+### 1. `src/contexts/TenantContext.tsx`
+No `loadTenantSettings`, ao processar `home`, incluir os campos faltantes:
+```ts
+setHomeConfig({
+  ...defaultHomeConfig,
+  widgets: ...,
+  widgetOrder: ...,
+  customBanners: ...,
+  instagram: homeSettings.instagram,    // NOVO
+  address: homeSettings.address,        // NOVO
+  pastoresImageUrl: homeSettings.pastoresImageUrl, // NOVO
+});
+```
 
-### 2. Ajustar `Home.tsx` para não depender de `useAuth`
+### 2. `src/components/home/widgets/MapaWidget.tsx`
+Substituir as linhas hardcoded (56-57) pelo uso das variáveis `endereco` e `address`:
+```tsx
+<p className="text-slate-800 font-medium">{address.street}</p>
+<p className="text-slate-600 text-sm">
+  {address.neighborhood}{address.city ? ` - ${address.city}` : ''}
+</p>
+```
 
-- Remover `useAuth()` do Home (não deve exigir autenticação)
-- Manter `FloatingLoginButton` para redirecionar ao login
+### 3. `src/components/tenants/TenantHomeConfigDialog.tsx`
+Verificar que o `onSubmit` envia `instagram`, `address` e `pastoresImageUrl` no payload (e que o hook `updateTenantHomeConfig` faz merge correto preservando esses campos). O TenantHomeConfigDialog pode estar omitindo esses campos no objeto enviado.
 
-### 3. Ajustar rota `/` no `App.tsx`
-
-- Mudar de `<Navigate to="/auth" />` para `<Navigate to="/home" />`
-- Isso garante que `mica.igrejamoove.com.br` → `/home` → carrega home pública da organização
-
-### 4. Garantir que widgets funcionem para `anon`
-
-- **Versículo**: usa API externa, já funciona sem auth
-- **Pastores**: usa `homeConfig.pastoresImageUrl` do TenantContext, já funciona
-- **Eventos**: usa query em `church_events` — já tem policy `anon` SELECT para eventos ativos
-- **Pedido de oração**: INSERT já tem policy para `anon`
-- **Mapa/Instagram/Conecta**: dados estáticos do config, funcionam sem auth
-- **Calendário**: derivado dos eventos, funciona com a policy anon existente
-
-Nenhuma migração SQL necessária — as policies já suportam acesso anon.
+### 4. `src/hooks/useTenantAdmin.ts` — Verificar merge de settings
+Garantir que `updateTenantHomeConfig` faz spread/merge do objeto existente com os novos dados, sem apagar campos extras.
 
 ## Arquivos
 
 | Arquivo | Alteração |
 |---|---|
-| `src/App.tsx` | Importar Home, adicionar rota `/home` pública, mudar `/` → `/home` |
-| `src/pages/Home.tsx` | Remover dependência de `useAuth` |
+| `src/contexts/TenantContext.tsx` | Incluir `instagram`, `address`, `pastoresImageUrl` no `setHomeConfig` |
+| `src/components/home/widgets/MapaWidget.tsx` | Usar variáveis dinâmicas em vez de texto hardcoded |
+| `src/components/tenants/TenantHomeConfigDialog.tsx` | Garantir que instagram/address são incluídos no payload |
+| `src/hooks/useTenantAdmin.ts` | Verificar merge correto dos settings |
 
