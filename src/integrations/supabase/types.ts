@@ -1977,6 +1977,7 @@ export type Database = {
       }
       get_authenticated_user_permissions: { Args: never; Returns: Json }
       get_current_user_permissions: { Args: never; Returns: Json }
+      get_current_user_profile_id: { Args: never; Returns: string }
       get_current_user_profile_name: { Args: never; Returns: string }
       get_current_user_role: {
         Args: never
