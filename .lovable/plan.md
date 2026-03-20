@@ -1,35 +1,42 @@
 
 
-# Isolar pedidos de oração por organização (tenant_id)
+# Criar tela de visualização de Pedidos de Oração (área logada)
 
 ## Problema
 
-A tabela `pedidos_oracao` não possui coluna `tenant_id`. Todos os pedidos de oração de todas as organizações vão para o mesmo "pool", sem isolamento.
+Os pedidos de oração são enviados pela Home pública e salvos no banco com `tenant_id`, mas não existe nenhuma tela na área logada para os admins visualizarem esses pedidos.
 
-## Correções
+## Solução
 
-### 1. Migração SQL: Adicionar `tenant_id` à tabela `pedidos_oracao`
+Criar uma página de listagem de pedidos de oração acessível para admins da organização no menu lateral.
 
-- Adicionar coluna `tenant_id uuid` (nullable, para não quebrar registros existentes)
-- Atualizar policies de INSERT (anon e authenticated) para aceitar `tenant_id`
-- Atualizar policy de SELECT para filtrar por `tenant_id` do usuário logado
-- Adicionar policy SELECT para `anon` (não aplicável — admins veem, anon só insere)
+### 1. `src/pages/PedidosOracao.tsx` — Nova página
 
-### 2. `src/hooks/usePedidosOracao.ts`
+- Layout padrão com `<Layout>`
+- Query para listar pedidos de oração filtrados por `tenant_id` do usuário logado (a RLS já filtra)
+- Tabela/cards com colunas: Nome (ou "Anônimo"), Texto do pedido, Data de envio
+- Ordenação por data decrescente (mais recentes primeiro)
+- Busca por nome ou texto
 
-- Receber `tenantId` como parâmetro (via hook ou argumento do mutation)
-- Incluir `tenant_id` no objeto inserido no Supabase
+### 2. `src/hooks/usePedidosOracao.ts` — Adicionar query de listagem
 
-### 3. `src/components/home/widgets/PedidoOracaoWidget.tsx`
+- Adicionar `useQuery` para buscar pedidos com `supabase.from('pedidos_oracao').select('*').order('created_at', { ascending: false })`
+- A RLS existente (`Admins can view tenant prayer requests`) já garante isolamento por tenant
 
-- Obter `tenant.id` do `TenantContext` via `useTenant()`
-- Passar `tenantId` ao chamar `createPedido.mutateAsync()`
+### 3. `src/App.tsx` — Adicionar rota
+
+- Rota protegida `/pedidos-oracao` apontando para a nova página
+
+### 4. `src/components/layout/Sidebar.tsx` — Adicionar item no menu
+
+- Novo item "Pedidos de Oração" com ícone `Heart` no menu lateral
 
 ## Arquivos
 
 | Arquivo | Alteração |
 |---|---|
-| Migração SQL | Adicionar coluna `tenant_id`, atualizar RLS policies |
-| `src/hooks/usePedidosOracao.ts` | Incluir `tenant_id` no insert |
-| `src/components/home/widgets/PedidoOracaoWidget.tsx` | Passar `tenant.id` do contexto ao hook |
+| `src/pages/PedidosOracao.tsx` | Nova página com listagem |
+| `src/hooks/usePedidosOracao.ts` | Adicionar query de listagem |
+| `src/App.tsx` | Adicionar rota protegida |
+| `src/components/layout/Sidebar.tsx` (ou `DesktopSidebar`/`MobileSidebar`) | Adicionar item no menu |
 
