@@ -6,6 +6,7 @@ import { toast } from '@/hooks/use-toast';
 interface PedidoOracao {
   nome?: string;
   texto: string;
+  tenantId?: string | null;
 }
 
 export const usePedidosOracao = () => {
