@@ -18,23 +18,26 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    // Auth: verify super admin via user token
-    const authHeader = req.headers.get('Authorization') || ''
-    const token = authHeader.replace('Bearer ', '')
+    // Auth: accept admin_secret in body matching SUPABASE_SERVICE_ROLE_KEY, or super admin user token
+    const body = await req.json().catch(() => ({}))
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     
-    if (!token) throw new Error('Authorization header required')
+    if (body.admin_secret !== serviceRoleKey) {
+      const authHeader = req.headers.get('Authorization') || ''
+      const token = authHeader.replace('Bearer ', '')
+      if (!token) throw new Error('Authorization required')
 
-    // The gateway converts service role key to a JWT, so we verify the user
-    const { data: { user: caller }, error: authError } = await supabaseAdmin.auth.getUser(token)
-    if (authError || !caller) throw new Error('Invalid authorization token')
+      const { data: { user: caller }, error: authError } = await supabaseAdmin.auth.getUser(token)
+      if (authError || !caller) throw new Error('Invalid authorization token')
 
-    const { data: superAdmin } = await supabaseAdmin
-      .from('super_admins')
-      .select('id')
-      .eq('user_id', caller.id)
-      .single()
+      const { data: superAdmin } = await supabaseAdmin
+        .from('super_admins')
+        .select('id')
+        .eq('user_id', caller.id)
+        .single()
 
-    if (!superAdmin) throw new Error('Only super admins can run cleanup')
+      if (!superAdmin) throw new Error('Only super admins can run cleanup')
+    }
 
     // Find orphan profiles (no tenant_id, not super admin)
     const { data: orphanProfiles, error: profilesError } = await supabaseAdmin
