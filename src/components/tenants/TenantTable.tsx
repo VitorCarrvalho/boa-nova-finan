@@ -39,7 +39,6 @@ interface TenantTableProps {
   onManageUsers: (tenant: TenantWithSettings) => void;
   onDelete: (tenant: TenantWithSettings) => void;
   onViewDns?: (tenant: TenantWithSettings) => void;
-  onViewAsTenant?: (tenant: TenantWithSettings) => void;
   onCheckDns?: (tenantId: string, subdomain: string) => Promise<string | null>;
 }
 
