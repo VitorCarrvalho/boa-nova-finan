@@ -1,27 +1,32 @@
 
 
-# Correção: Erro ao remover organização (FK constraint)
+# Correção: Hyperlink do subdomínio
 
 ## Problema
 
-Ao deletar uma organização, o sistema tenta deletar os `access_profiles` do tenant, mas a tabela `profiles` tem uma foreign key (`profiles_profile_id_fkey`) apontando para `access_profiles.id` com ação `NO ACTION` — ou seja, bloqueia a exclusão.
+O texto do subdomínio está dividido em dois `<span>` separados (`mica` + `.igrejamoove.com.br`), e o link `<a>` é apenas o ícone de seta. O redirecionamento para `igrejamoove.com.br` ao acessar `mica.igrejamoove.com.br` é um comportamento de DNS/servidor (o domínio provavelmente não está configurado), mas podemos melhorar a UX transformando todo o texto em um único hyperlink clicável.
 
-A FK `user_profile_assignments_profile_id_fkey` já está configurada como `CASCADE`, mas `profiles_profile_id_fkey` não.
+## Alteração
 
-## Solução
+**Arquivo:** `src/components/tenants/TenantTable.tsx` (linhas 193-205)
 
-Migração SQL para alterar a FK `profiles_profile_id_fkey` de `NO ACTION` para `SET NULL`:
+Substituir os dois `<span>` separados + ícone por um único `<a>` que engloba todo o texto:
 
-```sql
-ALTER TABLE public.profiles 
-  DROP CONSTRAINT profiles_profile_id_fkey;
-
-ALTER TABLE public.profiles 
-  ADD CONSTRAINT profiles_profile_id_fkey 
-  FOREIGN KEY (profile_id) 
-  REFERENCES public.access_profiles(id) 
-  ON DELETE SET NULL;
+```tsx
+<TableCell>
+  <a
+    href={`https://${tenant.subdomain}.igrejamoove.com.br`}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="flex items-center gap-1 text-sm text-primary hover:underline"
+  >
+    {tenant.subdomain}.igrejamoove.com.br
+    <ExternalLink className="h-3 w-3" />
+  </a>
+</TableCell>
 ```
 
-Isso faz com que, ao deletar um `access_profile` (via cascade da organização), o `profile_id` dos profiles associados seja setado como `NULL` ao invés de bloquear a operação. Nenhuma alteração de código frontend é necessária.
+Isso garante que o link completo seja clicável e visualmente claro como hyperlink.
+
+> **Nota:** Se ao clicar o browser redireciona para `igrejamoove.com.br`, isso indica que o DNS do subdomínio `mica.igrejamoove.com.br` não está configurado corretamente no servidor/registrador de domínio. O código estará enviando a URL correta.
 
