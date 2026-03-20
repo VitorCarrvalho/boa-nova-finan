@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Table,
@@ -14,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, Edit, Search, Filter } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useMembers } from '@/hooks/useMemberData';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -247,7 +247,17 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
               <TableBody>
                 {filteredMembers.map((member) => (
                   <TableRow key={member.id}>
-                    <TableCell className="font-medium">{member.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-8 w-8">
+                          {member.photo_url ? (
+                            <AvatarImage src={member.photo_url} alt={member.name} />
+                          ) : null}
+                          <AvatarFallback className="text-xs">{member.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        {member.name}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="space-y-1">
                         {member.email && (
