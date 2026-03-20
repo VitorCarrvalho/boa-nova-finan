@@ -59,9 +59,7 @@ export function useTenantUsers(tenantId: string | null) {
       }
 
       const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, name, email')
-        .in('id', userIds);
+        .rpc('get_profiles_by_ids', { _user_ids: userIds });
 
       if (profilesError) throw profilesError;
 
