@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { usePedidosOracao } from '@/hooks/usePedidosOracao';
+import { useTenant } from '@/contexts/TenantContext';
 
 const pedidoSchema = z.object({
   nome: z.string().optional(),
