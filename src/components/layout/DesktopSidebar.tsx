@@ -61,7 +61,12 @@ interface SubmenuItemType {
   module: string;
 }
 
-const DesktopSidebar = () => {
+interface DesktopSidebarProps {
+  displayLogo: string;
+  displayName: string;
+}
+
+const DesktopSidebar = ({ displayLogo, displayName }: DesktopSidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut } = useAuth();
@@ -244,8 +249,17 @@ const DesktopSidebar = () => {
       collapsible="icon"
       className="border-r bg-card"
     >
+      <div className="flex items-center justify-center border-b py-4 px-2">
+        <img 
+          src={displayLogo} 
+          alt={displayName} 
+          className={`object-contain transition-all duration-200 ${
+            state === "collapsed" ? "w-8 h-8" : "w-24 h-24"
+          }`}
+        />
+      </div>
       <SidebarContent className="py-4">
-        <ScrollArea className="h-[calc(100vh-2rem)]">
+        <ScrollArea className="h-[calc(100vh-8rem)]">
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu className="space-y-1">
