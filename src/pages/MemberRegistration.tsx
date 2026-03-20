@@ -51,6 +51,20 @@ const MemberRegistration = () => {
       setTenantId(tenant.id);
       setTenantName(tenant.name);
 
+      // Fetch branding for logo
+      const { data: brandingSettings } = await supabase
+        .from('tenant_settings')
+        .select('settings')
+        .eq('tenant_id', tenant.id)
+        .eq('category', 'branding')
+        .maybeSingle();
+
+      if (brandingSettings?.settings) {
+        const settings = brandingSettings.settings as any;
+        if (settings.logoUrl) setTenantLogo(settings.logoUrl);
+        if (settings.churchName) setTenantName(settings.churchName);
+      }
+
       const { data: congs } = await supabase
         .from('congregations')
         .select('id, name')
