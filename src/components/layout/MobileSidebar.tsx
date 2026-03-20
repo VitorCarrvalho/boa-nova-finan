@@ -478,16 +478,6 @@ const MobileSidebar = ({ displayLogo, displayName }: MobileSidebarProps = {}) =>
           <SidebarGroupLabel>Sistema</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {canAccessAccessManagement && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={location.pathname.startsWith('/gestao-acessos')}>
-                    <Link to="/gestao-acessos">
-                      <Shield className="h-4 w-4" />
-                      <span>Gestão de Acessos</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
 
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location.pathname.startsWith('/documentacao')}>

@@ -303,17 +303,6 @@ const DesktopSidebar = ({ displayLogo, displayName }: DesktopSidebarProps) => {
               )}
 
               {canViewModule('gestao-acessos') && (
-                <SidebarMenuItem key="gestao-acessos">
-                  <MenuItemComponent item={{
-                    title: 'Gestão de Acessos',
-                    icon: Shield,
-                    route: '/gestao-acessos',
-                    module: 'gestao-acessos'
-                  }} />
-                </SidebarMenuItem>
-              )}
-
-              {canViewModule('gestao-acessos') && (
                 <SidebarMenuItem key="conecta-gestao">
                   <MenuItemComponent item={{
                     title: 'Conecta Gestão',

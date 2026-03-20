@@ -2,14 +2,25 @@ import React from 'react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Database, Palette, Home, LayoutGrid } from 'lucide-react';
+import { Shield, Database, Palette, Home, LayoutGrid, Users } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
+import { usePermissions } from '@/hooks/usePermissions';
+import { useIsMobile } from '@/hooks/use-mobile';
 import TenantBrandingTab from '@/components/settings/TenantBrandingTab';
 import TenantHomeTab from '@/components/settings/TenantHomeTab';
 import TenantModulesTab from '@/components/settings/TenantModulesTab';
+import PendingApprovals from '@/components/access-management/PendingApprovals';
+import ProfileConfiguration from '@/components/access-management/ProfileConfiguration';
+import UserManagement from '@/components/settings/UserManagement';
+import MobilePendingApprovals from '@/components/access-management/MobilePendingApprovals';
+import MobileProfileConfiguration from '@/components/access-management/MobileProfileConfiguration';
+import MobileUserManagement from '@/components/access-management/MobileUserManagement';
 
 const Settings = () => {
   const { tenant, isMultiTenant, loading: tenantLoading } = useTenant();
+  const { canViewModule } = usePermissions();
+  const isMobile = useIsMobile();
+  const showAccessManagement = canViewModule('gestao-acessos');
   
   // Show loading while tenant data is being resolved
   if (tenantLoading) {
@@ -64,6 +75,12 @@ const Settings = () => {
               <Shield className="h-4 w-4" />
               Segurança
             </TabsTrigger>
+            {showAccessManagement && (
+              <TabsTrigger value="gestao-acessos" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Gestão de Acessos
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Branding Tab */}
@@ -126,6 +143,29 @@ const Settings = () => {
               </CardContent>
             </Card>
           </TabsContent>
+          {/* Gestão de Acessos Tab */}
+          {showAccessManagement && (
+            <TabsContent value="gestao-acessos">
+              <div className="space-y-6">
+                <Tabs defaultValue="pending" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="pending">Contas a Aprovar</TabsTrigger>
+                    <TabsTrigger value="profiles">Configuração de Perfis</TabsTrigger>
+                    <TabsTrigger value="users">Usuários</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="pending">
+                    {isMobile ? <MobilePendingApprovals /> : <PendingApprovals />}
+                  </TabsContent>
+                  <TabsContent value="profiles">
+                    {isMobile ? <MobileProfileConfiguration /> : <ProfileConfiguration />}
+                  </TabsContent>
+                  <TabsContent value="users">
+                    {isMobile ? <MobileUserManagement /> : <UserManagement />}
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </Layout>
