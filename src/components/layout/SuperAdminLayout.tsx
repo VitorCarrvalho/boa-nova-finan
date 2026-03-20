@@ -94,12 +94,6 @@ const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({ children }) => {
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
-                      onClick={handleSwitchToTenantView}
-                      className="cursor-pointer sm:hidden"
-                    >
-                      Ver como Tenant
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
                       onClick={handleLogout}
                       className="text-destructive focus:text-destructive cursor-pointer"
                     >
