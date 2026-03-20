@@ -1,48 +1,42 @@
 
 
-# Correções: Menu "Gestão de Tenants" visível para admin + Sidebar expandida por padrão
+# Remover tema dark + Substituir logo oficial
 
-## Problema 1: Menu "Gestão de Tenants" aparece para admin da organização
+## Alterações
 
-No `DesktopSidebar.tsx` (linha ~310), o item "Gestão de Tenants" usa a condição `isSuperAdmin`, que vem do hook `usePermissions`. Porém, o admin da organização pode estar recebendo `isSuperAdmin = true` incorretamente, ou a condição não está funcionando. Preciso verificar se o `useSuperAdmin` está retornando corretamente `false` para admins de organização.
+### 1. Substituir logo
+Copiar `logo-azul.png`, `logo-branco.png` e `logo-preto.png` para `src/assets/`. Substituir todas as referências a `logoIM` pelo novo `logo-azul.png` nos 3 arquivos:
+- `src/components/layout/Layout.tsx`
+- `src/components/auth/AuthPage.tsx`
+- `src/pages/Onboarding.tsx`
 
-Olhando o código (linha 309): `{isSuperAdmin && (` -- isso deveria funcionar. Vou verificar se o `usePermissions` repassa corretamente o valor do `useSuperAdmin`.
+### 2. Remover ThemeToggle do header
+- `src/components/layout/HeaderProfile.tsx`: Remover import e uso de `<ThemeToggle />`
 
-No `usePermissions.ts` linha 10: `const { isSuperAdmin } = useSuperAdmin();` -- isso está correto. Se o admin da organização não está na tabela `super_admins`, deveria retornar `false`. É possível que o usuário admin criado para a organização tenha sido inserido na tabela `super_admins` por engano durante testes. Vou verificar via query.
+### 3. Forçar tema claro
+- `src/App.tsx`: Alterar `<ThemeProvider>` para `defaultTheme="light"` e adicionar `forcedTheme="light"` (isso desabilita a troca de tema)
 
-Independente disso, a correção no código é adicionar uma verificação dupla: além de `isSuperAdmin`, verificar que a rota `/admin` é exclusiva. Mas como o sidebar já usa `isSuperAdmin` corretamente, o problema provavelmente é nos dados.
+### 4. Remover `.dark` do CSS
+- `src/index.css`: Remover todo o bloco `.dark { ... }` (linhas ~55-85) pois nunca será usado
 
-## Problema 2: Sidebar deve abrir expandida com textos
+### 5. Sonner (toaster)
+- `src/components/ui/sonner.tsx`: Remover `useTheme` e fixar `theme="light"`
 
-O `Layout.tsx` já tem `defaultOpen={true}` na linha 86, então a sidebar desktop já abre expandida. A funcionalidade de recolher já existe via `SidebarTrigger` no header. Isso já está implementado corretamente.
+### 6. Manter o arquivo `theme-toggle.tsx`
+Pode ser deletado, mas como não causa impacto, apenas remover o uso dele. O arquivo fica sem referências.
 
-## Plano de Ação
+## Arquivos Modificados
 
-### 1. Verificar dados — query `super_admins`
-Verificar se o admin da organização está indevidamente na tabela `super_admins`. Se sim, removê-lo.
-
-### 2. Garantia no código — `DesktopSidebar.tsx`
-Como camada extra de segurança, verificar que o item "Gestão de Tenants" não aparece para usuários com `tenant_id` (admins de organização são sempre vinculados a um tenant):
-
-**Arquivo:** `src/components/layout/DesktopSidebar.tsx` (linha ~309)
-
-Alterar de:
-```tsx
-{isSuperAdmin && (
-```
-Para:
-```tsx
-{isSuperAdmin && !user?.tenant_id && (
-```
-
-Porém o `user` do AuthContext é o auth user, não o profile. Alternativa mais segura: manter apenas `isSuperAdmin` mas garantir que o hook `useSuperAdmin` consulta corretamente a tabela dedicada (já faz isso).
-
-**Ação real**: Verificar a tabela `super_admins` e, se necessário, limpar dados. No código, a condição `isSuperAdmin` já é correta.
-
-### 3. Sidebar — confirmar comportamento
-O layout já está configurado com `defaultOpen={true}` e `SidebarTrigger` visível. Nenhuma alteração necessária, apenas confirmar que funciona.
-
----
-
-**Resumo**: A investigação principal é na tabela `super_admins` para verificar se há registros indevidos. A correção no código será mínima — apenas se os dados estiverem corretos e mesmo assim o menu aparecer.
+| Arquivo | Alteração |
+|---|---|
+| `src/assets/logo-azul.png` | Novo logo (copiar upload) |
+| `src/assets/logo-branco.png` | Logo contraste branco (copiar upload) |
+| `src/assets/logo-preto.png` | Logo contraste preto (copiar upload) |
+| `src/components/layout/Layout.tsx` | `logoIM` -> `logoAzul` |
+| `src/components/auth/AuthPage.tsx` | `logoIM` -> `logoAzul` |
+| `src/pages/Onboarding.tsx` | `logoIM` -> `logoAzul` |
+| `src/components/layout/HeaderProfile.tsx` | Remover `ThemeToggle` |
+| `src/App.tsx` | Forçar tema claro |
+| `src/index.css` | Remover bloco `.dark` |
+| `src/components/ui/sonner.tsx` | Fixar `theme="light"` |
 
