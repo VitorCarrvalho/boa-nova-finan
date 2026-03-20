@@ -1,26 +1,30 @@
 
 
-# Mover logo do header para o topo do sidebar
+# Mover "Gestão de Acessos" para dentro de "Configurações"
+
+## Abordagem
+
+Remover o item "Gestão de Acessos" como menu independente no sidebar e transformá-lo em uma aba dentro da página de Configurações, ao lado das abas existentes (Branding, Home, Módulos, Geral, Segurança).
 
 ## Alterações
 
-### 1. `src/components/layout/DesktopSidebar.tsx`
-- Receber `displayLogo` e `displayName` como props
-- Adicionar no topo do Sidebar (antes do `SidebarContent`) um `SidebarHeader` com o logo centralizado
-- Quando collapsed: mostrar logo menor centralizado
-- Quando expanded: mostrar logo maior centralizado
+### 1. `src/pages/Settings.tsx` — Adicionar aba "Gestão de Acessos"
+- Importar os componentes de AccessManagement (PendingApprovals, ProfileConfiguration, UserManagement e versões mobile)
+- Adicionar nova `TabsTrigger` com ícone `Shield` e label "Gestão de Acessos"
+- Adicionar `TabsContent` que renderiza o conteúdo da página AccessManagement (as 3 sub-abas: Contas a Aprovar, Configuração de Perfis, Usuários)
+- Condicionar a visibilidade da aba com `canViewModule('gestao-acessos')` via `usePermissions`
 
-### 2. `src/components/layout/Layout.tsx` (desktop, linhas 85-112)
-- Passar `displayLogo` e `displayName` como props para `DesktopSidebar`
-- Remover `<img>` do logo e `<h1>` do nome da organização do header desktop
-- Manter apenas `SidebarTrigger` e `HeaderProfile` no header
+### 2. `src/components/layout/DesktopSidebar.tsx` (linhas 305-314) — Remover item
+- Remover o bloco `{canViewModule('gestao-acessos') && (...)}` que renderiza o menu "Gestão de Acessos"
 
-### 3. `src/components/layout/MobileSidebar.tsx`
-- Aplicar a mesma lógica: adicionar logo no topo do sidebar mobile
-- Remover logo do header mobile no `Layout.tsx` (linhas 54-82)
+### 3. `src/components/layout/MobileSidebar.tsx` (linhas 481-490) — Remover item
+- Remover o bloco `{canAccessAccessManagement && (...)}` que renderiza "Gestão de Acessos"
+
+### 4. `src/App.tsx` — Manter rota `/gestao-acessos`
+- Manter a rota existente para não quebrar links diretos, mas opcionalmente redirecionar para `/configuracoes?tab=gestao-acessos`
 
 ## Resultado
-- Logo aparece centralizado no topo do sidebar (desktop e mobile)
-- Header fica mais limpo, com apenas o trigger e o perfil do usuário
-- Quando sidebar recolhida, logo fica em versão compacta
+- "Gestão de Acessos" aparece como aba dentro de Configurações, junto a Branding, Home, Módulos, Geral e Segurança
+- Menu lateral fica mais limpo, sem item independente de Gestão de Acessos
+- Funcionalidade preservada integralmente
 
