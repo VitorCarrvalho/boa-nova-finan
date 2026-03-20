@@ -119,6 +119,21 @@ const MemberRegistration = () => {
 
     setSubmitting(true);
     try {
+      let photoUrl: string | null = null;
+
+      if (photoFile && tenantId) {
+        const fileExt = photoFile.name.split('.').pop();
+        const fileName = `${tenantId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('member-photos')
+          .upload(fileName, photoFile, { cacheControl: '3600', upsert: false });
+        if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage
+          .from('member-photos')
+          .getPublicUrl(uploadData.path);
+        photoUrl = publicUrl;
+      }
+
       const { error } = await supabase.from('members').insert({
         name: formData.name.trim(),
         cpf: formData.cpf || null,
@@ -132,6 +147,7 @@ const MemberRegistration = () => {
         ministries: formData.ministries.length > 0 ? formData.ministries : null,
         date_of_baptism: formData.date_of_baptism || null,
         date_of_joining: formData.date_of_joining || null,
+        photo_url: photoUrl,
         tenant_id: tenantId,
         is_active: false,
         approval_status: 'pending',
