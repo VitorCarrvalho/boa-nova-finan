@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useConectaCategories, useConectaCongregations } from '@/hooks/useConectaProviders';
+import { useTenant } from '@/contexts/TenantContext';
 import { Upload, Check } from 'lucide-react';
 
 const submitFormSchema = z.object({
