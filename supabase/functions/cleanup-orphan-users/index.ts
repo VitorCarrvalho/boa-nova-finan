@@ -43,6 +43,7 @@ serve(async (req) => {
       await supabaseAdmin.from('approval_audit_logs').delete().eq('changed_by', orphan.id)
       await supabaseAdmin.from('user_profile_assignments').delete().eq('user_id', orphan.id)
       await supabaseAdmin.from('audit_logs').delete().eq('user_id', orphan.id)
+      await supabaseAdmin.from('profiles').update({ approved_by: null }).eq('approved_by', orphan.id)
       
       const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(orphan.id)
       if (deleteError) {
