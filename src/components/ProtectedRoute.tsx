@@ -75,8 +75,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/admin" replace />;
   }
 
-  // Aguardar carregamento das permissões por mais tempo após o login
-  if (!loading && user && userAccessProfile === undefined) {
+  // Aguardar carregamento das permissões por mais tempo após o login (exceto super admin)
+  if (!loading && user && userAccessProfile === undefined && !isSuperAdmin) {
     console.log('ProtectedRoute - Aguardando carregamento das permissões...');
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
