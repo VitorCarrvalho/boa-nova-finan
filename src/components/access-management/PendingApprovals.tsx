@@ -229,7 +229,7 @@ const PendingApprovals = () => {
                                 <Button
                                   onClick={() => handleApprove(user.id)}
                                   className="bg-green-600 hover:bg-green-700 flex-1"
-                                  disabled={approveUser.isPending}
+                                  disabled={approveUser.isPending || !approvalData.profileId}
                                 >
                                   Aprovar
                                 </Button>
