@@ -23,7 +23,7 @@ interface SuperAdminLayoutProps {
 const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({ children }) => {
   const { user, signOut, loading } = useAuth();
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
+  
 
   if (loading) {
     return (
