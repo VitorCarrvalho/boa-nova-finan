@@ -125,12 +125,12 @@ export function useTenantMetrics(period: string = '30d', selectedTenantId: strin
         .from('financial_records')
         .select('*', { count: 'exact', head: true });
 
-      // Generate mock data by tenant (would need proper aggregation in production)
+      // Data by tenant: show zeros (real aggregation would require cross-tenant queries)
       const dataByTenant = (tenants || []).slice(0, 8).map(t => ({
         name: t.name.length > 15 ? t.name.substring(0, 15) + '...' : t.name,
-        members: Math.floor(Math.random() * 500) + 50,
-        events: Math.floor(Math.random() * 50) + 5,
-        financial: Math.floor(Math.random() * 200) + 20,
+        members: 0,
+        events: 0,
+        financial: 0,
       }));
 
       setDataMetrics({
@@ -156,18 +156,8 @@ export function useTenantMetrics(period: string = '30d', selectedTenantId: strin
         .select('*', { count: 'exact', head: true })
         .eq('status', 'sent');
 
-      // Generate activity over time (mock data for now)
-      const activityOverTime = [];
-      for (let i = Math.min(days, 30) - 1; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        activityOverTime.push({
-          date: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-          logins: Math.floor(Math.random() * 100) + 20,
-          actions: Math.floor(Math.random() * 200) + 50,
-        });
-      }
-
+      // Activity over time: empty until real tracking exists
+      const activityOverTime: Array<{ date: string; logins: number; actions: number }> = [];
       setActivityMetrics({
         reconciliationsThisMonth: reconciliationsCount || 0,
         notificationsSent: notificationsCount || 0,

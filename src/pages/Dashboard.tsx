@@ -15,6 +15,8 @@ import FinancialChart from '@/components/dashboard/FinancialChart';
 import MemberChart from '@/components/dashboard/MemberChart';
 import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
   const { userAccessProfile, loading } = useAuth();
@@ -25,6 +27,48 @@ const Dashboard = () => {
   const { data: memberStats, isLoading: memberLoading } = useMemberStats();
   const { data: reconciliationStats, isLoading: reconciliationLoading } = useReconciliationStats();
   const { data: events, isLoading: eventsLoading } = useEvents();
+
+  // Fetch real notification stats from DB
+  const { data: notificationStats } = useQuery({
+    queryKey: ['dashboard-notification-stats'],
+    queryFn: async () => {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { count: sentCount } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'sent')
+        .gte('created_at', startOfMonth.toISOString());
+
+      const { count: scheduledCount } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'scheduled');
+
+      return {
+        sentThisMonth: sentCount || 0,
+        scheduled: scheduledCount || 0,
+      };
+    },
+  });
+
+  // Calculate new members in last 30 days from memberStats
+  const { data: newMembersCount } = useQuery({
+    queryKey: ['dashboard-new-members'],
+    queryFn: async () => {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const { count } = await supabase
+        .from('members')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', thirtyDaysAgo.toISOString());
+
+      return count || 0;
+    },
+  });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -37,7 +81,7 @@ const Dashboard = () => {
     window.open(route, '_blank');
   };
 
-  // Calculate stats - totalIncome now includes reconciliations
+  // Calculate stats
   const generalMonthlyRevenue = financialStats?.totalIncome || 0;
   const upcomingEvent = events?.find(event => new Date(event.date) > new Date());
   const thisMonthEvents = events?.filter(event => {
@@ -45,20 +89,6 @@ const Dashboard = () => {
     const now = new Date();
     return eventDate.getMonth() === now.getMonth() && eventDate.getFullYear() === now.getFullYear();
   }).length || 0;
-
-  // Mock data for notifications and recent activities
-  const notificationStats = {
-    sentThisMonth: 24,
-    scheduled: 3
-  };
-
-  const recentActivities = [
-    "Vitor Carvalho cadastrou novo membro",
-    "Conciliação da Congregação Mesquita aprovada",
-    "Evento de Conferência criado",
-    "Pagamento a fornecedor registrado",
-    "Novo usuário admin adicionado"
-  ];
 
   // Loading state apenas para auth essencial
   if (loading) {
@@ -71,58 +101,6 @@ const Dashboard = () => {
       </Layout>
     );
   }
-
-  const DashboardCard = ({ title, value, icon: Icon, color, description, route, trend }: {
-    title: string;
-    value: string;
-    icon: any;
-    color: string;
-    description: string;
-    route: string;
-    trend?: string;
-  }) => (
-    <Card 
-      className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 group"
-      onClick={() => handleCardClick(route)}
-    >
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-        <div className="flex items-center gap-2">
-          {trend && (
-            <div className="h-2 w-8 bg-muted rounded overflow-hidden">
-              <div className={`h-full ${color.includes('red') ? 'bg-destructive' : 'bg-primary'} rounded`} style={{width: '60%'}}></div>
-            </div>
-          )}
-          <Icon className={`h-4 w-4 ${color} group-hover:scale-110 transition-transform`} />
-          <ArrowUpRight className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition-colors" />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className={`text-2xl font-bold ${color}`}>
-          {value}
-        </div>
-        <div className="flex items-center justify-between mt-1">
-          <p className="text-xs text-muted-foreground">
-            {description}
-          </p>
-          {trend && (
-            <span className={`text-xs font-medium ${color}`}>
-              {trend}
-            </span>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-
-  const SectionTitle = ({ icon, title }: { icon: string; title: string }) => (
-    <div className="flex items-center gap-2 mb-4">
-      <span className="text-lg">{icon}</span>
-      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-    </div>
-  );
 
   return (
     <Layout>
@@ -188,7 +166,6 @@ const Dashboard = () => {
                 value={formatCurrency(financialStats?.totalIncome || 0)}
                 description={`${financialStats?.thisMonthRecords || 0} registros`}
                 icon={DollarSign}
-                trend={{ value: 12, isPositive: true }}
                 onClick={() => navigate('/financeiro')}
               />
               <MobileDashboardCard
@@ -196,10 +173,6 @@ const Dashboard = () => {
                 value={formatCurrency(financialStats?.balance || 0)}
                 description="Receitas - Despesas"
                 icon={TrendingUp}
-                trend={{ 
-                  value: 5, 
-                  isPositive: (financialStats?.balance || 0) >= 0 
-                }}
                 onClick={() => navigate('/financeiro')}
               />
               <MobileDashboardCard
@@ -207,7 +180,6 @@ const Dashboard = () => {
                 value={reconciliationStats?.approvedThisMonth?.toString() || '0'}
                 description={formatCurrency(reconciliationStats?.totalApprovedAmount || 0)}
                 icon={CheckCircle}
-                trend={{ value: 8, isPositive: true }}
                 onClick={() => navigate('/conciliacoes')}
               />
               <MobileDashboardCard
@@ -234,7 +206,6 @@ const Dashboard = () => {
                 value={memberStats?.activeMembers?.toString() || '0'}
                 description="Total ativo"
                 icon={Users}
-                trend={{ value: 4, isPositive: true }}
                 onClick={() => navigate('/membros')}
               />
               <MobileDashboardCard
@@ -242,16 +213,13 @@ const Dashboard = () => {
                 value={memberStats?.totalMembers?.toString() || '0'}
                 description="Cadastrados no sistema"
                 icon={Users}
-                trend={{ value: 2, isPositive: true }}
                 onClick={() => navigate('/membros')}
               />
               <MobileDashboardCard
                 title="Novos Membros"
-                value="8"
+                value={(newMembersCount ?? 0).toString()}
                 description="Últimos 30 dias"
                 icon={Users}
-                trend={{ value: 15, isPositive: true }}
-                badge={{ text: 'Novo', variant: 'default' }}
                 onClick={() => navigate('/membros')}
               />
             </MobileDashboardGrid>
@@ -278,7 +246,6 @@ const Dashboard = () => {
                 value={thisMonthEvents.toString()}
                 description="Programados"
                 icon={Calendar}
-                trend={{ value: 3, isPositive: true }}
                 onClick={() => navigate('/eventos')}
               />
             </MobileDashboardGrid>
@@ -294,18 +261,17 @@ const Dashboard = () => {
             <MobileDashboardGrid>
               <MobileDashboardCard
                 title="Mensagens Enviadas"
-                value={notificationStats.sentThisMonth.toString()}
+                value={(notificationStats?.sentThisMonth ?? 0).toString()}
                 description="Este mês"
                 icon={Send}
-                trend={{ value: 20, isPositive: true }}
                 onClick={() => navigate('/notificacoes')}
               />
               <MobileDashboardCard
                 title="Agendadas"
-                value={notificationStats.scheduled.toString()}
+                value={(notificationStats?.scheduled ?? 0).toString()}
                 description="Aguardando envio"
                 icon={Bell}
-                badge={{ text: 'Pendente', variant: 'outline' }}
+                badge={(notificationStats?.scheduled ?? 0) > 0 ? { text: 'Pendente', variant: 'outline' } : undefined}
                 onClick={() => navigate('/notificacoes/agendadas')}
               />
             </MobileDashboardGrid>
@@ -366,30 +332,6 @@ const Dashboard = () => {
             />
           )}
         </div>
-
-        {/* Recent Activities */}
-        <section>
-          <h2 className={`font-semibold text-foreground mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
-            🕓 Atividades Recentes
-          </h2>
-          <Card>
-            <CardContent className={isMobile ? 'p-4' : 'p-6'}>
-              <div className="space-y-3">
-                {recentActivities.slice(0, isMobile ? 3 : 5).map((activity, index) => (
-                  <div key={index} className={`flex items-center gap-3 p-3 bg-muted/50 rounded-lg`}>
-                    <Activity className={`text-muted-foreground ${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
-                    <span className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                      {activity}
-                    </span>
-                    <span className={`text-muted-foreground/70 ml-auto ${isMobile ? 'text-xs' : 'text-xs'}`}>
-                      há {Math.floor(Math.random() * 24) + 1}h
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </section>
       </div>
     </Layout>
   );

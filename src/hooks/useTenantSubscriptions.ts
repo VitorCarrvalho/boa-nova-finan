@@ -98,29 +98,8 @@ export function useTenantSubscriptions() {
         pendingPayments: pendingCount,
       });
 
-      // Generate mock invoices from tenants (in a real app, would come from tenant_invoices table)
-      const mockInvoices: Invoice[] = (tenants || [])
-        .filter(t => t.plan_type !== 'free')
-        .slice(0, 10)
-        .map(tenant => {
-          const now = new Date();
-          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-          const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-          
-          return {
-            id: `inv_${tenant.id}`,
-            tenantId: tenant.id,
-            tenantName: tenant.name,
-            amount: planPrices[tenant.plan_type || 'basic'] || 97,
-            status: tenant.subscription_status === 'active' ? 'paid' : 'pending',
-            periodStart: startOfMonth.toISOString(),
-            periodEnd: endOfMonth.toISOString(),
-            paidAt: tenant.subscription_status === 'active' ? now.toISOString() : null,
-          };
-        });
-
-      setInvoices(mockInvoices);
-
+      // No invoice table exists yet — return empty array
+      setInvoices([]);
     } catch (error) {
       console.error('Error fetching subscriptions:', error);
     } finally {

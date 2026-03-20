@@ -27,7 +27,7 @@ const AdminDashboard = () => {
     {
       title: 'Usuários na Plataforma',
       value: stats?.totalUsers ?? 0,
-      description: `${stats?.activeUsers ?? 0} ativos (30 dias)`,
+      description: `${stats?.totalUsers ?? 0} cadastrados`,
       icon: Users,
       color: 'from-emerald-500 to-emerald-600',
     },
