@@ -53,11 +53,15 @@ const MapaWidget = () => {
       
       <div className="flex-1 flex flex-col justify-between">
         <div className="space-y-2 bg-slate-100/60 backdrop-blur-sm rounded-lg p-3">
-          <p className="text-slate-800 font-medium">Rua João Vicente, 741</p>
-          <p className="text-slate-600 text-sm">Osvaldo Cruz - Rio de Janeiro</p>
-          <p className="text-slate-500 text-xs font-mono bg-slate-200/50 px-2 py-1 rounded-full w-fit">
-            CEP: {cep}
+          <p className="text-slate-800 font-medium">{address.street || 'Endereço não configurado'}</p>
+          <p className="text-slate-600 text-sm">
+            {address.neighborhood}{address.city ? ` - ${address.city}` : ''}
           </p>
+          {cep && (
+            <p className="text-slate-500 text-xs font-mono bg-slate-200/50 px-2 py-1 rounded-full w-fit">
+              CEP: {cep}
+            </p>
+          )}
         </div>
         
         <Button variant="ghost" size="sm" className="mt-3 w-fit text-slate-700 hover:bg-slate-200/50 border border-slate-300/50">
