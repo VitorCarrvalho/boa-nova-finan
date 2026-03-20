@@ -1,59 +1,45 @@
 
 
-# Remover todos os dados mockados/fake do sistema
+# Isolar prestadores do Conecta Moove por organização (tenant)
 
-## Arquivos afetados e problemas encontrados
+## Problema
 
-### 1. `src/pages/Dashboard.tsx` — Múltiplos dados fake
+A tabela `service_providers` não possui coluna `tenant_id`. Todos os prestadores cadastrados são visíveis para qualquer admin de qualquer organização. Os 2 registros que aparecem na screenshot não pertencem à organização atual.
 
-- **Linhas 49-61**: `notificationStats` e `recentActivities` são 100% hardcoded (24 mensagens enviadas, 3 agendadas, atividades fictícias com nomes inventados)
-- **Linha 191, 210, 237, 245, 253, 281, 300**: Todos os `trend` são valores inventados (12%, 8%, 4%, 2%, 15%, 3%, 20%)
-- **Linha 250**: "Novos Membros" com valor hardcoded `"8"`
-- **Linha 385**: Tempo "há Xh" com `Math.random()`
+## Solução
 
-**Correção**: 
-- Notificações: buscar contagens reais da tabela `notifications` (filtrar por `status = 'sent'` e `status = 'scheduled'` do mês atual, com filtro de tenant)
-- Atividades recentes: remover seção inteira ou buscar de `audit_logs` do tenant (dados reais)
-- Trends: remover todos os `trend` props (não há dados históricos para calcular variação real)
-- "Novos Membros": calcular membros com `created_at` nos últimos 30 dias a partir dos dados já carregados
-- Remover `Math.random()` do tempo das atividades
+### 1. Migração SQL: Adicionar `tenant_id` à `service_providers`
 
-### 2. `src/hooks/useSuperAdminDashboard.ts` — Mock no Super Admin
+- Adicionar coluna `tenant_id uuid REFERENCES tenants(id)` à tabela
+- Atualizar as policies RLS do admin para filtrar por `tenant_id = get_user_tenant_id(auth.uid())`
+- A policy pública de leitura (`status = 'approved'`) pode continuar global (marketplace aberto) ou ser filtrada — depende da decisão abaixo
+- A policy de INSERT deve setar `tenant_id` do caller
 
-- **Linha 90**: `activeUsers` simulado como 70% do total (`Math.floor(totalUsers * 0.7)`)
-- **Linhas 112-121**: MRR history simulado com crescimento falso
-- **Linhas 124-132**: Atividades recentes são apenas tenants mais recentes, não atividades reais
+### 2. `src/pages/ConectaManagement.tsx` — Filtrar por tenant
 
-**Correção**:
-- `activeUsers`: mostrar apenas `totalUsers` (remover métrica fake de "ativos")
-- MRR history: remover gráfico ou mostrar apenas o MRR atual (sem dados históricos reais)
-- Atividades recentes: buscar de `audit_logs` ou remover
+- Na query de fetch (linha 72), não precisa de filtro manual pois a RLS já cuidará do isolamento
+- No submit de novos providers, incluir `tenant_id` no payload
 
-### 3. `src/hooks/useTenantMetrics.ts` — Mock em métricas
+### 3. `src/components/conecta/ConectaSubmitForm.tsx` — Incluir tenant_id
 
-- **Linhas 129-134**: `dataByTenant` com `Math.random()` para members, events, financial
-- **Linhas 160-168**: `activityOverTime` com logins/actions aleatórios
+- Ao inserir novo prestador, incluir o `tenant_id` do usuário logado
 
-**Correção**:
-- `dataByTenant`: buscar contagens reais por tenant usando queries com `group by`
-- `activityOverTime`: remover ou zerar (não há dados reais de logins)
+### 4. Dados existentes
 
-### 4. `src/hooks/useTenantSubscriptions.ts` — Faturas mock
+- Os 2 registros existentes (SP e João Silva) provavelmente foram criados sem tenant_id. A migração pode atribuí-los ao tenant principal (Igreja Moove) ou deixá-los como `NULL` — nesse caso a RLS os excluirá automaticamente da visualização de tenants específicos.
 
-- **Linhas 101-122**: `mockInvoices` geradas artificialmente a partir de tenants
+## Decisão necessária
 
-**Correção**: Retornar array vazio de invoices até existir uma tabela real de faturas
+O marketplace Conecta é **global** (todos veem todos os aprovados) ou **por organização** (cada igreja vê só seus prestadores)?
 
-## Resumo de alterações
+- Se **global**: a policy SELECT pública permanece sem filtro de tenant. Apenas a gestão (admin) é isolada por tenant.
+- Se **por organização**: a policy SELECT pública também filtra por tenant.
 
-| Arquivo | O que remover/corrigir |
+## Arquivos
+
+| Arquivo | Alteração |
 |---|---|
-| `src/pages/Dashboard.tsx` | Remover notificationStats mock, recentActivities hardcoded, trends fake, "8" novos membros, Math.random no tempo. Buscar notificações reais do DB. |
-| `src/hooks/useSuperAdminDashboard.ts` | Remover activeUsers simulado, MRR history fake, simplificar atividades recentes |
-| `src/hooks/useTenantMetrics.ts` | Remover dataByTenant random, activityOverTime random. Buscar dados reais ou zerar |
-| `src/hooks/useTenantSubscriptions.ts` | Remover mockInvoices, retornar array vazio |
-
-## Princípio
-
-Onde não há dados reais disponíveis, mostrar "0" ou "Sem dados" em vez de inventar números. Isso garante que o sistema está pronto para receber informações reais sem confundir o usuário.
+| Migração SQL | Adicionar `tenant_id`, atualizar RLS admin |
+| `src/pages/ConectaManagement.tsx` | Nenhuma mudança manual necessária (RLS resolve) |
+| `src/components/conecta/ConectaSubmitForm.tsx` | Incluir `tenant_id` no insert |
 
