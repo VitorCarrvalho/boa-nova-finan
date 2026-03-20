@@ -20,6 +20,7 @@ export const useMembers = () => {
       let query = supabase
         .from('members')
         .select('*')
+        .eq('approval_status', 'approved')
         .order('name', { ascending: true });
 
       // Filter for pastors to only their assigned congregations
