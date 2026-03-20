@@ -1,34 +1,25 @@
 
 
-# Adicionar upload de foto no cadastro público de membros
+# Adicionar campo de foto no formulário de membro (admin)
 
-## Problema
+## Contexto
 
-O bucket `profile-pictures` existe mas só permite upload por usuários autenticados. O formulário público é acessado por `anon`, então precisa de um bucket/policy que permita upload anônimo.
+O `MemberForm.tsx` (usado por admins para criar/editar membros) não possui campo de upload de foto. O campo `photo_url` já existe na tabela `members` e o bucket `member-photos` já está configurado com policies. Basta adicionar o upload no formulário.
 
-## Solução
+## Alterações
 
-### 1. Migração SQL: Criar bucket `member-photos` com policy anon
+### `src/components/members/MemberForm.tsx`
 
-- Criar bucket `member-photos` (público, para exibir as fotos)
-- Policy INSERT para `anon`: permitir upload no bucket `member-photos` (com path livre)
-- Policy SELECT para `public`: permitir leitura pública
+- Adicionar estados `photoFile` e `photoPreview` (similar ao que já existe em `MemberRegistration.tsx`)
+- Inicializar `photoPreview` com `member?.photo_url` quando editando
+- Adicionar campo de upload com preview circular (Avatar) no topo do formulário, antes dos campos
+- No `handleSubmit`: se há foto nova, fazer upload para `member-photos/{timestamp}.ext` e incluir `photo_url` no payload
+- Usar o bucket `member-photos` existente (já tem policies para authenticated via `Tenant users can insert their tenant members`)
+- Aceitar JPG, PNG, WEBP, máximo 5MB
 
-### 2. `src/pages/MemberRegistration.tsx`
+### `src/components/members/MemberTable.tsx`
 
-- Adicionar estado `photoFile` e `photoPreview` para preview da imagem selecionada
-- Adicionar campo de upload com preview circular (Avatar) antes dos campos do formulário
-- No `handleSubmit`:
-  1. Se há foto, fazer upload para `member-photos/{tenantId}/{timestamp}.ext`
-  2. Obter URL pública
-  3. Inserir no `members` com `photo_url` preenchido
-- Aceitar apenas imagens (JPG, PNG, WEBP), máximo 5MB
-- Preview da foto selecionada com opção de remover
+- Exibir miniatura da foto (Avatar) na coluna do nome na tabela de membros
 
-## Arquivos
-
-| Arquivo | Alteração |
-|---|---|
-| Migração SQL | Criar bucket `member-photos` + policies anon |
-| `src/pages/MemberRegistration.tsx` | Campo de upload com preview + lógica de upload no submit |
+Nenhuma migração SQL necessária — o bucket e a coluna `photo_url` já existem.
 
