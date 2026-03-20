@@ -12,6 +12,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Import all pages
 import Auth from "@/pages/Auth";
+import Home from "@/pages/Home";
 import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
 import Financial from "@/pages/Financial";
@@ -91,7 +92,8 @@ const App = () => (
               <AuthProvider>
                 <ReportsProvider>
               <Routes>
-                <Route path="/" element={<Navigate to="/auth" replace />} />
+                <Route path="/" element={<Navigate to="/home" replace />} />
+                <Route path="/home" element={<Home />} />
                 
                 {/* Conecta Moove - Public Routes */}
                 <Route path="/conecta" element={<ConectaIPTM />} />

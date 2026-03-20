@@ -1,7 +1,5 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { useTenantHome } from '@/hooks/useTenantHome';
 import { useTenantBranding } from '@/hooks/useTenantBranding';
@@ -27,8 +25,6 @@ const widgetComponents: Record<string, React.ComponentType> = {
 };
 
 const Home = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
   const { loading: tenantLoading, error: tenantError } = useTenant();
   const { isWidgetEnabled, getOrderedWidgets } = useTenantHome();
   const { branding, loading: brandingLoading } = useTenantBranding();
