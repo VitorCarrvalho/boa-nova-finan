@@ -238,7 +238,7 @@ export function TenantFormDialog({
                           <div className="flex items-center">
                             <Input {...field} placeholder="ibc" className="rounded-r-none" />
                             <span className="bg-muted px-3 py-2 border border-l-0 rounded-r-md text-sm text-muted-foreground whitespace-nowrap">
-                              .igrejamoove
+                              .igrejamoove.com.br
                             </span>
                           </div>
                         </FormControl>
