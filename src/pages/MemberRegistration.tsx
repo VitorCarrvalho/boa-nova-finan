@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CheckCircle, Church, Loader2 } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 
 const availableMinistries = [
@@ -20,6 +21,7 @@ const MemberRegistration = () => {
   const { toast } = useToast();
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantName, setTenantName] = useState('');
+  const [tenantLogo, setTenantLogo] = useState<string | null>(null);
   const [congregations, setCongregations] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -48,6 +50,20 @@ const MemberRegistration = () => {
 
       setTenantId(tenant.id);
       setTenantName(tenant.name);
+
+      // Fetch branding for logo
+      const { data: brandingSettings } = await supabase
+        .from('tenant_settings')
+        .select('settings')
+        .eq('tenant_id', tenant.id)
+        .eq('category', 'branding')
+        .maybeSingle();
+
+      if (brandingSettings?.settings) {
+        const settings = brandingSettings.settings as any;
+        if (settings.logoUrl) setTenantLogo(settings.logoUrl);
+        if (settings.churchName) setTenantName(settings.churchName);
+      }
 
       const { data: congs } = await supabase
         .from('congregations')
@@ -149,9 +165,16 @@ const MemberRegistration = () => {
     <div className="min-h-screen bg-muted/30 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-            <Church className="h-7 w-7 text-primary" />
-          </div>
+          {tenantLogo ? (
+            <Avatar className="mx-auto mb-4 h-16 w-16">
+              <AvatarImage src={tenantLogo} alt={tenantName} />
+              <AvatarFallback><Church className="h-7 w-7 text-primary" /></AvatarFallback>
+            </Avatar>
+          ) : (
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+              <Church className="h-7 w-7 text-primary" />
+            </div>
+          )}
           <h1 className="text-2xl font-bold text-foreground">{tenantName}</h1>
           <p className="text-muted-foreground mt-1">Formulário de Cadastro de Membro</p>
         </div>
