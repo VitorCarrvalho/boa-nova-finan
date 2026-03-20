@@ -8,6 +8,3 @@ verify_jwt = false
 
 [functions."onboard-tenant"]
 verify_jwt = false
-
-[functions."cleanup-orphan-users"]
-verify_jwt = false
