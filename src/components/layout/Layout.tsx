@@ -7,7 +7,7 @@ import MobileSidebar from './MobileSidebar';
 import DesktopSidebar from './DesktopSidebar';
 import HeaderProfile from './HeaderProfile';
 import SuperAdminLayout from './SuperAdminLayout';
-import logoIM from '@/assets/logoIM.png';
+import logoAzul from '@/assets/logo-azul.png';
 import useSuperAdmin from '@/hooks/useSuperAdmin';
 import { useLocation } from 'react-router-dom';
 
@@ -25,7 +25,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const loading = authLoading || superAdminLoading;
 
   // Dynamic branding
-  const displayLogo = branding.logoUrl || logoIM;
+  const displayLogo = branding.logoUrl || logoAzul;
   const displayName = branding.churchName || 'Igreja Moove';
 
   if (loading) {

@@ -47,44 +47,6 @@
     --sidebar-ring: 217 91% 45%;
   }
 
-  .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 20% 96%;
-
-    --card: 222 47% 8%;
-    --card-foreground: 210 20% 96%;
-
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 20% 96%;
-
-    --primary: 217 91% 55%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 35 92% 45%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 222 47% 14%;
-    --muted-foreground: 215 16% 60%;
-
-    --accent: 35 92% 45%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 222 47% 16%;
-    --input: 222 47% 16%;
-    --ring: 217 91% 55%;
-
-    --sidebar-background: 222 47% 8%;
-    --sidebar-foreground: 210 20% 96%;
-    --sidebar-primary: 217 91% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 91% 15%;
-    --sidebar-accent-foreground: 217 91% 70%;
-    --sidebar-border: 222 47% 16%;
-    --sidebar-ring: 217 91% 55%;
-  }
 
 /* Gradient utilities */
 .gradient-primary {

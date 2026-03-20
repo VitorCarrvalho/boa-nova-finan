@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Church, User, CreditCard, CheckCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import logoIM from '@/assets/logoIM.png';
+import logoAzul from '@/assets/logo-azul.png';
 
 const BRAZILIAN_STATES = [
   'AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT',
@@ -99,7 +99,7 @@ const Onboarding = () => {
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <img src={logoIM} alt="Igreja Moove" className="w-20 h-20 mx-auto mb-3 object-contain" />
+          <img src={logoAzul} alt="Igreja Moove" className="w-20 h-20 mx-auto mb-3 object-contain" />
           <h1 className="text-2xl font-bold text-foreground">Cadastre sua Igreja</h1>
           <p className="text-muted-foreground mt-1">Em poucos minutos sua organização estará pronta</p>
         </div>

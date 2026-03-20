@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, Link } from 'react-router-dom';
 import useSuperAdmin from '@/hooks/useSuperAdmin';
-import logoIM from '@/assets/logoIM.png';
+import logoAzul from '@/assets/logo-azul.png';
 
 const AuthPage = () => {
   const [email, setEmail] = useState('');
@@ -89,7 +89,7 @@ const AuthPage = () => {
     setResetLoading(false);
   };
 
-  const displayLogo = branding.logoUrl || logoIM;
+  const displayLogo = branding.logoUrl || logoAzul;
   const displayName = branding.churchName || 'Igreja Moove';
   const displayTagline = branding.tagline || 'Sistema de Gestão da Igreja';
 
