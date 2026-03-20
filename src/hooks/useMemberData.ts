@@ -183,3 +183,34 @@ export const useUpdateMember = () => {
     },
   });
 };
+
+export const useDeleteMember = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('members')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      queryClient.invalidateQueries({ queryKey: ['member-stats'] });
+      toast({
+        title: "Membro removido",
+        description: "O membro foi removido com sucesso!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao remover membro",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
