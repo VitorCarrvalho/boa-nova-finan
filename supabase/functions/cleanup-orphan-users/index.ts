@@ -38,6 +38,11 @@ serve(async (req) => {
     const errors: string[] = []
 
     for (const orphan of orphans) {
+      // Clean up related records first
+      await supabaseAdmin.from('approval_audit_logs').delete().eq('user_id', orphan.id)
+      await supabaseAdmin.from('approval_audit_logs').delete().eq('changed_by', orphan.id)
+      await supabaseAdmin.from('user_profile_assignments').delete().eq('user_id', orphan.id)
+      
       const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(orphan.id)
       if (deleteError) {
         console.error(`Failed to delete ${orphan.email}: ${deleteError.message}`)
