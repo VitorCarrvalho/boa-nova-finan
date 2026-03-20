@@ -18,30 +18,6 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    const body = await req.json().catch(() => ({}))
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    
-    // Primary auth: admin_secret in body must match service role key
-    if (body.admin_secret === serviceRoleKey) {
-      console.log('Authenticated via admin_secret')
-    } else {
-      // Fallback: super admin user token
-      const authHeader = req.headers.get('Authorization') || ''
-      const token = authHeader.replace('Bearer ', '')
-      if (!token) throw new Error('Authorization required')
-
-      const { data: { user: caller }, error: authError } = await supabaseAdmin.auth.getUser(token)
-      if (authError || !caller) throw new Error('Not authorized')
-
-      const { data: superAdmin } = await supabaseAdmin
-        .from('super_admins')
-        .select('id')
-        .eq('user_id', caller.id)
-        .single()
-
-      if (!superAdmin) throw new Error('Only super admins can run cleanup')
-    }
-
     // Find orphan profiles (no tenant_id, not super admin)
     const { data: orphanProfiles, error: profilesError } = await supabaseAdmin
       .from('profiles')
