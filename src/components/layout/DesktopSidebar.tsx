@@ -41,6 +41,7 @@ import {
   ChevronRight,
   Shield,
   HeartHandshake,
+  Heart,
   Truck,
   Calculator,
   Network,
@@ -77,7 +78,8 @@ const DesktopSidebar = ({ displayLogo, displayName }: DesktopSidebarProps) => {
     canViewAuthorizeAccounts,
     canViewApprovedAccounts,
     canViewNewAccount,
-    isSuperAdmin
+    isSuperAdmin,
+    isFullAccess
   } = usePermissions();
   const { data: congregationAccess } = useUserCongregationAccess();
   const hasAccessToAnyCongregation = congregationAccess?.hasAccess || false;
@@ -298,6 +300,17 @@ const DesktopSidebar = ({ displayLogo, displayName }: DesktopSidebarProps) => {
                     icon: MessageSquare,
                     route: '/notificacoes',
                     module: 'notificacoes'
+                  }} />
+                </SidebarMenuItem>
+              )}
+
+              {isFullAccess && (
+                <SidebarMenuItem key="pedidos-oracao">
+                  <MenuItemComponent item={{
+                    title: 'Pedidos de Oração',
+                    icon: Heart,
+                    route: '/pedidos-oracao',
+                    module: 'dashboard'
                   }} />
                 </SidebarMenuItem>
               )}

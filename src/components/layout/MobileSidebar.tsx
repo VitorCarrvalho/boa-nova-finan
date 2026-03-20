@@ -473,6 +473,24 @@ const MobileSidebar = ({ displayLogo, displayName }: MobileSidebarProps = {}) =>
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Pedidos de Oração */}
+        {canAccessSettings && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location.pathname === '/pedidos-oracao'}>
+                    <Link to="/pedidos-oracao">
+                      <Heart className="h-4 w-4" />
+                      <span>Pedidos de Oração</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         {/* Settings and Admin */}
         <SidebarGroup>
           <SidebarGroupLabel>Sistema</SidebarGroupLabel>
