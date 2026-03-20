@@ -74,14 +74,6 @@ const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({ children }) => {
               </div>
 
               <div className="flex items-center gap-3">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleSwitchToTenantView}
-                  className="hidden sm:flex"
-                >
-                  Ver como Tenant
-                </Button>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
