@@ -274,9 +274,13 @@ export function useTenantAdmin() {
           },
         });
 
-        if (fnError) throw fnError;
-        if (!fnData?.success) {
-          throw new Error(fnData?.error || 'Erro ao criar administrador');
+        if (fnError || !fnData?.success) {
+          // Rollback: delete tenant and its settings
+          console.error('Admin creation failed, rolling back tenant:', fnError || fnData?.error);
+          await supabase.from('tenant_settings').delete().eq('tenant_id', tenantId);
+          await supabase.from('access_profiles').delete().eq('tenant_id', tenantId);
+          await supabase.from('tenants').delete().eq('id', tenantId);
+          throw new Error(fnData?.error || fnError?.message || 'Erro ao criar administrador');
         }
       }
 

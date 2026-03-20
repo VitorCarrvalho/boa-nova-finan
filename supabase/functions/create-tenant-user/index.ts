@@ -274,7 +274,8 @@ serve(async (req) => {
       }
     }
 
-    // Step 3: Create user in Supabase Auth
+    // Step 3: Create user in Supabase Auth (handle existing email)
+    let newUser: any
     const { data: authData, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -286,8 +287,35 @@ serve(async (req) => {
     })
 
     if (createError) {
-      console.error('User creation failed:', createError)
-      throw new Error(createError.message)
+      if (createError.message?.includes('already been registered')) {
+        console.log('Email already exists, attempting to reuse existing user...')
+        
+        // Find existing user by email
+        const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers()
+        if (listError) throw new Error('Failed to list users: ' + listError.message)
+        
+        const existingUser = listData.users.find((u: any) => u.email === email)
+        if (!existingUser) throw new Error('User not found despite email_exists error')
+        
+        // Check if user already belongs to another tenant
+        const { data: existingProfile } = await supabaseAdmin
+          .from('profiles')
+          .select('tenant_id')
+          .eq('id', existingUser.id)
+          .single()
+        
+        if (existingProfile?.tenant_id && existingProfile.tenant_id !== tenantId) {
+          throw new Error('Este email já pertence a um usuário de outra organização')
+        }
+        
+        newUser = existingUser
+        console.log(`Reusing existing auth user: ${newUser.id}`)
+      } else {
+        console.error('User creation failed:', createError)
+        throw new Error(createError.message)
+      }
+    } else {
+      newUser = authData.user
     }
 
     const newUser = authData.user
