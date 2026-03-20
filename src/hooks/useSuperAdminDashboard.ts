@@ -86,9 +86,6 @@ export function useSuperAdminDashboard() {
         .from('profiles')
         .select('*', { count: 'exact', head: true });
 
-      // Simulate active users (last 30 days login would require auth logs)
-      const activeUsers = Math.floor((totalUsers || 0) * 0.7);
-
       // Fetch reconciliations this month
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
@@ -103,36 +100,31 @@ export function useSuperAdminDashboard() {
         totalTenants,
         activeTenants,
         totalUsers: totalUsers || 0,
-        activeUsers,
+        activeUsers: totalUsers || 0,
         mrr,
         paidSubscriptions,
         reconciliationsThisMonth: reconciliationsThisMonth || 0,
       });
 
-      // Generate mock MRR history (last 6 months)
-      const months = [];
-      for (let i = 5; i >= 0; i--) {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        months.push({
-          month: date.toLocaleDateString('pt-BR', { month: 'short' }),
-          value: Math.floor(mrr * (0.6 + (5 - i) * 0.08)) // Simulating growth
-        });
-      }
-      setMrrHistory(months);
+      // MRR history: only current month (no fake history)
+      const currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'short' });
+      setMrrHistory([{ month: currentMonth, value: mrr }]);
 
-      // Generate recent activity from tenants
-      const activity: RecentActivity[] = (tenants || [])
-        .slice(0, 5)
-        .map(tenant => ({
-          type: 'new_tenant' as const,
-          description: `Novo tenant cadastrado`,
-          tenantName: tenant.name,
-          time: new Date(tenant.created_at).toLocaleDateString('pt-BR'),
-        }));
+      // Recent activity from audit_logs (real data)
+      const { data: auditLogs } = await supabase
+        .from('audit_logs')
+        .select('action_type, table_name, created_at, tenant_id')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      const activity: RecentActivity[] = (auditLogs || []).map(log => ({
+        type: 'other' as const,
+        description: `${log.action_type} em ${log.table_name}`,
+        tenantName: '',
+        time: new Date(log.created_at).toLocaleDateString('pt-BR'),
+      }));
       
       setRecentActivity(activity);
-
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
