@@ -12,9 +12,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, Edit, Search, Filter } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Download, Edit, Search, Trash2 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { useMembers } from '@/hooks/useMemberData';
+import { useMembers, useDeleteMember } from '@/hooks/useMemberData';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MobileTableCard } from '@/components/ui/mobile-table-card';
@@ -28,7 +29,8 @@ interface MemberTableProps {
 
 const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
   const { data: members, isLoading } = useMembers();
-  const { canEditModule, canExportModule } = usePermissions();
+  const deleteMember = useDeleteMember();
+  const { canEditModule, canExportModule, canDeleteModule } = usePermissions();
   const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -36,6 +38,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
   
   const canEdit = canEditModule('membros');
   const canExport = canExportModule('membros');
+  const canDelete = canDeleteModule('membros');
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-';
@@ -211,14 +214,20 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
                     value: formatDate(member.date_of_joining)
                   }
                 ]}
-                actions={canEdit ? [
-                  {
+                actions={[
+                  ...(canEdit ? [{
                     label: 'Editar',
                     icon: <Edit className="h-3 w-3" />,
                     onClick: () => onEditMember(member),
-                    variant: 'outline'
-                  }
-                ] : []}
+                    variant: 'outline' as const
+                  }] : []),
+                  ...(canDelete ? [{
+                    label: 'Remover',
+                    icon: <Trash2 className="h-3 w-3" />,
+                    onClick: () => deleteMember.mutate(member.id),
+                    variant: 'destructive' as const
+                  }] : [])
+                ]}
               />
             ))}
             {filteredMembers.length === 0 && (
@@ -241,7 +250,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
                   <TableHead>Ministérios</TableHead>
                   <TableHead>Data Ingresso</TableHead>
                   <TableHead>Status</TableHead>
-                  {canEdit && <TableHead>Ações</TableHead>}
+                  {(canEdit || canDelete) && <TableHead>Ações</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -293,22 +302,49 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
                         {member.is_active ? 'Ativo' : 'Inativo'}
                       </Badge>
                     </TableCell>
-                    {canEdit && (
+                    {(canEdit || canDelete) && (
                       <TableCell>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => onEditMember(member)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          {canEdit && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => onEditMember(member)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {canDelete && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Remover membro</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja remover <strong>{member.name}</strong>? Esta ação não pode ser desfeita.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => deleteMember.mutate(member.id)}>
+                                    Remover
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </div>
                       </TableCell>
                     )}
                   </TableRow>
                 ))}
                 {filteredMembers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={canEdit ? 7 : 6} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={(canEdit || canDelete) ? 7 : 6} className="text-center py-8 text-muted-foreground">
                       Nenhum membro encontrado
                     </TableCell>
                   </TableRow>

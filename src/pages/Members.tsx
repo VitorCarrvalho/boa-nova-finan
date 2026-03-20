@@ -39,8 +39,13 @@ const Members = () => {
   };
 
   const handleNewMember = () => {
-    setEditingMember(null);
-    setShowForm(true);
+    if (showForm) {
+      setShowForm(false);
+      setEditingMember(null);
+    } else {
+      setEditingMember(null);
+      setShowForm(true);
+    }
   };
 
   const canManageMembers = userAccessProfile === 'Admin' || userAccessProfile === 'Pastor';
