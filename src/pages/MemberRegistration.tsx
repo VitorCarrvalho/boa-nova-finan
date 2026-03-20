@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckCircle, Church, Loader2 } from 'lucide-react';
+import { CheckCircle, Church, Loader2, Camera, X } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 
@@ -27,6 +27,9 @@ const MemberRegistration = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     name: '', cpf: '', rg: '', email: '', phone: '',
@@ -78,6 +81,29 @@ const MemberRegistration = () => {
     loadTenant();
   }, [slug]);
 
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast({ title: 'Formato inválido', description: 'Aceitos: JPG, PNG ou WEBP', variant: 'destructive' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: 'Arquivo muito grande', description: 'Máximo 5MB', variant: 'destructive' });
+      return;
+    }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const removePhoto = () => {
+    setPhotoFile(null);
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleMinistryToggle = (ministry: string) => {
     setFormData(prev => ({
       ...prev,
@@ -93,6 +119,21 @@ const MemberRegistration = () => {
 
     setSubmitting(true);
     try {
+      let photoUrl: string | null = null;
+
+      if (photoFile && tenantId) {
+        const fileExt = photoFile.name.split('.').pop();
+        const fileName = `${tenantId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('member-photos')
+          .upload(fileName, photoFile, { cacheControl: '3600', upsert: false });
+        if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage
+          .from('member-photos')
+          .getPublicUrl(uploadData.path);
+        photoUrl = publicUrl;
+      }
+
       const { error } = await supabase.from('members').insert({
         name: formData.name.trim(),
         cpf: formData.cpf || null,
@@ -106,6 +147,7 @@ const MemberRegistration = () => {
         ministries: formData.ministries.length > 0 ? formData.ministries : null,
         date_of_baptism: formData.date_of_baptism || null,
         date_of_joining: formData.date_of_joining || null,
+        photo_url: photoUrl,
         tenant_id: tenantId,
         is_active: false,
         approval_status: 'pending',
@@ -186,6 +228,39 @@ const MemberRegistration = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Photo Upload */}
+              <div className="flex flex-col items-center gap-2">
+                <Label className="text-sm text-muted-foreground">Foto (opcional)</Label>
+                <div className="relative">
+                  <Avatar className="h-24 w-24 cursor-pointer border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 transition-colors" onClick={() => fileInputRef.current?.click()}>
+                    {photoPreview ? (
+                      <AvatarImage src={photoPreview} alt="Preview" />
+                    ) : (
+                      <AvatarFallback className="bg-muted">
+                        <Camera className="h-8 w-8 text-muted-foreground" />
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  {photoPreview && (
+                    <button
+                      type="button"
+                      onClick={removePhoto}
+                      className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handlePhotoSelect}
+                />
+                <p className="text-xs text-muted-foreground">JPG, PNG ou WEBP • Máx. 5MB</p>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <Label htmlFor="name">Nome Completo *</Label>
