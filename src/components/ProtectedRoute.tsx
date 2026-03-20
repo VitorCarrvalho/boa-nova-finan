@@ -49,16 +49,29 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/auth" replace />;
   }
 
-  // Se é Super Admin, apenas redirecionar para /admin se estiver tentando acessar rotas proibidas
-  // Permitir rotas de tenant (ex: /configuracoes, /dashboard) para Super Admins acessarem normalmente
+  // Block /admin/* routes for non-super-admins with 403
   const isAdminRoute = location.pathname.startsWith('/admin');
-  const isTenantRoute = ['/configuracoes', '/dashboard', '/membros', '/financeiro', '/eventos'].some(
-    r => location.pathname.startsWith(r)
-  );
   
-  // Super Admin só é forçado para /admin na entrada inicial (não em rotas de tenant)
-  if (isSuperAdmin && !isAdminRoute && !isTenantRoute && location.pathname !== '/') {
-    console.log('🚀 ProtectedRoute: Super Admin detected, redirecting to /admin');
+  if (isAdminRoute && !isSuperAdmin && !superAdminLoading) {
+    console.log('🚫 ProtectedRoute: Non-super-admin trying to access /admin route');
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center max-w-md">
+          <h2 className="text-2xl font-bold mb-2 text-foreground">403 — Acesso Não Autorizado</h2>
+          <p className="text-muted-foreground mb-4">
+            Você não tem permissão para acessar esta área.
+          </p>
+          <Button onClick={() => window.location.href = '/dashboard'} variant="default">
+            Voltar ao Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Super Admin redirect to /admin only from root
+  if (isSuperAdmin && location.pathname === '/') {
+    console.log('🚀 ProtectedRoute: Super Admin at root, redirecting to /admin');
     return <Navigate to="/admin" replace />;
   }
 

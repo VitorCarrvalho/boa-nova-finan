@@ -207,7 +207,6 @@ const AdminTenants = () => {
                 onManageUsers={handleManageUsers}
                 onDelete={handleDeleteClick}
                 onViewDns={handleViewDns}
-                onViewAsTenant={handleViewAsTenant}
                 onCheckDns={checkTenantDns}
               />
             )}
