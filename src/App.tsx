@@ -96,6 +96,7 @@ const App = () => (
                 {/* Conecta Moove - Public Routes */}
                 <Route path="/conecta" element={<ConectaIPTM />} />
                 <Route path="/conecta/perfil/:slug" element={<ConectaProviderProfile />} />
+                <Route path="/cadastro-membro/:slug" element={<MemberRegistration />} />
                 
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/onboarding" element={<Onboarding />} />
