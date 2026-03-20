@@ -193,7 +193,7 @@ export function TenantTable({
               <TableCell>
                 <div className="flex items-center gap-1">
                   <span className="text-sm">{tenant.subdomain}</span>
-                  <span className="text-xs text-muted-foreground">.igrejamoove</span>
+                  <span className="text-xs text-muted-foreground">.igrejamoove.com.br</span>
                   <a
                     href={`https://${tenant.subdomain}.igrejamoove.com.br`}
                     target="_blank"
