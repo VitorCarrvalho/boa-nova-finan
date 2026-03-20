@@ -25,7 +25,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const loading = authLoading || superAdminLoading;
 
   // Dynamic branding
-  const displayLogo = branding.logoUrl || logoIM;
+  const displayLogo = branding.logoUrl || logoAzul;
   const displayName = branding.churchName || 'Igreja Moove';
 
   if (loading) {

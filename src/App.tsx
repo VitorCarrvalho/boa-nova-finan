@@ -78,8 +78,8 @@ const App = () => (
     <HelmetProvider>
       <ThemeProvider
         attribute="class"
-        defaultTheme="system"
-        enableSystem
+        defaultTheme="light"
+        forcedTheme="light"
         disableTransitionOnChange
       >
         <TooltipProvider>

@@ -89,7 +89,7 @@ const AuthPage = () => {
     setResetLoading(false);
   };
 
-  const displayLogo = branding.logoUrl || logoIM;
+  const displayLogo = branding.logoUrl || logoAzul;
   const displayName = branding.churchName || 'Igreja Moove';
   const displayTagline = branding.tagline || 'Sistema de Gestão da Igreja';
 

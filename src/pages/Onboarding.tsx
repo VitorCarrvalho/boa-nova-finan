@@ -99,7 +99,7 @@ const Onboarding = () => {
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <img src={logoIM} alt="Igreja Moove" className="w-20 h-20 mx-auto mb-3 object-contain" />
+          <img src={logoAzul} alt="Igreja Moove" className="w-20 h-20 mx-auto mb-3 object-contain" />
           <h1 className="text-2xl font-bold text-foreground">Cadastre sua Igreja</h1>
           <p className="text-muted-foreground mt-1">Em poucos minutos sua organização estará pronta</p>
         </div>

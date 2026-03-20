@@ -104,7 +104,7 @@ const HeaderProfile: React.FC = () => {
 
   return (
     <div className="flex items-center gap-3">
-      <ThemeToggle />
+      
       <div className="relative group">
         <Avatar className="w-8 h-8 cursor-pointer border-2 border-primary/20">
           <AvatarImage src={profile.photo_url} alt="Foto do perfil" />
