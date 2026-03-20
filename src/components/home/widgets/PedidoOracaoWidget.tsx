@@ -23,6 +23,7 @@ type PedidoForm = z.infer<typeof pedidoSchema>;
 
 const PedidoOracaoWidget = () => {
   const { createPedido } = usePedidosOracao();
+  const { tenant } = useTenant();
   
   const form = useForm<PedidoForm>({
     resolver: zodResolver(pedidoSchema),
