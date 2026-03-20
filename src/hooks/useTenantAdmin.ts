@@ -108,10 +108,8 @@ export function useTenantAdmin() {
             .select('*', { count: 'exact', head: true })
             .eq('tenant_id', t.id);
 
-          const { count: usersCount } = await supabase
-            .from('profiles')
-            .select('*', { count: 'exact', head: true })
-            .eq('tenant_id', t.id);
+          const { data: usersCount } = await supabase
+            .rpc('count_profiles_by_tenant', { _tenant_id: t.id });
 
           let branding: TenantBranding | undefined;
           let homeConfig: TenantHomeConfig | undefined;
