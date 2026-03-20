@@ -20,6 +20,7 @@ export const useMembers = () => {
       let query = supabase
         .from('members')
         .select('*')
+        .eq('approval_status', 'approved')
         .order('name', { ascending: true });
 
       // Filter for pastors to only their assigned congregations
@@ -51,7 +52,8 @@ export const useMemberStats = () => {
     queryFn: async () => {
       let query = supabase
         .from('members')
-        .select('*');
+        .select('*')
+        .eq('approval_status', 'approved');
 
       // Filter for pastors to only their assigned congregations
       if (userAccessProfile === 'Pastor' && congregationAccess?.assignedCongregations) {
