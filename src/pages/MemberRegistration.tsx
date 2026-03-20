@@ -228,6 +228,39 @@ const MemberRegistration = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Photo Upload */}
+              <div className="flex flex-col items-center gap-2">
+                <Label className="text-sm text-muted-foreground">Foto (opcional)</Label>
+                <div className="relative">
+                  <Avatar className="h-24 w-24 cursor-pointer border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 transition-colors" onClick={() => fileInputRef.current?.click()}>
+                    {photoPreview ? (
+                      <AvatarImage src={photoPreview} alt="Preview" />
+                    ) : (
+                      <AvatarFallback className="bg-muted">
+                        <Camera className="h-8 w-8 text-muted-foreground" />
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  {photoPreview && (
+                    <button
+                      type="button"
+                      onClick={removePhoto}
+                      className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handlePhotoSelect}
+                />
+                <p className="text-xs text-muted-foreground">JPG, PNG ou WEBP • Máx. 5MB</p>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <Label htmlFor="name">Nome Completo *</Label>
