@@ -1204,21 +1204,33 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_followed: boolean
+          is_read: boolean
           nome: string | null
+          read_at: string | null
+          read_by: string | null
           tenant_id: string | null
           texto: string
         }
         Insert: {
           created_at?: string
           id?: string
+          is_followed?: boolean
+          is_read?: boolean
           nome?: string | null
+          read_at?: string | null
+          read_by?: string | null
           tenant_id?: string | null
           texto: string
         }
         Update: {
           created_at?: string
           id?: string
+          is_followed?: boolean
+          is_read?: boolean
           nome?: string | null
+          read_at?: string | null
+          read_by?: string | null
           tenant_id?: string | null
           texto?: string
         }
