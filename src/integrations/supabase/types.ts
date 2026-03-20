@@ -1978,6 +1978,14 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      get_profiles_by_ids: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          email: string
+          id: string
+          name: string
+        }[]
+      }
       get_user_tenant_id: { Args: { _user_id?: string }; Returns: string }
       is_current_user_org_admin: { Args: never; Returns: boolean }
       is_super_admin: { Args: { _user_id?: string }; Returns: boolean }
