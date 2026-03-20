@@ -1,20 +1,27 @@
 
 
-# Ajustes na Tela de Login
+# Correção: Erro ao remover organização (FK constraint)
 
-## Alterações no arquivo `src/components/auth/AuthPage.tsx`
+## Problema
 
-### 1. Remover aba "Cadastrar"
-- Remover `TabsTrigger value="signup"` e todo o `TabsContent value="signup"` (linhas 271, 312-375)
-- Mudar `grid-cols-3` para `grid-cols-2` no `TabsList` (linha 269)
-- Remover estados e imports não utilizados: `name`, `congregation`, `setCongregation`, `useCongregationsPublic`, `Select/SelectContent/SelectItem/SelectTrigger/SelectValue`
-- Remover função `handleSignUp`
+Ao deletar uma organização, o sistema tenta deletar os `access_profiles` do tenant, mas a tabela `profiles` tem uma foreign key (`profiles_profile_id_fkey`) apontando para `access_profiles.id` com ação `NO ACTION` — ou seja, bloqueia a exclusão.
 
-### 2. Aumentar logo
-- Trocar `w-32 h-32` por `w-48 h-48` na tag `<img>` (linha 258)
+A FK `user_profile_assignments_profile_id_fkey` já está configurada como `CASCADE`, mas `profiles_profile_id_fkey` não.
 
-### 3. Ajustar layout do texto de onboarding
-- Mover o `<div>` com o texto "Sua igreja ainda não está na plataforma?" para **dentro** do container principal, abaixo do `Card`
-- Mudar layout do container de `flex items-center justify-center` para `flex flex-col items-center justify-center` para empilhar card + texto
-- Adicionar `mt-8` no div do texto para dar espaçamento agradável
+## Solução
+
+Migração SQL para alterar a FK `profiles_profile_id_fkey` de `NO ACTION` para `SET NULL`:
+
+```sql
+ALTER TABLE public.profiles 
+  DROP CONSTRAINT profiles_profile_id_fkey;
+
+ALTER TABLE public.profiles 
+  ADD CONSTRAINT profiles_profile_id_fkey 
+  FOREIGN KEY (profile_id) 
+  REFERENCES public.access_profiles(id) 
+  ON DELETE SET NULL;
+```
+
+Isso faz com que, ao deletar um `access_profile` (via cascade da organização), o `profile_id` dos profiles associados seja setado como `NULL` ao invés de bloquear a operação. Nenhuma alteração de código frontend é necessária.
 
