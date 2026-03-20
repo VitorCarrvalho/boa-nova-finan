@@ -1,73 +1,61 @@
 
 
-# Correção: Lista de usuários mostra usuários de todas as organizações
+# Criar usuário diretamente pela Gestão de Acessos > Usuários
 
-## Problema
+## Contexto
 
-Os componentes `UserManagement.tsx` e `MobileUserManagement.tsx` fazem `SELECT` na tabela `profiles` com filtro apenas por `approval_status = 'ativo'`, sem filtrar por `tenant_id`. Como as policies RLS da tabela `profiles` são permissivas (OR entre múltiplas policies), usuários de outras organizações ficam visíveis.
+Atualmente, a aba "Usuários" em Configurações só lista e edita usuários existentes. Não há funcionalidade para criar um novo usuário diretamente. A criação hoje só é possível via Super Admin (Gestão de Tenants). Precisamos permitir que o admin da organização crie usuários diretamente.
 
-O mesmo problema afeta `PendingApprovals.tsx` e `MobilePendingApprovals.tsx` (contas a aprovar).
+## Abordagem
 
-## Solução
+Criar uma edge function `create-org-user` que o admin da organização pode chamar (diferente da `create-tenant-user` que é exclusiva do super admin). Adicionar um botão "Novo Usuário" e um dialog com formulário nos componentes desktop e mobile.
 
-Criar uma RPC `SECURITY DEFINER` que retorna perfis filtrados por `tenant_id`, similar ao padrão já usado em `get_profiles_by_ids` e `count_profiles_by_tenant`.
+## Alterações
 
-### 1. Migração SQL: Criar função `get_tenant_profiles`
+### 1. Edge Function: `supabase/functions/create-org-user/index.ts`
 
-```sql
-CREATE OR REPLACE FUNCTION public.get_tenant_profiles(
-  _status text DEFAULT 'ativo'
-)
-RETURNS TABLE(
-  id uuid, name text, email text, role user_role,
-  profile_id uuid, congregation_id uuid, 
-  approval_status text, created_at timestamptz,
-  photo_url text, ministries text[],
-  rejection_reason text, tenant_id uuid
-)
-LANGUAGE sql STABLE SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-  SELECT p.id, p.name, p.email, p.role,
-         p.profile_id, p.congregation_id,
-         p.approval_status, p.created_at,
-         p.photo_url, p.ministries,
-         p.rejection_reason, p.tenant_id
-  FROM public.profiles p
-  WHERE p.tenant_id = get_user_tenant_id(auth.uid())
-    AND p.approval_status = _status;
-$$;
-```
+Nova edge function que:
+- Valida que o caller é admin da organização (`is_current_user_org_admin`)
+- Recebe: `name`, `email`, `password`, `profileId`, `congregationId` (opcional)
+- Usa `supabaseAdmin.auth.admin.createUser()` para criar o auth user
+- Atualiza o `profiles` com `tenant_id` do caller, `approval_status = 'ativo'`, `profile_id`, `congregation_id`
+- Cria `user_profile_assignments`
+- Reutiliza email existente se já registrado (mesmo padrão do `create-tenant-user`)
 
-### 2. `src/components/settings/UserManagement.tsx` (linhas 31-42)
+### 2. `src/components/settings/UserManagement.tsx` (Desktop)
 
-Substituir a query direta por RPC + join manual com `access_profiles`:
+- Adicionar botão "Novo Usuário" no header do Card
+- Adicionar Dialog com formulário: Nome, Email, Senha, Perfil de Acesso (dropdown), Congregação (dropdown opcional)
+- Ao submeter, chamar `supabase.functions.invoke('create-org-user', { body: {...} })`
+- Após sucesso, fechar dialog e `refetch()`
 
-```typescript
-const { data: profilesData } = await supabase.rpc('get_tenant_profiles', { _status: 'ativo' });
-// Then fetch access_profiles for each profile_id
-```
+### 3. `src/components/access-management/MobileUserManagement.tsx` (Mobile)
 
-### 3. `src/components/access-management/MobileUserManagement.tsx` (linhas 56-68)
+- Mesmo botão e dialog adaptado para mobile (usando Sheet)
+- Mesma lógica de criação via edge function
 
-Mesma substituição: usar RPC `get_tenant_profiles` ao invés de query direta em `profiles`.
+## Fluxo do Formulário
 
-### 4. Verificar PendingApprovals e MobilePendingApprovals
+| Campo | Tipo | Obrigatório |
+|---|---|---|
+| Nome Completo | Input text | Sim |
+| Email | Input email | Sim |
+| Senha Temporária | Input password (min 6) | Sim |
+| Perfil de Acesso | Select (access_profiles do tenant) | Sim |
+| Congregação | Select (congregations do tenant) | Não |
 
-Aplicar mesma correção para listar apenas pendentes da organização, usando `get_tenant_profiles` com `_status: 'em_analise'`.
-
-## Arquivos Modificados
+## Arquivos
 
 | Arquivo | Alteração |
 |---|---|
-| Migração SQL | Criar função `get_tenant_profiles` |
-| `src/components/settings/UserManagement.tsx` | Usar RPC para listar usuários |
-| `src/components/access-management/MobileUserManagement.tsx` | Usar RPC para listar usuários |
-| `src/components/access-management/PendingApprovals.tsx` | Usar RPC para pendentes |
-| `src/components/access-management/MobilePendingApprovals.tsx` | Usar RPC para pendentes |
+| `supabase/functions/create-org-user/index.ts` | Nova edge function |
+| `src/components/settings/UserManagement.tsx` | Botão + Dialog de criação |
+| `src/components/access-management/MobileUserManagement.tsx` | Botão + Dialog de criação (mobile) |
 
-## Resultado
-- Admin da organização vê apenas usuários do seu tenant
-- Pendentes de aprovação filtrados por organização
-- Sem dependência das policies RLS permissivas para isolamento
+## Segurança
+
+- A edge function valida que o caller pertence ao tenant e é admin
+- O novo usuário herda o `tenant_id` do caller
+- Senha temporária definida pelo admin; usuário pode alterar depois
+- Perfil de acesso atribuído na criação (não fica "em_analise")
 
