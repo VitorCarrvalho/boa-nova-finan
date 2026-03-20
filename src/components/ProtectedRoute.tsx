@@ -88,8 +88,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Só mostrar "em análise" se realmente não há perfil de acesso E não está carregando
-  if (!loading && user && userAccessProfile === null) {
+  // Só mostrar "em análise" se realmente não há perfil de acesso E não está carregando E não é super admin
+  if (!loading && user && userAccessProfile === null && !isSuperAdmin) {
     console.log(`🚨 ProtectedRoute - User ${user.email || user.id} sem perfil de acesso válido, mostrando tela de análise`);
     
     const handleReload = () => {
