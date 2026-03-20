@@ -303,6 +303,17 @@ const DesktopSidebar = ({ displayLogo, displayName }: DesktopSidebarProps) => {
                 </SidebarMenuItem>
               )}
 
+              {isFullAccess && (
+                <SidebarMenuItem key="pedidos-oracao">
+                  <MenuItemComponent item={{
+                    title: 'Pedidos de Oração',
+                    icon: Heart,
+                    route: '/pedidos-oracao',
+                    module: 'dashboard'
+                  }} />
+                </SidebarMenuItem>
+              )}
+
               {canViewModule('gestao-acessos') && (
                 <SidebarMenuItem key="conecta-gestao">
                   <MenuItemComponent item={{
