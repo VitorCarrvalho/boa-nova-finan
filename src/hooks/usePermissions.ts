@@ -94,25 +94,3 @@ export const usePermissions = () => {
     canExportApprovedAccounts
   };
 };
-  return {
-    userPermissions,
-    hasPermission,
-    checkModuleAccess,
-    canViewModule,
-    canInsertModule,
-    canEditModule,
-    canDeleteModule,
-    canApproveModule,
-    canExportModule,
-    canSendNotificationModule,
-    canAccessCongregation,
-    // Submódulo específicas
-    canViewPaidAccounts,
-    canViewPendingApproval,
-    canViewAuthorizeAccounts,
-    canViewApprovedAccounts,
-    canViewNewAccount,
-    canExportPaidAccounts,
-    canExportApprovedAccounts
-  };
-};
