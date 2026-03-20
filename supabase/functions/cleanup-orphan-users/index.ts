@@ -18,12 +18,13 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    // Verify caller: accept service role key in Authorization header or super admin token
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) throw new Error('Authorization header required')
-    
+    // Auth: service role key comparison or super admin user token
+    const authHeader = req.headers.get('Authorization') || ''
     const token = authHeader.replace('Bearer ', '')
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    
+    console.log('Token length:', token.length, 'SRK length:', serviceRoleKey.length)
+    console.log('Match:', token === serviceRoleKey)
     
     if (token !== serviceRoleKey) {
       // Try as user token
@@ -38,6 +39,8 @@ serve(async (req) => {
 
       if (!superAdmin) throw new Error('Only super admins can run cleanup')
     }
+    
+    console.log('Auth passed')
 
     // Find orphan profiles (no tenant_id, not super admin)
     const { data: orphanProfiles, error: profilesError } = await supabaseAdmin
