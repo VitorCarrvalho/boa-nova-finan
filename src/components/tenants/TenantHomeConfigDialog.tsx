@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,9 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TenantHomeConfig } from '@/contexts/TenantContext';
-import { GripVertical, Instagram, MapPin, Users } from 'lucide-react';
+import { GripVertical, Instagram, MapPin, Users, Upload, X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface TenantHomeConfigDialogProps {
   open: boolean;
