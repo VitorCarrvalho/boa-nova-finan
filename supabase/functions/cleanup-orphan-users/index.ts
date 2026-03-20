@@ -18,17 +18,15 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    // Verify caller using service role key or super admin token
+    // Verify caller: accept service role key in Authorization header or super admin token
     const authHeader = req.headers.get('Authorization')
-    const apiKey = req.headers.get('apikey') || ''
+    if (!authHeader) throw new Error('Authorization header required')
+    
+    const token = authHeader.replace('Bearer ', '')
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     
-    // Allow service role key as direct auth
-    const isServiceRole = apiKey === serviceRoleKey
-    
-    if (!isServiceRole) {
-      if (!authHeader) throw new Error('Authorization header required')
-      const token = authHeader.replace('Bearer ', '')
+    if (token !== serviceRoleKey) {
+      // Try as user token
       const { data: { user: caller }, error: authError } = await supabaseAdmin.auth.getUser(token)
       if (authError || !caller) throw new Error('Invalid authorization token')
 
