@@ -216,6 +216,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
             widgets: (homeSettings.widgets as TenantHomeConfig['widgets']) || defaultHomeConfig.widgets,
             widgetOrder: (homeSettings.widgetOrder as string[]) || defaultHomeConfig.widgetOrder,
             customBanners: (homeSettings.customBanners as TenantHomeConfig['customBanners']) || [],
+            instagram: (homeSettings.instagram as TenantHomeConfig['instagram']) || undefined,
+            address: (homeSettings.address as TenantHomeConfig['address']) || undefined,
+            pastoresImageUrl: (homeSettings.pastoresImageUrl as string) || undefined,
           });
         }
         if (setting.category === 'modules' && setting.settings) {
