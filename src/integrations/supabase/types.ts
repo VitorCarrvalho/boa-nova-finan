@@ -998,6 +998,7 @@ export type Database = {
       members: {
         Row: {
           address: string | null
+          approval_status: string
           congregation_id: string | null
           cpf: string | null
           created_at: string
@@ -1019,6 +1020,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          approval_status?: string
           congregation_id?: string | null
           cpf?: string | null
           created_at?: string
@@ -1040,6 +1042,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          approval_status?: string
           congregation_id?: string | null
           cpf?: string | null
           created_at?: string
