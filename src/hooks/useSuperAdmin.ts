@@ -16,16 +16,13 @@ export function useSuperAdmin() {
 
     try {
       const { data, error } = await supabase
-        .from('super_admins')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        .rpc('is_super_admin', { _user_id: user.id });
 
       if (error) {
         console.error('Error checking super admin status:', error);
         setIsSuperAdmin(false);
       } else {
-        setIsSuperAdmin(!!data);
+        setIsSuperAdmin(data === true);
       }
     } catch (err) {
       console.error('Error in super admin check:', err);
