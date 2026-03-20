@@ -28,21 +28,35 @@ const UserManagement = () => {
   const { data: users, isLoading, refetch } = useQuery({
     queryKey: ['approvedUsers'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          *,
-          access_profiles:profile_id (
-            id,
-            name,
-            description
-          )
-        `)
-        .eq('approval_status', 'ativo')
-        .order('name');
+      // Use RPC to get only tenant-scoped profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .rpc('get_tenant_profiles', { _status: 'ativo' });
 
-      if (error) throw error;
-      return data;
+      if (profilesError) throw profilesError;
+
+      // Fetch access_profiles for each user's profile_id
+      const profileIds = (profilesData || [])
+        .map((p: any) => p.profile_id)
+        .filter(Boolean);
+
+      let accessProfilesMap: Record<string, any> = {};
+      if (profileIds.length > 0) {
+        const { data: apData } = await supabase
+          .from('access_profiles')
+          .select('id, name, description')
+          .in('id', profileIds);
+
+        if (apData) {
+          apData.forEach((ap: any) => {
+            accessProfilesMap[ap.id] = ap;
+          });
+        }
+      }
+
+      return (profilesData || []).map((p: any) => ({
+        ...p,
+        access_profiles: p.profile_id ? accessProfilesMap[p.profile_id] || null : null,
+      }));
     },
   });
   const { toast } = useToast();
