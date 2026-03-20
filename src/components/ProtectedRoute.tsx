@@ -75,8 +75,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/admin" replace />;
   }
 
-  // Aguardar carregamento das permissões por mais tempo após o login
-  if (!loading && user && userAccessProfile === undefined) {
+  // Aguardar carregamento das permissões por mais tempo após o login (exceto super admin)
+  if (!loading && user && userAccessProfile === undefined && !isSuperAdmin) {
     console.log('ProtectedRoute - Aguardando carregamento das permissões...');
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -88,8 +88,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Só mostrar "em análise" se realmente não há perfil de acesso E não está carregando
-  if (!loading && user && userAccessProfile === null) {
+  // Só mostrar "em análise" se realmente não há perfil de acesso E não está carregando E não é super admin
+  if (!loading && user && userAccessProfile === null && !isSuperAdmin) {
     console.log(`🚨 ProtectedRoute - User ${user.email || user.id} sem perfil de acesso válido, mostrando tela de análise`);
     
     const handleReload = () => {

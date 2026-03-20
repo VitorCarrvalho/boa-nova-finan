@@ -203,9 +203,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Exponential backoff para retries
       if (retryCount > 0) {
-        const delay = Math.min(1000 * Math.pow(1.5, retryCount - 1), 5000); // Max 5s delay
+        const delay = Math.min(1000 * Math.pow(1.5, retryCount - 1), 5000);
         console.log(`⏳ AuthProvider - Waiting ${delay}ms before retry ${retryCount}`);
         await new Promise(resolve => setTimeout(resolve, delay));
+      }
+
+      // Step 0: Check if user is Super Admin (bypass all profile/RLS checks)
+      console.log(`🔍 AuthProvider - Step 0: Checking super_admins table`);
+      const { data: superAdminData, error: superAdminError } = await supabase
+        .from('super_admins')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!superAdminError && superAdminData) {
+        console.log('🚀 AuthProvider - User is Super Admin, bypassing profile checks');
+        setUserPermissions({});
+        setUserAccessProfile('SuperAdmin');
+        saveUserDataToCache(
+          { id: userId, email: user?.email },
+          {},
+          'SuperAdmin'
+        );
+        return;
       }
       
       // Step 1: Verificar dados básicos do usuário
