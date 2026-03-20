@@ -25,8 +25,6 @@ const widgetComponents: Record<string, React.ComponentType> = {
 };
 
 const Home = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
   const { loading: tenantLoading, error: tenantError } = useTenant();
   const { isWidgetEnabled, getOrderedWidgets } = useTenantHome();
   const { branding, loading: brandingLoading } = useTenantBranding();
