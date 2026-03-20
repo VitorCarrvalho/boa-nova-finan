@@ -48,18 +48,33 @@ const MobileUserManagement: React.FC = () => {
   const { data: users, isLoading, refetch } = useQuery({
     queryKey: ['approved-users'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          *,
-          access_profiles:profile_id(name),
-          congregations:congregation_id(name)
-        `)
-        .eq('approval_status', 'ativo')
-        .order('created_at', { ascending: false });
+      // Use RPC to get only tenant-scoped profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .rpc('get_tenant_profiles', { _status: 'ativo' });
 
-      if (error) throw error;
-      return data as Profile[];
+      if (profilesError) throw profilesError;
+
+      // Fetch access_profiles and congregations for joins
+      const profileIds = (profilesData || []).map((p: any) => p.profile_id).filter(Boolean);
+      const congIds = (profilesData || []).map((p: any) => p.congregation_id).filter(Boolean);
+
+      let apMap: Record<string, any> = {};
+      let congMap: Record<string, any> = {};
+
+      if (profileIds.length > 0) {
+        const { data: apData } = await supabase.from('access_profiles').select('id, name').in('id', profileIds);
+        apData?.forEach((ap: any) => { apMap[ap.id] = ap; });
+      }
+      if (congIds.length > 0) {
+        const { data: congData } = await supabase.from('congregations').select('id, name').in('id', congIds);
+        congData?.forEach((c: any) => { congMap[c.id] = c; });
+      }
+
+      return (profilesData || []).map((p: any) => ({
+        ...p,
+        access_profiles: p.profile_id ? apMap[p.profile_id] || null : null,
+        congregations: p.congregation_id ? congMap[p.congregation_id] || null : null,
+      })) as Profile[];
     }
   });
 

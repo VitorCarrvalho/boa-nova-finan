@@ -16,22 +16,30 @@ export const usePendingUsers = () => {
     queryFn: async () => {
       console.log('Fetching pending users');
       
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select(`
-          *,
-          congregation:congregation_id (*)
-        `)
-        .eq('approval_status', 'em_analise')
-        .order('created_at', { ascending: false });
+      // Use RPC to get only tenant-scoped pending profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .rpc('get_tenant_profiles', { _status: 'em_analise' });
 
-      if (error) {
-        console.error('Error fetching pending users:', error);
-        throw error;
+      if (profilesError) {
+        console.error('Error fetching pending users:', profilesError);
+        throw profilesError;
       }
 
-      console.log('Pending users fetched:', profiles);
-      return profiles as PendingUserWithCongregation[];
+      // Fetch congregations for joins
+      const congIds = (profilesData || []).map((p: any) => p.congregation_id).filter(Boolean);
+      let congMap: Record<string, any> = {};
+      if (congIds.length > 0) {
+        const { data: congData } = await supabase.from('congregations').select('*').in('id', congIds);
+        congData?.forEach((c: any) => { congMap[c.id] = c; });
+      }
+
+      const result = (profilesData || []).map((p: any) => ({
+        ...p,
+        congregation: p.congregation_id ? congMap[p.congregation_id] || null : null,
+      }));
+
+      console.log('Pending users fetched:', result);
+      return result as PendingUserWithCongregation[];
     },
   });
 };
