@@ -1973,11 +1973,13 @@ export type Database = {
       }
       get_authenticated_user_permissions: { Args: never; Returns: Json }
       get_current_user_permissions: { Args: never; Returns: Json }
+      get_current_user_profile_name: { Args: never; Returns: string }
       get_current_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
       get_user_tenant_id: { Args: { _user_id?: string }; Returns: string }
+      is_current_user_org_admin: { Args: never; Returns: boolean }
       is_super_admin: { Args: { _user_id?: string }; Returns: boolean }
       is_tenant_admin: {
         Args: { _tenant_id?: string; _user_id?: string }
