@@ -144,7 +144,6 @@ export function TenantTable({
   onManageUsers,
   onDelete,
   onViewDns,
-  onViewAsTenant,
   onCheckDns,
 }: TenantTableProps) {
   const [checkingDns, setCheckingDns] = useState<Record<string, boolean>>({});
