@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useNavigate } from 'react-router-dom';
+
 
 interface SuperAdminLayoutProps {
   children: React.ReactNode;
@@ -23,7 +23,7 @@ interface SuperAdminLayoutProps {
 const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({ children }) => {
   const { user, signOut, loading } = useAuth();
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
+  
 
   if (loading) {
     return (
@@ -46,9 +46,6 @@ const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({ children }) => {
     await signOut();
   };
 
-  const handleSwitchToTenantView = () => {
-    navigate('/dashboard');
-  };
 
   return (
     <SidebarProvider defaultOpen={!isMobile}>
@@ -77,14 +74,6 @@ const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({ children }) => {
               </div>
 
               <div className="flex items-center gap-3">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleSwitchToTenantView}
-                  className="hidden sm:flex"
-                >
-                  Ver como Tenant
-                </Button>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -104,12 +93,6 @@ const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({ children }) => {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      onClick={handleSwitchToTenantView}
-                      className="cursor-pointer sm:hidden"
-                    >
-                      Ver como Tenant
-                    </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={handleLogout}
                       className="text-destructive focus:text-destructive cursor-pointer"

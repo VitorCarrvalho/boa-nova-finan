@@ -69,9 +69,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Super Admin redirect to /admin only from root
-  if (isSuperAdmin && location.pathname === '/') {
-    console.log('🚀 ProtectedRoute: Super Admin at root, redirecting to /admin');
+  // Super Admin só pode acessar rotas /admin/*
+  if (isSuperAdmin && !isAdminRoute) {
+    console.log('🚀 ProtectedRoute: Super Admin em rota de org, redirecionando para /admin');
     return <Navigate to="/admin" replace />;
   }
 
