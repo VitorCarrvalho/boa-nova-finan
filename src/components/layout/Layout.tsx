@@ -7,7 +7,7 @@ import MobileSidebar from './MobileSidebar';
 import DesktopSidebar from './DesktopSidebar';
 import HeaderProfile from './HeaderProfile';
 import SuperAdminLayout from './SuperAdminLayout';
-import logoIM from '@/assets/logoIM.png';
+import logoAzul from '@/assets/logo-azul.png';
 import useSuperAdmin from '@/hooks/useSuperAdmin';
 import { useLocation } from 'react-router-dom';
 
