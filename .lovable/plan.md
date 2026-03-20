@@ -1,61 +1,59 @@
 
 
-# Criar usuário diretamente pela Gestão de Acessos > Usuários
+# Remover todos os dados mockados/fake do sistema
 
-## Contexto
+## Arquivos afetados e problemas encontrados
 
-Atualmente, a aba "Usuários" em Configurações só lista e edita usuários existentes. Não há funcionalidade para criar um novo usuário diretamente. A criação hoje só é possível via Super Admin (Gestão de Tenants). Precisamos permitir que o admin da organização crie usuários diretamente.
+### 1. `src/pages/Dashboard.tsx` — Múltiplos dados fake
 
-## Abordagem
+- **Linhas 49-61**: `notificationStats` e `recentActivities` são 100% hardcoded (24 mensagens enviadas, 3 agendadas, atividades fictícias com nomes inventados)
+- **Linha 191, 210, 237, 245, 253, 281, 300**: Todos os `trend` são valores inventados (12%, 8%, 4%, 2%, 15%, 3%, 20%)
+- **Linha 250**: "Novos Membros" com valor hardcoded `"8"`
+- **Linha 385**: Tempo "há Xh" com `Math.random()`
 
-Criar uma edge function `create-org-user` que o admin da organização pode chamar (diferente da `create-tenant-user` que é exclusiva do super admin). Adicionar um botão "Novo Usuário" e um dialog com formulário nos componentes desktop e mobile.
+**Correção**: 
+- Notificações: buscar contagens reais da tabela `notifications` (filtrar por `status = 'sent'` e `status = 'scheduled'` do mês atual, com filtro de tenant)
+- Atividades recentes: remover seção inteira ou buscar de `audit_logs` do tenant (dados reais)
+- Trends: remover todos os `trend` props (não há dados históricos para calcular variação real)
+- "Novos Membros": calcular membros com `created_at` nos últimos 30 dias a partir dos dados já carregados
+- Remover `Math.random()` do tempo das atividades
 
-## Alterações
+### 2. `src/hooks/useSuperAdminDashboard.ts` — Mock no Super Admin
 
-### 1. Edge Function: `supabase/functions/create-org-user/index.ts`
+- **Linha 90**: `activeUsers` simulado como 70% do total (`Math.floor(totalUsers * 0.7)`)
+- **Linhas 112-121**: MRR history simulado com crescimento falso
+- **Linhas 124-132**: Atividades recentes são apenas tenants mais recentes, não atividades reais
 
-Nova edge function que:
-- Valida que o caller é admin da organização (`is_current_user_org_admin`)
-- Recebe: `name`, `email`, `password`, `profileId`, `congregationId` (opcional)
-- Usa `supabaseAdmin.auth.admin.createUser()` para criar o auth user
-- Atualiza o `profiles` com `tenant_id` do caller, `approval_status = 'ativo'`, `profile_id`, `congregation_id`
-- Cria `user_profile_assignments`
-- Reutiliza email existente se já registrado (mesmo padrão do `create-tenant-user`)
+**Correção**:
+- `activeUsers`: mostrar apenas `totalUsers` (remover métrica fake de "ativos")
+- MRR history: remover gráfico ou mostrar apenas o MRR atual (sem dados históricos reais)
+- Atividades recentes: buscar de `audit_logs` ou remover
 
-### 2. `src/components/settings/UserManagement.tsx` (Desktop)
+### 3. `src/hooks/useTenantMetrics.ts` — Mock em métricas
 
-- Adicionar botão "Novo Usuário" no header do Card
-- Adicionar Dialog com formulário: Nome, Email, Senha, Perfil de Acesso (dropdown), Congregação (dropdown opcional)
-- Ao submeter, chamar `supabase.functions.invoke('create-org-user', { body: {...} })`
-- Após sucesso, fechar dialog e `refetch()`
+- **Linhas 129-134**: `dataByTenant` com `Math.random()` para members, events, financial
+- **Linhas 160-168**: `activityOverTime` com logins/actions aleatórios
 
-### 3. `src/components/access-management/MobileUserManagement.tsx` (Mobile)
+**Correção**:
+- `dataByTenant`: buscar contagens reais por tenant usando queries com `group by`
+- `activityOverTime`: remover ou zerar (não há dados reais de logins)
 
-- Mesmo botão e dialog adaptado para mobile (usando Sheet)
-- Mesma lógica de criação via edge function
+### 4. `src/hooks/useTenantSubscriptions.ts` — Faturas mock
 
-## Fluxo do Formulário
+- **Linhas 101-122**: `mockInvoices` geradas artificialmente a partir de tenants
 
-| Campo | Tipo | Obrigatório |
-|---|---|---|
-| Nome Completo | Input text | Sim |
-| Email | Input email | Sim |
-| Senha Temporária | Input password (min 6) | Sim |
-| Perfil de Acesso | Select (access_profiles do tenant) | Sim |
-| Congregação | Select (congregations do tenant) | Não |
+**Correção**: Retornar array vazio de invoices até existir uma tabela real de faturas
 
-## Arquivos
+## Resumo de alterações
 
-| Arquivo | Alteração |
+| Arquivo | O que remover/corrigir |
 |---|---|
-| `supabase/functions/create-org-user/index.ts` | Nova edge function |
-| `src/components/settings/UserManagement.tsx` | Botão + Dialog de criação |
-| `src/components/access-management/MobileUserManagement.tsx` | Botão + Dialog de criação (mobile) |
+| `src/pages/Dashboard.tsx` | Remover notificationStats mock, recentActivities hardcoded, trends fake, "8" novos membros, Math.random no tempo. Buscar notificações reais do DB. |
+| `src/hooks/useSuperAdminDashboard.ts` | Remover activeUsers simulado, MRR history fake, simplificar atividades recentes |
+| `src/hooks/useTenantMetrics.ts` | Remover dataByTenant random, activityOverTime random. Buscar dados reais ou zerar |
+| `src/hooks/useTenantSubscriptions.ts` | Remover mockInvoices, retornar array vazio |
 
-## Segurança
+## Princípio
 
-- A edge function valida que o caller pertence ao tenant e é admin
-- O novo usuário herda o `tenant_id` do caller
-- Senha temporária definida pelo admin; usuário pode alterar depois
-- Perfil de acesso atribuído na criação (não fica "em_analise")
+Onde não há dados reais disponíveis, mostrar "0" ou "Sem dados" em vez de inventar números. Isso garante que o sistema está pronto para receber informações reais sem confundir o usuário.
 
