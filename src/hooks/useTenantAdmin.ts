@@ -400,14 +400,19 @@ export function useTenantAdmin() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      const { data: existing } = await supabase
+      const { data: existing, error: fetchError } = await supabase
         .from('tenant_settings')
         .select('id, settings')
         .eq('tenant_id', tenantId)
         .eq('category', 'home')
-        .single();
+        .maybeSingle();
 
-      const existingSettings = existing?.settings as Record<string, unknown> || {};
+      if (fetchError) {
+        console.error('Error fetching existing home config:', fetchError);
+        throw fetchError;
+      }
+
+      const existingSettings = (existing?.settings as Record<string, unknown>) || {};
       const updatedSettings = { ...existingSettings, ...homeConfig };
 
       if (existing) {
@@ -415,7 +420,10 @@ export function useTenantAdmin() {
           .from('tenant_settings')
           .update({ settings: updatedSettings, updated_by: user?.id })
           .eq('id', existing.id);
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating home config:', error);
+          throw error;
+        }
       } else {
         const { error } = await supabase
           .from('tenant_settings')
@@ -425,7 +433,10 @@ export function useTenantAdmin() {
             settings: updatedSettings,
             updated_by: user?.id,
           });
-        if (error) throw error;
+        if (error) {
+          console.error('Error inserting home config:', error);
+          throw error;
+        }
       }
 
       toast({

@@ -330,7 +330,7 @@ export function TenantHomeConfigDialog({
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
+          <Button onClick={handleSubmit} disabled={loading || uploadingImage}>
             {loading ? 'Salvando...' : 'Salvar'}
           </Button>
         </DialogFooter>
