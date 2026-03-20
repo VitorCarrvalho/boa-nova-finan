@@ -250,7 +250,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
                   <TableHead>Ministérios</TableHead>
                   <TableHead>Data Ingresso</TableHead>
                   <TableHead>Status</TableHead>
-                  {canEdit && <TableHead>Ações</TableHead>}
+                  {(canEdit || canDelete) && <TableHead>Ações</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
