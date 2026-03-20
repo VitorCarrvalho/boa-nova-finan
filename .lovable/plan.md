@@ -1,30 +1,62 @@
 
+# Correção: Perfis de acesso herdados indevidamente por novas organizações
 
-# Mover "Gestão de Acessos" para dentro de "Configurações"
+## Problema
 
-## Abordagem
+Duas causas raiz:
 
-Remover o item "Gestão de Acessos" como menu independente no sidebar e transformá-lo em uma aba dentro da página de Configurações, ao lado das abas existentes (Branding, Home, Módulos, Geral, Segurança).
+1. **RLS permite ver perfis globais**: A policy `Tenant users can view their tenant access profiles` inclui `tenant_id IS NULL`, fazendo o admin da organização ver todos os perfis globais (Super Admin, Gerente Financeiro, Membro, etc.) além dos seus próprios.
 
-## Alterações
+2. **Perfis padrão incompletos no onboard**: A função `onboard-tenant` cria apenas 4 perfis (Admin, Pastor, Gerente Financeiro, Membro), mas o correto são 5: **Admin, Analista, Pastor, Presidente, Diretor**.
 
-### 1. `src/pages/Settings.tsx` — Adicionar aba "Gestão de Acessos"
-- Importar os componentes de AccessManagement (PendingApprovals, ProfileConfiguration, UserManagement e versões mobile)
-- Adicionar nova `TabsTrigger` com ícone `Shield` e label "Gestão de Acessos"
-- Adicionar `TabsContent` que renderiza o conteúdo da página AccessManagement (as 3 sub-abas: Contas a Aprovar, Configuração de Perfis, Usuários)
-- Condicionar a visibilidade da aba com `canViewModule('gestao-acessos')` via `usePermissions`
+## Solução
 
-### 2. `src/components/layout/DesktopSidebar.tsx` (linhas 305-314) — Remover item
-- Remover o bloco `{canViewModule('gestao-acessos') && (...)}` que renderiza o menu "Gestão de Acessos"
+### 1. Migração SQL: Corrigir RLS da `access_profiles`
 
-### 3. `src/components/layout/MobileSidebar.tsx` (linhas 481-490) — Remover item
-- Remover o bloco `{canAccessAccessManagement && (...)}` que renderiza "Gestão de Acessos"
+Alterar a policy `Tenant users can view their tenant access profiles` para que usuários de um tenant vejam **apenas** perfis do seu tenant (não mais perfis globais com `tenant_id IS NULL`):
 
-### 4. `src/App.tsx` — Manter rota `/gestao-acessos`
-- Manter a rota existente para não quebrar links diretos, mas opcionalmente redirecionar para `/configuracoes?tab=gestao-acessos`
+```sql
+DROP POLICY "Tenant users can view their tenant access profiles" ON access_profiles;
+CREATE POLICY "Tenant users can view their tenant access profiles"
+  ON access_profiles FOR SELECT TO public
+  USING (
+    is_super_admin() 
+    OR (is_active = true AND tenant_id = get_user_tenant_id(auth.uid()))
+  );
+```
+
+Também remover a policy `Users can view their own active access profile` (usa `get_current_user_profile_id()` que já é coberta pela policy acima):
+
+```sql
+DROP POLICY "Users can view their own active access profile" ON access_profiles;
+CREATE POLICY "Users can view own profile"
+  ON access_profiles FOR SELECT TO public
+  USING (id = get_current_user_profile_id() AND is_active = true);
+```
+
+### 2. Edge Function: Atualizar perfis padrão no `onboard-tenant`
+
+Substituir os 4 perfis atuais (Admin, Pastor, Gerente Financeiro, Membro) pelos 5 corretos:
+- **Admin** — Acesso total à organização
+- **Analista** — Visualiza contas a pagar e relatórios
+- **Pastor** — Gestão da congregação com acesso financeiro
+- **Presidente** — Acesso a todos os módulos e ações
+- **Diretor** — Perfil para diretores com poder de aprovação
+
+Remover Gerente Financeiro e Membro da lista padrão.
+
+### 3. Limpeza de dados (via migração SQL)
+
+Para a organização já criada (tenant `d7613584-...`), não há perfis extras indevidos — os perfis globais aparecem apenas na visualização. A correção da RLS resolve automaticamente.
+
+## Arquivos Modificados
+
+| Arquivo | Alteração |
+|---|---|
+| Migração SQL | Corrigir RLS de `access_profiles` para filtrar por `tenant_id` |
+| `supabase/functions/onboard-tenant/index.ts` | Substituir perfis padrão pelos 5 corretos |
 
 ## Resultado
-- "Gestão de Acessos" aparece como aba dentro de Configurações, junto a Branding, Home, Módulos, Geral e Segurança
-- Menu lateral fica mais limpo, sem item independente de Gestão de Acessos
-- Funcionalidade preservada integralmente
-
+- Admin da organização vê apenas os perfis do seu tenant
+- Novos tenants recebem exatamente 5 perfis padrão
+- Perfis criados pelo admin ficam isolados à sua organização
