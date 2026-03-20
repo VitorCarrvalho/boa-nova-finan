@@ -12,6 +12,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Import all pages
 import Auth from "@/pages/Auth";
+import Home from "@/pages/Home";
 import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
 import Financial from "@/pages/Financial";
