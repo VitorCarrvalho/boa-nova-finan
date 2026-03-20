@@ -1991,6 +1991,23 @@ export type Database = {
           name: string
         }[]
       }
+      get_tenant_profiles: {
+        Args: { _status?: string }
+        Returns: {
+          approval_status: string
+          congregation_id: string
+          created_at: string
+          email: string
+          id: string
+          ministries: string[]
+          name: string
+          photo_url: string
+          profile_id: string
+          rejection_reason: string
+          role: Database["public"]["Enums"]["user_role"]
+          tenant_id: string
+        }[]
+      }
       get_user_tenant_id: { Args: { _user_id?: string }; Returns: string }
       is_current_user_org_admin: { Args: never; Returns: boolean }
       is_super_admin: { Args: { _user_id?: string }; Returns: boolean }
