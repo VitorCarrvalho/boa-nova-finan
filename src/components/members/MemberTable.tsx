@@ -302,22 +302,49 @@ const MemberTable: React.FC<MemberTableProps> = ({ onEditMember }) => {
                         {member.is_active ? 'Ativo' : 'Inativo'}
                       </Badge>
                     </TableCell>
-                    {canEdit && (
+                    {(canEdit || canDelete) && (
                       <TableCell>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => onEditMember(member)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          {canEdit && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => onEditMember(member)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {canDelete && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Remover membro</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja remover <strong>{member.name}</strong>? Esta ação não pode ser desfeita.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => deleteMember.mutate(member.id)}>
+                                    Remover
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </div>
                       </TableCell>
                     )}
                   </TableRow>
                 ))}
                 {filteredMembers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={canEdit ? 7 : 6} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={(canEdit || canDelete) ? 7 : 6} className="text-center py-8 text-muted-foreground">
                       Nenhum membro encontrado
                     </TableCell>
                   </TableRow>
