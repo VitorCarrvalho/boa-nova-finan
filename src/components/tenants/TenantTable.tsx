@@ -39,7 +39,6 @@ interface TenantTableProps {
   onManageUsers: (tenant: TenantWithSettings) => void;
   onDelete: (tenant: TenantWithSettings) => void;
   onViewDns?: (tenant: TenantWithSettings) => void;
-  onViewAsTenant?: (tenant: TenantWithSettings) => void;
   onCheckDns?: (tenantId: string, subdomain: string) => Promise<string | null>;
 }
 
@@ -145,7 +144,6 @@ export function TenantTable({
   onManageUsers,
   onDelete,
   onViewDns,
-  onViewAsTenant,
   onCheckDns,
 }: TenantTableProps) {
   const [checkingDns, setCheckingDns] = useState<Record<string, boolean>>({});
@@ -242,12 +240,6 @@ export function TenantTable({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    {onViewAsTenant && (
-                      <DropdownMenuItem onClick={() => onViewAsTenant(tenant)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        Ver como Organização
-                      </DropdownMenuItem>
-                    )}
                     <DropdownMenuItem onClick={() => onEdit(tenant)}>
                       <Edit className="mr-2 h-4 w-4" />
                       Editar

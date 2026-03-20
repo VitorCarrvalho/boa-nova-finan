@@ -92,10 +92,6 @@ const AdminTenants = () => {
     setDnsOpen(true);
   };
 
-  const handleViewAsTenant = (tenant: TenantWithSettings) => {
-    navigate(`/dashboard?tenant=${tenant.slug}`);
-  };
-
   const handleDeleteClick = (tenant: TenantWithSettings) => {
     setSelectedTenant(tenant);
     setDeleteDialogOpen(true);
@@ -211,7 +207,6 @@ const AdminTenants = () => {
                 onManageUsers={handleManageUsers}
                 onDelete={handleDeleteClick}
                 onViewDns={handleViewDns}
-                onViewAsTenant={handleViewAsTenant}
                 onCheckDns={checkTenantDns}
               />
             )}
