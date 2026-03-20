@@ -290,11 +290,17 @@ const MobileSidebar = ({ displayLogo, displayName }: MobileSidebarProps = {}) =>
   return (
     <Sidebar className="border-r">
       <SidebarContent>
+        {/* Logo */}
+        {displayLogo && (
+          <div className="flex items-center justify-center border-b py-4 px-2">
+            <img src={displayLogo} alt={displayName || ''} className="w-20 h-20 object-contain" />
+          </div>
+        )}
+
         {/* User Profile Section */}
         {state === 'expanded' && (
           <SidebarGroup>
             <div className="p-4 border-b">
-              <h1 className="text-lg font-bold mb-3">Igreja Moove</h1>
               
               <div className="flex items-center gap-3">
                 <div className="relative group">

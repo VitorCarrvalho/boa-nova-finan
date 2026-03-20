@@ -55,19 +55,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     return (
       <SidebarProvider defaultOpen={false}>
         <div className="flex min-h-screen w-full bg-background">
-          <MobileSidebar />
+          <MobileSidebar displayLogo={displayLogo} displayName={displayName} />
           
           <div className="flex-1 flex flex-col">
-            <header className="bg-card border-b border-border px-4 py-4 sticky top-0 z-40">
+            <header className="bg-card border-b border-border px-4 py-3 sticky top-0 z-40">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <img 
-                    src={displayLogo} 
-                    alt={displayName} 
-                    className="w-10 h-10 object-contain"
-                  />
                   <SidebarTrigger className="md:hidden" />
-                  <h1 className="text-xl font-bold text-foreground">{displayName}</h1>
                 </div>
                 <HeaderProfile />
               </div>
