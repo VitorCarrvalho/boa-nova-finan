@@ -41,6 +41,7 @@ import {
   ChevronRight,
   Shield,
   HeartHandshake,
+  Heart,
   Truck,
   Calculator,
   Network,
