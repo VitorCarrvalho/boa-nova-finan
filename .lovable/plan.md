@@ -1,72 +1,23 @@
 
 
-# Cadastro Público de Membros com Aprovação
+# Correção: Formulário público de cadastro de membros
 
-## Resumo
+## Problema 1: Logo genérico ao invés do logo da organização
 
-Criar uma página pública (`/cadastro-membro/:slug`) onde novos membros preenchem todos os campos do cadastro. Após envio, recebem confirmação de que está em análise. Na tela de Membros, uma nova aba "Pendentes de Aprovação" permite ao admin aprovar (membro vira ativo) ou rejeitar (registro excluído).
+A página `MemberRegistration.tsx` usa um ícone `<Church>` do Lucide. O logo real da organização está salvo em `tenant_settings` (category = 'branding', `settings.logoUrl`).
 
-## Alterações
+**Correção**: Na função `loadTenant`, buscar também o `tenant_settings` com `category = 'branding'` para o tenant, extrair `settings.logoUrl` e `settings.churchName`. Substituir o ícone `<Church>` por uma tag `<img>` com o logo real. Se não houver logo, manter o ícone como fallback.
 
-### 1. Migração SQL: Adicionar campo `approval_status` à tabela `members`
+## Problema 2: Erro `null value in column "user_id" of relation "audit_logs"`
 
-- Adicionar coluna `approval_status text NOT NULL DEFAULT 'approved'` (para manter compatibilidade com membros existentes)
-- Valores possíveis: `pending`, `approved`, `rejected`
-- Adicionar policy RLS para `anon` INSERT: permitir inserção com `status = 'pending'` e `terms_accepted` (ou sem autenticação, dado que é público)
-- Nova policy: `Anon can submit member registration` — INSERT para `anon` com `WITH CHECK (approval_status = 'pending')`
-- Atualizar a query de `useMembers` para filtrar `approval_status = 'approved'` por padrão
+O trigger `audit_members` na tabela `members` executa `log_changes()`, que insere em `audit_logs` com `user_id = auth.uid()`. Para inserções anônimas (formulário público), `auth.uid()` é `NULL`, mas `audit_logs.user_id` é `NOT NULL`.
 
-### 2. Nova página: `src/pages/MemberRegistration.tsx`
-
-- URL pública: `/cadastro-membro/:slug`
-- Resolve o `slug` para buscar o `tenant_id` da tabela `tenants` (via query pública)
-- Formulário completo: Nome, CPF, RG, Email, Telefone, Endereço, Escolaridade, Instagram, Congregação (dropdown público filtrado pelo tenant), Ministérios (checkboxes)
-- Insere na tabela `members` com `is_active = false`, `approval_status = 'pending'`, `tenant_id` do slug
-- Após envio: tela de sucesso com mensagem "Cadastro recebido! Seu cadastro está em análise e será avaliado pela administração."
-- Layout limpo sem sidebar, sem autenticação
-
-### 3. RLS: Permitir `anon` acessar congregações pelo tenant
-
-- Criar nova policy SELECT `anon` na tabela `congregations` para que o formulário público consiga listar congregações: `USING (is_active = true AND tenant_id = <tenant do slug>)`
-- Alternativa mais simples: usar a view `congregations_public` já existente (que não tem RLS)
-
-### 4. Rota no `src/App.tsx`
-
-- Adicionar rota pública `/cadastro-membro/:slug` sem `ProtectedRoute`
-
-### 5. Aba "Pendentes" na página `src/pages/Members.tsx`
-
-- Adicionar `Tabs` com duas abas: "Membros" (lista atual) e "Pendentes de Aprovação"
-- Na aba pendentes: lista de membros com `approval_status = 'pending'`
-- Cada item tem botões "Aprovar" e "Rejeitar"
-- Aprovar: atualiza `approval_status = 'approved'` e `is_active = true`
-- Rejeitar: deleta o registro da tabela `members`
-- Badge com contagem de pendentes na aba
-
-### 6. Hook `src/hooks/usePendingMembers.ts`
-
-- Query: `members` WHERE `approval_status = 'pending'` AND tenant do usuário
-- Mutations: `approveMember` (UPDATE status), `rejectMember` (DELETE)
-
-### 7. Atualizar `src/hooks/useMemberData.ts`
-
-- `useMembers`: adicionar filtro `.eq('approval_status', 'approved')` para não misturar pendentes na listagem principal
+**Correção**: Migração SQL para alterar a função `log_changes()` — usar `COALESCE(auth.uid(), '00000000-0000-0000-0000-000000000000'::uuid)` como `user_id`, ou tornar a coluna `user_id` nullable em `audit_logs`. A opção mais limpa é tornar `user_id` nullable, pois registros criados anonimamente legitimamente não têm usuário.
 
 ## Arquivos
 
 | Arquivo | Alteração |
 |---|---|
-| Migração SQL | Adicionar `approval_status`, policy anon INSERT |
-| `src/pages/MemberRegistration.tsx` | Nova página pública |
-| `src/App.tsx` | Rota `/cadastro-membro/:slug` |
-| `src/pages/Members.tsx` | Adicionar sistema de abas com "Pendentes" |
-| `src/hooks/usePendingMembers.ts` | Novo hook para pendentes |
-| `src/hooks/useMemberData.ts` | Filtrar approved na listagem |
-
-## Segurança
-
-- Formulário público aceita apenas INSERT com `approval_status = 'pending'`
-- Anon não pode alterar status nem ver membros existentes
-- Aprovação/rejeição restrita a admins via RLS existente
-- `tenant_id` resolvido pelo slug no servidor, não manipulável pelo cliente
+| Migração SQL | Tornar `audit_logs.user_id` nullable + atualizar `log_changes()` para aceitar `auth.uid()` null |
+| `src/pages/MemberRegistration.tsx` | Buscar branding do tenant e exibir logo real |
 
