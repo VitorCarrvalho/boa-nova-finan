@@ -71,7 +71,8 @@ const DesktopSidebar = () => {
     canViewPendingApproval,
     canViewAuthorizeAccounts,
     canViewApprovedAccounts,
-    canViewNewAccount
+    canViewNewAccount,
+    isSuperAdmin
   } = usePermissions();
   const { data: congregationAccess } = useUserCongregationAccess();
   const hasAccessToAnyCongregation = congregationAccess?.hasAccess || false;
