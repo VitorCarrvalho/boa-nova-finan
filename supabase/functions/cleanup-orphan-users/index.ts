@@ -18,29 +18,23 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    // Auth: service role key comparison or super admin user token
+    // Auth: verify super admin via user token
     const authHeader = req.headers.get('Authorization') || ''
     const token = authHeader.replace('Bearer ', '')
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     
-    console.log('Token length:', token.length, 'SRK length:', serviceRoleKey.length)
-    console.log('Match:', token === serviceRoleKey)
-    
-    if (token !== serviceRoleKey) {
-      // Try as user token
-      const { data: { user: caller }, error: authError } = await supabaseAdmin.auth.getUser(token)
-      if (authError || !caller) throw new Error('Invalid authorization token')
+    if (!token) throw new Error('Authorization header required')
 
-      const { data: superAdmin } = await supabaseAdmin
-        .from('super_admins')
-        .select('id')
-        .eq('user_id', caller.id)
-        .single()
+    // The gateway converts service role key to a JWT, so we verify the user
+    const { data: { user: caller }, error: authError } = await supabaseAdmin.auth.getUser(token)
+    if (authError || !caller) throw new Error('Invalid authorization token')
 
-      if (!superAdmin) throw new Error('Only super admins can run cleanup')
-    }
-    
-    console.log('Auth passed')
+    const { data: superAdmin } = await supabaseAdmin
+      .from('super_admins')
+      .select('id')
+      .eq('user_id', caller.id)
+      .single()
+
+    if (!superAdmin) throw new Error('Only super admins can run cleanup')
 
     // Find orphan profiles (no tenant_id, not super admin)
     const { data: orphanProfiles, error: profilesError } = await supabaseAdmin
@@ -50,13 +44,11 @@ serve(async (req) => {
 
     if (profilesError) throw new Error('Failed to fetch profiles: ' + profilesError.message)
 
-    // Get super admin user IDs to exclude
     const { data: superAdmins } = await supabaseAdmin
       .from('super_admins')
       .select('user_id')
 
     const superAdminIds = new Set((superAdmins || []).map((sa: any) => sa.user_id))
-
     const orphans = (orphanProfiles || []).filter((p: any) => !superAdminIds.has(p.id))
     console.log(`Found ${orphans.length} orphan users to delete`)
 
