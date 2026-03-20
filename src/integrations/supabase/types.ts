@@ -1967,6 +1967,10 @@ export type Database = {
         Args: { _assigned_by?: string; _profile_id: string; _user_id: string }
         Returns: boolean
       }
+      count_profiles_by_tenant: {
+        Args: { _tenant_id: string }
+        Returns: number
+      }
       generate_provider_slug: {
         Args: { provider_name: string }
         Returns: string
