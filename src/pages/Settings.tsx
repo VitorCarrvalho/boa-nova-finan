@@ -143,6 +143,29 @@ const Settings = () => {
               </CardContent>
             </Card>
           </TabsContent>
+          {/* Gestão de Acessos Tab */}
+          {showAccessManagement && (
+            <TabsContent value="gestao-acessos">
+              <div className="space-y-6">
+                <Tabs defaultValue="pending" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="pending">Contas a Aprovar</TabsTrigger>
+                    <TabsTrigger value="profiles">Configuração de Perfis</TabsTrigger>
+                    <TabsTrigger value="users">Usuários</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="pending">
+                    {isMobile ? <MobilePendingApprovals /> : <PendingApprovals />}
+                  </TabsContent>
+                  <TabsContent value="profiles">
+                    {isMobile ? <MobileProfileConfiguration /> : <ProfileConfiguration />}
+                  </TabsContent>
+                  <TabsContent value="users">
+                    {isMobile ? <MobileUserManagement /> : <UserManagement />}
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </Layout>
