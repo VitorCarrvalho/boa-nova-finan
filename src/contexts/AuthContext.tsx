@@ -445,7 +445,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(currentSession?.user ?? null);
       
       if (currentSession?.user) {
-        console.log(`👤 [${timestamp}] AuthProvider - User found from ${source} (${currentSession.user.email}), checking cache first...`);
+        console.log(`👤 [${timestamp}] AuthProvider - User found from ${source} (${currentSession.user.email}), validating tenant...`);
+        
+        // 🔒 CRITICAL: Validate tenant isolation on session load
+        const currentTenantId = await resolveCurrentTenantId();
+        if (currentTenantId) {
+          const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('tenant_id')
+            .eq('id', currentSession.user.id)
+            .maybeSingle();
+
+          const { data: superAdminCheck } = await supabase
+            .from('super_admins')
+            .select('id')
+            .eq('user_id', currentSession.user.id)
+            .maybeSingle();
+
+          const isSuperAdmin = !!superAdminCheck;
+
+          if (!isSuperAdmin && (!userProfile || userProfile.tenant_id !== currentTenantId)) {
+            console.log(`🚫 [${timestamp}] AuthProvider - Tenant mismatch on session load! Signing out.`);
+            cleanupAuthState();
+            await supabase.auth.signOut();
+            setUser(null);
+            setSession(null);
+            setUserPermissions({});
+            setUserAccessProfile(null);
+            setIsProcessingAuth(false);
+            setLoading(false);
+            return;
+          }
+          console.log(`✅ [${timestamp}] AuthProvider - Tenant validation passed on session load`);
+        }
+        
+        console.log(`👤 [${timestamp}] AuthProvider - Checking cache...`);
         
         // Check cache first to avoid unnecessary database calls
         const cachedData = getUserDataFromCache(currentSession.user.id);
