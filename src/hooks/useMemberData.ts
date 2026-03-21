@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { useUserCongregationAccess } from '@/hooks/useUserCongregationAccess';
 import { useTenant } from '@/contexts/TenantContext';
 
 type Member = Database['public']['Tables']['members']['Row'];
@@ -12,29 +11,15 @@ type MemberUpdate = Database['public']['Tables']['members']['Update'];
 
 export const useMembers = () => {
   const { userAccessProfile } = useAuth();
-  const { data: congregationAccess } = useUserCongregationAccess();
 
   return useQuery({
-    queryKey: ['members', userAccessProfile, congregationAccess?.assignedCongregations],
+    queryKey: ['members', userAccessProfile],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from('members')
         .select('*')
         .eq('approval_status', 'approved')
         .order('name', { ascending: true });
-
-      // Filter for pastors to only their assigned congregations
-      if (userAccessProfile === 'Pastor' && congregationAccess?.assignedCongregations) {
-        const assignedCongregationIds = congregationAccess.assignedCongregations.map(c => c.id);
-        if (assignedCongregationIds.length > 0) {
-          query = query.in('congregation_id', assignedCongregationIds);
-        } else {
-          // If pastor has no assigned congregations, return empty array
-          return [];
-        }
-      }
-
-      const { data, error } = await query;
 
       if (error) throw error;
       return data as Member[];
