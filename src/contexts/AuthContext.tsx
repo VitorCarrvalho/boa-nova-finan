@@ -3,6 +3,23 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
+import { getTenantIdentifier } from '@/utils/tenantIdentifier';
+
+// Resolve the current tenant ID from URL identifier (subdomain/slug/query param)
+const resolveCurrentTenantId = async (): Promise<string | null> => {
+  const identifier = getTenantIdentifier();
+  if (!identifier) return null; // No tenant in URL = main platform, no restriction
+  
+  const { data, error } = await supabase
+    .from('tenants')
+    .select('id')
+    .or(`subdomain.eq.${identifier},slug.eq.${identifier}`)
+    .eq('is_active', true)
+    .maybeSingle();
+  
+  if (error || !data) return null;
+  return data.id;
+};
 
 type UserRole = Database['public']['Enums']['user_role'];
 
@@ -428,7 +445,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(currentSession?.user ?? null);
       
       if (currentSession?.user) {
-        console.log(`👤 [${timestamp}] AuthProvider - User found from ${source} (${currentSession.user.email}), checking cache first...`);
+        console.log(`👤 [${timestamp}] AuthProvider - User found from ${source} (${currentSession.user.email}), validating tenant...`);
+        
+        // 🔒 CRITICAL: Validate tenant isolation on session load
+        const currentTenantId = await resolveCurrentTenantId();
+        if (currentTenantId) {
+          const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('tenant_id')
+            .eq('id', currentSession.user.id)
+            .maybeSingle();
+
+          const { data: superAdminCheck } = await supabase
+            .from('super_admins')
+            .select('id')
+            .eq('user_id', currentSession.user.id)
+            .maybeSingle();
+
+          const isSuperAdmin = !!superAdminCheck;
+
+          if (!isSuperAdmin && (!userProfile || userProfile.tenant_id !== currentTenantId)) {
+            console.log(`🚫 [${timestamp}] AuthProvider - Tenant mismatch on session load! Signing out.`);
+            cleanupAuthState();
+            await supabase.auth.signOut();
+            setUser(null);
+            setSession(null);
+            setUserPermissions({});
+            setUserAccessProfile(null);
+            setIsProcessingAuth(false);
+            setLoading(false);
+            return;
+          }
+          console.log(`✅ [${timestamp}] AuthProvider - Tenant validation passed on session load`);
+        }
+        
+        console.log(`👤 [${timestamp}] AuthProvider - Checking cache...`);
         
         // Check cache first to avoid unnecessary database calls
         const cachedData = getUserDataFromCache(currentSession.user.id);
@@ -661,6 +712,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               } 
             };
           }
+        }
+
+        // 🔒 CRITICAL: Validate tenant isolation
+        // Check if user belongs to the tenant identified in the URL
+        const currentTenantId = await resolveCurrentTenantId();
+        if (currentTenantId) {
+          // We're on a tenant-specific URL, validate the user belongs to this tenant
+          const { data: tenantProfile, error: tenantProfileError } = await supabase
+            .from('profiles')
+            .select('tenant_id')
+            .eq('id', data.user.id)
+            .maybeSingle();
+
+          if (tenantProfileError) {
+            console.log('❌ Erro ao verificar tenant do usuário:', tenantProfileError);
+          }
+
+          // Check if user is a Super Admin (exempt from tenant restriction)
+          const { data: superAdminData } = await supabase
+            .from('super_admins')
+            .select('id')
+            .eq('user_id', data.user.id)
+            .maybeSingle();
+
+          const isSuperAdmin = !!superAdminData;
+
+          if (!isSuperAdmin && (!tenantProfile || tenantProfile.tenant_id !== currentTenantId)) {
+            console.log('🚫 Tenant mismatch! User tenant:', tenantProfile?.tenant_id, 'Current tenant:', currentTenantId);
+            await supabase.auth.signOut();
+            cleanupAuthState();
+            return { 
+              error: { 
+                message: 'Invalid login credentials' 
+              } 
+            };
+          }
+          console.log('✅ Tenant validation passed');
         }
       }
       
