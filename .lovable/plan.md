@@ -1,52 +1,45 @@
 
-# Correção Crítica: Isolamento de Login por Organização (Tenant)
 
-## Problema
+# Correção: Pastor da Lagoinha não vê menu de Membros nem registros
 
-O Supabase Auth é global — qualquer usuário com credenciais válidas pode fazer login em qualquer URL de organização. Não existe nenhuma verificação que compare o `tenant_id` do usuário com o tenant da URL acessada. Resultado: `admin@lagoinha.com` consegue logar no subdomínio da Mica e ver todos os dados.
+## Problemas identificados
 
-## Causa raiz
+### Problema 1 — Pastor não está atribuído à congregação
+A congregação "Sede" da Lagoinha tem `responsible_pastor_ids: []`. O hook `useUserCongregationAccess` procura congregações onde o pastor está listado em `responsible_pastor_ids`. Como o pastor `vitor@lagoinha.com` não está nesse array, `assignedCongregations` retorna vazio.
 
-A função `signIn` no `AuthContext.tsx` (linha 602) apenas verifica `approval_status` após o login. Nunca verifica se o `tenant_id` do usuário corresponde ao tenant da organização sendo acessada.
+Em `useMemberData.ts`, quando o perfil é "Pastor" e `assignedCongregations` está vazio, o código retorna `[]` imediatamente (linha 32-34), sem nem fazer query ao banco.
 
-## Plano de correção
+**Impacto**: Mesmo que o menu apareça, a lista de membros vem vazia.
 
-### 1. `src/contexts/AuthContext.tsx` — Validar tenant no login
+### Problema 2 — `useMemberData` é restritivo demais para Pastores
+O filtro de congregação em `useMemberData` é hardcoded para o perfil "Pastor". Se um pastor não estiver vinculado a nenhuma congregação via `responsible_pastor_ids`, ele simplesmente não vê NENHUM membro — mesmo que seu perfil de acesso tenha permissão total ao módulo `membros`.
 
-Após o login bem-sucedido (linha 630+), adicionar verificação:
+A lógica deveria respeitar as permissões do perfil de acesso, não fazer um filtro rígido baseado no nome "Pastor".
 
-1. Importar `useTenant` do TenantContext (já disponível pois TenantProvider envolve AuthProvider)
-2. Na função `signIn`, após verificar `approval_status`, consultar o `tenant_id` do perfil do usuário
-3. Comparar com o `tenant.id` do contexto atual
-4. Se não coincidir → fazer `signOut()` imediatamente e retornar erro "Email ou senha inválidos" (mensagem genérica por segurança — não revelar que o usuário existe em outra org)
+### Problema 3 — Menu pode não aparecer (race condition)
+O `usePermissions` depende de `userPermissions` estar carregado no AuthContext. Se o sidebar renderiza antes do `processUserAuthentication` completar, `userPermissions` é `null` → `hasPermission` retorna `false` → menu não aparece. Em geral isso se resolve ao re-renderizar, mas pode causar flicker ou falha visual.
 
+## Correções
+
+### 1. `src/hooks/useMemberData.ts` — Remover filtro hardcoded de Pastor
+Remover a lógica que filtra membros por `assignedCongregations` quando o perfil é "Pastor". A filtragem por congregação deve ser feita apenas se o módulo `membros` exigir acesso a congregação (e atualmente não exige — `requiresCongregationAccess` não está definido para membros). O RLS já garante isolamento por tenant.
+
+```ts
+// ANTES: filtro rígido por perfil "Pastor"
+if (userAccessProfile === 'Pastor' && congregationAccess?.assignedCongregations) { ... }
+
+// DEPOIS: remover esse bloco inteiro
+// A RLS já filtra por tenant_id, não precisa filtrar por congregação no frontend
 ```
-// Pseudocódigo da validação:
-if (currentTenant && profile.tenant_id !== currentTenant.id) {
-  await supabase.auth.signOut();
-  return { error: { message: 'Invalid login credentials' } };
-}
-```
 
-### 2. `src/contexts/AuthContext.tsx` — Validar tenant no carregamento de sessão
+Mesma correção para `useMemberStats`.
 
-O mesmo check precisa existir no `processAuth` (que roda no `onAuthStateChange` e `checkSession`). Se um usuário já tem sessão ativa e acessa a URL de outra org, deve ser deslogado automaticamente.
-
-Na função que processa a sessão existente (~linha 200+), após carregar o perfil:
-- Se há tenant no contexto e o `tenant_id` do perfil não bate → fazer signOut silencioso
-
-### 3. Mensagem de erro genérica (segurança)
-
-A mensagem retornada deve ser **"Email ou senha incorretos"** — nunca indicar que o usuário existe em outra organização. Isso evita enumeração de contas.
+### 2. Verificar se o menu de membros aparece corretamente
+Após a correção do filtro, o menu deve aparecer normalmente pois as permissões estão corretas no banco (`membros.view: true`). Se persistir um problema de timing, adicionar um guard no sidebar para não filtrar itens enquanto `userPermissions` for `null`.
 
 ## Arquivos
 
 | Arquivo | Alteração |
 |---|---|
-| `src/contexts/AuthContext.tsx` | Adicionar validação de tenant no `signIn` e no `processAuth` |
+| `src/hooks/useMemberData.ts` | Remover filtro hardcoded por congregação para perfil "Pastor" em `useMembers` e `useMemberStats` |
 
-## Pontos de atenção
-
-- Super Admins devem ser isentos desta validação (eles não pertencem a nenhum tenant específico)
-- A validação no preview/localhost (sem tenant definido) não deve bloquear — apenas quando há tenant identificado na URL
-- O cache local (`lovable_user_data`) também deve ser invalidado quando o tenant não bate
