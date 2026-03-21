@@ -3,6 +3,23 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
+import { getTenantIdentifier } from '@/utils/tenantIdentifier';
+
+// Resolve the current tenant ID from URL identifier (subdomain/slug/query param)
+const resolveCurrentTenantId = async (): Promise<string | null> => {
+  const identifier = getTenantIdentifier();
+  if (!identifier) return null; // No tenant in URL = main platform, no restriction
+  
+  const { data, error } = await supabase
+    .from('tenants')
+    .select('id')
+    .or(`subdomain.eq.${identifier},slug.eq.${identifier}`)
+    .eq('is_active', true)
+    .maybeSingle();
+  
+  if (error || !data) return null;
+  return data.id;
+};
 
 type UserRole = Database['public']['Enums']['user_role'];
 
