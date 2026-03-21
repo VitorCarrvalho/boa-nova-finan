@@ -679,6 +679,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             };
           }
         }
+
+        // 🔒 CRITICAL: Validate tenant isolation
+        // Check if user belongs to the tenant identified in the URL
+        const currentTenantId = await resolveCurrentTenantId();
+        if (currentTenantId) {
+          // We're on a tenant-specific URL, validate the user belongs to this tenant
+          const { data: tenantProfile, error: tenantProfileError } = await supabase
+            .from('profiles')
+            .select('tenant_id')
+            .eq('id', data.user.id)
+            .maybeSingle();
+
+          if (tenantProfileError) {
+            console.log('❌ Erro ao verificar tenant do usuário:', tenantProfileError);
+          }
+
+          // Check if user is a Super Admin (exempt from tenant restriction)
+          const { data: superAdminData } = await supabase
+            .from('super_admins')
+            .select('id')
+            .eq('user_id', data.user.id)
+            .maybeSingle();
+
+          const isSuperAdmin = !!superAdminData;
+
+          if (!isSuperAdmin && (!tenantProfile || tenantProfile.tenant_id !== currentTenantId)) {
+            console.log('🚫 Tenant mismatch! User tenant:', tenantProfile?.tenant_id, 'Current tenant:', currentTenantId);
+            await supabase.auth.signOut();
+            cleanupAuthState();
+            return { 
+              error: { 
+                message: 'Invalid login credentials' 
+              } 
+            };
+          }
+          console.log('✅ Tenant validation passed');
+        }
       }
       
       console.log('✅ Login realizado com sucesso - deixando AuthPage fazer redirect');
