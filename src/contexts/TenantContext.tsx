@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getTenantIdentifier } from '@/utils/tenantIdentifier';
 
 export interface TenantBranding {
   primaryColor: string;
