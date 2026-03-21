@@ -30,36 +30,14 @@ export const useMembers = () => {
 
 export const useMemberStats = () => {
   const { userAccessProfile } = useAuth();
-  const { data: congregationAccess } = useUserCongregationAccess();
 
   return useQuery({
-    queryKey: ['member-stats', userAccessProfile, congregationAccess?.assignedCongregations],
+    queryKey: ['member-stats', userAccessProfile],
     queryFn: async () => {
-      let query = supabase
+      const { data: members, error } = await supabase
         .from('members')
         .select('*')
         .eq('approval_status', 'approved');
-
-      // Filter for pastors to only their assigned congregations
-      if (userAccessProfile === 'Pastor' && congregationAccess?.assignedCongregations) {
-        const assignedCongregationIds = congregationAccess.assignedCongregations.map(c => c.id);
-        if (assignedCongregationIds.length > 0) {
-          query = query.in('congregation_id', assignedCongregationIds);
-        } else {
-          // If pastor has no assigned congregations, return empty stats
-          return {
-            totalMembers: 0,
-            activeMembers: 0,
-            inactiveMembers: 0,
-            pastors: 0,
-            workers: 0,
-            regularMembers: 0,
-            ministryStats: {}
-          };
-        }
-      }
-
-      const { data: members, error } = await query;
 
       if (error) throw error;
 
@@ -69,7 +47,6 @@ export const useMemberStats = () => {
       const workers = members.filter(member => member.role === 'worker').length;
       const regularMembers = members.filter(member => member.role === 'member').length;
 
-      // Estatísticas por ministério
       const ministryStats = members.reduce((acc: any, member) => {
         if (member.ministries) {
           member.ministries.forEach(ministry => {
